@@ -14,6 +14,7 @@
     { "idx": 9, "version": "7", "when": 1789575000000, "tag": "0009_content_execution_revision", "breakpoints": true },
     { "idx": 10, "version": "7", "when": 1789577700000, "tag": "0010_content_unit_execution_readiness", "breakpoints": true },
     { "idx": 11, "version": "7", "when": 1789580400000, "tag": "0011_agent_runs", "breakpoints": true },
-    { "idx": 12, "version": "7", "when": 1789592400000, "tag": "0012_operational_actions", "breakpoints": true }
+    { "idx": 12, "version": "7", "when": 1789592400000, "tag": "0012_operational_actions", "breakpoints": true },
+    { "idx": 13, "version": "7", "when": 1789596000000, "tag": "0013_planning_objectives", "breakpoints": true }
   ]
 }
