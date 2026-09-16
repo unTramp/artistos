@@ -9,19 +9,15 @@ test("reviews Candidate Knowledge and rebuilds Artist Brain from approved source
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("knowledge-e2e-password-123");
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
 
-  const workspace = await page.context().request.post("/api/v1/artist", {
-    headers: { "idempotency-key": `knowledge-workspace-${crypto.randomUUID()}` },
-    data: {
-      name: "Knowledge E2E Artist",
-      artistName: "Knowledge E2E Artist",
-      timezone: "UTC",
-      locale: "en",
-      reportingCurrency: "USD"
-    }
-  });
-  expect(workspace.status()).toBe(201);
+  await page.waitForURL("**/onboarding");
+  await page.getByLabel("Your name").fill("Knowledge E2E Artist");
+  await page.getByLabel("Artist name").fill("Knowledge E2E Artist");
+  await page.getByLabel("Timezone").fill("UTC");
+  await page.getByLabel("Language / locale").fill("en");
+  await page.getByRole("button", { name: "Create my Artist OS" }).click();
+  await page.waitForURL("**/");
+  await expect(page.getByRole("heading", { name: "What needs attention now?" })).toBeVisible();
 
   await page.goto("/knowledge");
   await expect(page.getByRole("heading", { name: "Memory that earns permanence", exact: true })).toBeVisible();

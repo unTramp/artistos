@@ -30,8 +30,8 @@ export default function AuthPage() {
       }
 
       setPassword("");
-      setMessage(mode === "sign-up" ? "Account created." : "Signed in.");
       await refetch();
+      window.location.assign(mode === "sign-up" ? "/onboarding" : "/");
     } finally {
       setSubmitting(false);
     }
@@ -61,7 +61,7 @@ export default function AuthPage() {
     return (
       <main className="auth-shell">
         <section className="auth-card">
-          <p className="eyebrow">AUTHENTICATED</p>
+          <p className="eyebrow">ARTIST OS SESSION</p>
           <h1 className="auth-title">Welcome back</h1>
           <p className="auth-muted">Session restored for <strong>{session.user.email}</strong>.</p>
           <div className="auth-actions">
@@ -78,9 +78,9 @@ export default function AuthPage() {
     <main className="auth-shell">
       <section className="auth-card">
         <a className="auth-back" href="/">← Artist OS</a>
-        <p className="eyebrow">STAGE 0 · AUTH</p>
+        <p className="eyebrow">PRIVATE ARTIST WORKSPACE</p>
         <h1 className="auth-title">{mode === "sign-in" ? "Sign in" : "Create account"}</h1>
-        <p className="auth-muted">Authentication is infrastructure. Artist ownership is enforced separately by Artist OS.</p>
+        <p className="auth-muted">Your identity, music, memory and decisions stay inside one authenticated artist scope.</p>
 
         <div className="auth-tabs" role="tablist" aria-label="Authentication mode">
           <button className={mode === "sign-in" ? "active" : ""} type="button" onClick={() => { setMode("sign-in"); setMessage(null); }}>Sign in</button>

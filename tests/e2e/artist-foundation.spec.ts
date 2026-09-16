@@ -9,20 +9,15 @@ test("creates Identity, Era, Song and Song Brain context through authenticated i
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("artist-foundation-password-123");
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
 
-  const api = page.context().request;
-  const workspace = await api.post("/api/v1/artist", {
-    headers: { "idempotency-key": `workspace-${crypto.randomUUID()}` },
-    data: {
-      name: "Artist Foundation E2E",
-      artistName: "Artist Foundation E2E",
-      timezone: "UTC",
-      locale: "en",
-      reportingCurrency: "USD"
-    }
-  });
-  expect(workspace.status()).toBe(201);
+  await page.waitForURL("**/onboarding");
+  await page.getByLabel("Your name").fill("Artist Foundation E2E");
+  await page.getByLabel("Artist name").fill("Artist Foundation E2E");
+  await page.getByLabel("Timezone").fill("UTC");
+  await page.getByLabel("Language / locale").fill("en");
+  await page.getByRole("button", { name: "Create my Artist OS" }).click();
+  await page.waitForURL("**/");
+  await expect(page.getByRole("heading", { name: "What needs attention now?" })).toBeVisible();
 
   await page.goto("/identity");
   await expect(page.getByRole("heading", { name: "Identity", exact: true })).toBeVisible();
