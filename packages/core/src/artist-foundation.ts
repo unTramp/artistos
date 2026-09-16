@@ -20,7 +20,9 @@ export type ArtistFoundationPersistenceCode =
   | "ERA_NOT_ACTIVATABLE"
   | "ERA_ACTIVE_EXISTS"
   | "ERA_IDENTITY_VERSION_NOT_ACTIVE"
+  | "SONG_NOT_FOUND"
   | "SONG_DUPLICATE_ISRC"
+  | "SONG_ERA_IDENTITY_MISMATCH"
   | "IDEMPOTENCY_IN_PROGRESS";
 
 export class ArtistFoundationPersistenceError extends Error {
@@ -50,14 +52,6 @@ const requireUser = <T>(context: CommandContext): CommandResult<T> | null => {
 
 const mapPersistenceError = <T>(error: unknown): CommandResult<T> => {
   if (error instanceof ArtistFoundationPersistenceError) {
-    if (error.code === "IDEMPOTENCY_IN_PROGRESS") {
-      return {
-        status: "RETRYABLE_FAILURE",
-        code: error.code,
-        message: "An identical artist command is still in progress.",
-        retryable: true
-      };
-    }
     if (error.code.endsWith("_NOT_FOUND")) {
       return { status: "NOT_FOUND", code: error.code, message: "The requested artist resource was not found." };
     }
@@ -72,7 +66,7 @@ const mapPersistenceError = <T>(error: unknown): CommandResult<T> => {
 };
 
 export interface CreateIdentityDraftCommand {
-  label?: string | undefined;
+  label?: string;
 }
 
 export interface CreateIdentityDraftResult {
@@ -92,9 +86,9 @@ export interface ActivateIdentityVersionResult {
 export interface CreateEraCommand {
   identityVersionId: string;
   name: string;
-  startDate?: string | undefined;
-  endDate?: string | undefined;
-  narrativeChapter?: string | undefined;
+  startDate?: string;
+  endDate?: string;
+  narrativeChapter?: string;
 }
 
 export interface EraResult {
@@ -106,17 +100,17 @@ export interface EraResult {
 
 export interface CreateSongCommand {
   title: string;
-  type?: string | undefined;
+  type?: string;
   isOriginal: boolean;
-  originalArtist?: string | undefined;
-  genre?: string | undefined;
-  mood?: string | undefined;
-  language?: string | undefined;
-  story?: string | undefined;
-  meaning?: string | undefined;
-  lyricsReference?: string | undefined;
-  isrc?: string | undefined;
-  platformLinks?: Record<string, string> | undefined;
+  originalArtist?: string;
+  genre?: string;
+  mood?: string;
+  language?: string;
+  story?: string;
+  meaning?: string;
+  lyricsReference?: string;
+  isrc?: string;
+  platformLinks?: Record<string, string>;
 }
 
 export interface SongResult {
@@ -229,7 +223,16 @@ export class CreateEraService {
     const denied = requireUser<EraResult>(context); if (denied) return denied;
     const parsed = eraSchema.safeParse(command);
     if (!parsed.success) return { status: "VALIDATION_ERROR", code: "ERA_INVALID_INPUT", message: "Era data is invalid.", fieldErrors: fieldErrors(parsed.error.issues) };
-    try { return { status: "SUCCESS", data: await this.writer.createEra({ artistId: context.artistId, eraId: this.idFactory(), command: parsed.data, evidence: evidenceFrom(context) }) }; }
+    try {
+      const normalized: CreateEraCommand = {
+        identityVersionId: parsed.data.identityVersionId,
+        name: parsed.data.name,
+        ...(parsed.data.startDate ? { startDate: parsed.data.startDate } : {}),
+        ...(parsed.data.endDate ? { endDate: parsed.data.endDate } : {}),
+        ...(parsed.data.narrativeChapter ? { narrativeChapter: parsed.data.narrativeChapter } : {})
+      };
+      return { status: "SUCCESS", data: await this.writer.createEra({ artistId: context.artistId, eraId: this.idFactory(), command: normalized, evidence: evidenceFrom(context) }) };
+    }
     catch (error) { return mapPersistenceError(error); }
   }
 }
@@ -260,7 +263,23 @@ export class CreateSongService {
     const denied = requireUser<SongResult>(context); if (denied) return denied;
     const parsed = songSchema.safeParse(command);
     if (!parsed.success) return { status: "VALIDATION_ERROR", code: "SONG_INVALID_INPUT", message: "Song data is invalid.", fieldErrors: fieldErrors(parsed.error.issues) };
-    try { return { status: "SUCCESS", data: await this.writer.createSong({ artistId: context.artistId, songId: this.idFactory(), command: parsed.data, evidence: evidenceFrom(context) }) }; }
+    try {
+      const normalized: CreateSongCommand = {
+        title: parsed.data.title,
+        isOriginal: parsed.data.isOriginal,
+        ...(parsed.data.type ? { type: parsed.data.type } : {}),
+        ...(parsed.data.originalArtist ? { originalArtist: parsed.data.originalArtist } : {}),
+        ...(parsed.data.genre ? { genre: parsed.data.genre } : {}),
+        ...(parsed.data.mood ? { mood: parsed.data.mood } : {}),
+        ...(parsed.data.language ? { language: parsed.data.language } : {}),
+        ...(parsed.data.story ? { story: parsed.data.story } : {}),
+        ...(parsed.data.meaning ? { meaning: parsed.data.meaning } : {}),
+        ...(parsed.data.lyricsReference ? { lyricsReference: parsed.data.lyricsReference } : {}),
+        ...(parsed.data.isrc ? { isrc: parsed.data.isrc } : {}),
+        ...(parsed.data.platformLinks ? { platformLinks: parsed.data.platformLinks } : {})
+      };
+      return { status: "SUCCESS", data: await this.writer.createSong({ artistId: context.artistId, songId: this.idFactory(), command: normalized, evidence: evidenceFrom(context) }) };
+    }
     catch (error) { return mapPersistenceError(error); }
   }
 }
