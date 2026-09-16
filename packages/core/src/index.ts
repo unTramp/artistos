@@ -40,3 +40,4 @@ export type CommandResult<T> =
 
 export * from "./artist";
 export * from "./artist-foundation";
+export * from "./song-brain";
