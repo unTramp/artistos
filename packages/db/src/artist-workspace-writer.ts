@@ -8,7 +8,7 @@ export class PgArtistWorkspaceWriter implements ArtistWorkspaceWritePort {
 
   async createArtistWorkspace(request: CreateArtistPersistenceRequest): Promise<CreateArtistResult> {
     return this.db.transaction(async (tx) => {
-      const scope = "CreateArtist";
+      const scope = `CreateArtist:${request.ownerUserId}`;
 
       if (request.idempotencyKey) {
         const claimed = await tx.insert(idempotencyRecords).values({
