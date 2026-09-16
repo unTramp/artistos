@@ -47,3 +47,4 @@ export * from "./content-execution";
 export * from "./context-assembler";
 export * from "./agent-run";
 export * from "./operational-action";
+export * from "./attention-projection";
