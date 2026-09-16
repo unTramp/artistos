@@ -4,6 +4,7 @@ import { AppShell } from "../components/app-shell";
 import { resolveAuthenticatedActorContext } from "@/lib/actor-context";
 import { getDatabaseRuntime } from "@/lib/runtime";
 import { FactoryActions } from "./factory-actions";
+import { FactoryAIProposals } from "./factory-ai-proposals";
 
 export default async function FactoryPage() {
   const actorContext = await resolveAuthenticatedActorContext(await headers());
@@ -46,6 +47,7 @@ export default async function FactoryPage() {
   const approvedCount = angles.filter((angle) => angle.status === "APPROVED").length;
   const rejectedCount = angles.filter((angle) => angle.status === "REJECTED").length;
   const unitAngleIds = units.flatMap((unit) => unit.angleId ? [unit.angleId] : []);
+  const songOptions = songs.map((song) => ({ id: song.id, title: song.title }));
 
   return (
     <AppShell activeId="factory" sessionEmail={actorContext.user.email} stage="Phase 2 · Content Factory">
@@ -67,13 +69,10 @@ export default async function FactoryPage() {
         <article><span>3</span><div><strong>Unit</strong><p>Approved Angle becomes one canonical Content Unit only through an explicit command.</p></div></article>
       </section>
 
-      <section className="factory-ai-boundary">
-        <div><p className="eyebrow">AI PROPOSAL LAYER</p><h2>Not connected yet — by design</h2></div>
-        <p>The manual path is already canonical. Future AI generation will assemble Identity + Song Brain + Artist Brain context and write proposals into this same review queue; it will not create production truth directly.</p>
-      </section>
+      <FactoryAIProposals songs={songOptions} />
 
       <FactoryActions
-        songs={songs.map((song) => ({ id: song.id, title: song.title }))}
+        songs={songOptions}
         angles={angles.map((angle) => ({ id: angle.id, title: angle.title, status: angle.status }))}
         unitAngleIds={unitAngleIds}
       />
@@ -107,7 +106,7 @@ export default async function FactoryPage() {
                 </div>
                 {angle.rejectionReason && <p className="factory-decision-note"><strong>{angle.rejectionReason.replaceAll("_", " ")}</strong>{angle.decisionNote ? ` · ${angle.decisionNote}` : ""}</p>}
                 {!angle.rejectionReason && angle.decisionNote && <p className="factory-decision-note">{angle.decisionNote}</p>}
-                <small>Identity {angle.identityVersionId ? "captured" : "not yet active"}{angle.eraIdentityId ? " · Era captured" : ""}</small>
+                <small>{angle.sourceType === "AI_PROPOSAL" ? "AI proposal · " : ""}Identity {angle.identityVersionId ? "captured" : "not yet active"}{angle.eraIdentityId ? " · Era captured" : ""}</small>
               </article>
             ))}
           </div>
