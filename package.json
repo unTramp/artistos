@@ -16,7 +16,8 @@
     "arch:check": "node scripts/check-architecture.mjs",
     "auth:generate": "auth generate --config apps/web/lib/auth.ts --output packages/db/generated/better-auth.sql --yes",
     "db:generate": "pnpm --filter @artist-os/db db:generate",
-    "db:migrate": "pnpm --filter @artist-os/db db:migrate"
+    "db:migrate": "pnpm --filter @artist-os/db db:migrate",
+    "demo:seed": "pnpm --filter @artist-os/db demo:seed"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
