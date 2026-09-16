@@ -10,7 +10,7 @@ describe("createLogger", () => {
     });
 
     const logger = createLogger({ service: "stage0-test", destination: stream });
-    logger.info({
+    logger.error({
       operation: "security.redaction_test",
       traceId: "trace-test",
       password: "root-password",
