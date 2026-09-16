@@ -21,6 +21,7 @@
     "test": "vitest run --config vitest.config.ts --passWithNoTests",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx src/migrate.ts"
+    "db:migrate": "tsx src/migrate.ts",
+    "demo:seed": "node --env-file=../../.env --import tsx src/seed-demo.ts"
   }
 }
