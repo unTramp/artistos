@@ -1,20 +1,43 @@
 import { headers } from "next/headers";
-import { PgArtistFoundationReader, PgContentExecutionReader, PgContentFactoryReader, PgKnowledgeReader } from "@artist-os/db";
+import { AttentionProjectionService, type AttentionItem } from "@artist-os/core";
+import {
+  PgArtistFoundationReader,
+  PgContentExecutionReader,
+  PgContentFactoryReader,
+  PgKnowledgeReader,
+  PgOperationalActionReader
+} from "@artist-os/db";
 import { AppShell } from "./components/app-shell";
 import { resolveAuthenticatedActorContext } from "@/lib/actor-context";
 import { getDatabaseRuntime } from "@/lib/runtime";
 
-type AttentionItem = {
-  tone: "violet" | "amber" | "cyan" | "emerald";
-  label: string;
-  title: string;
-  reason: string;
-  href: string;
-  action: string;
-};
-
 type BrainPayload = {
   validatedLearnings?: unknown[];
+};
+
+const toneFor = (item: AttentionItem): "violet" | "amber" | "cyan" | "emerald" => {
+  if (item.kind === "BLOCKER") return "amber";
+  if (item.kind === "MEMORY") return "amber";
+  if (item.kind === "REVIEW") return "cyan";
+  return "violet";
+};
+
+const labelFor = (item: AttentionItem) => {
+  if (item.kind === "BLOCKER") return "BLOCKED";
+  if (item.kind === "NEXT_ACTION") return "NEXT";
+  if (item.kind === "REVIEW") return "REVIEW";
+  if (item.kind === "MEMORY") return "MEMORY";
+  if (item.kind === "FOUNDATION") return "FOUNDATION";
+  return "MUSIC";
+};
+
+const hrefForOperationalSource = (sourceEntityType: string, sourceEntityId: string) => {
+  if (sourceEntityType === "ContentUnit") return `/factory/units/${sourceEntityId}`;
+  if (sourceEntityType === "ContentAngle") return "/factory";
+  if (sourceEntityType === "CandidateKnowledge") return "/knowledge";
+  if (sourceEntityType === "ArtistIdentity" || sourceEntityType === "IdentityVersion") return "/identity";
+  if (sourceEntityType === "Song") return `/songs/${sourceEntityId}`;
+  return "/";
 };
 
 export default async function HomePage() {
@@ -69,13 +92,15 @@ export default async function HomePage() {
   const knowledgeReader = new PgKnowledgeReader(runtime.db);
   const factoryReader = new PgContentFactoryReader(runtime.db);
   const executionReader = new PgContentExecutionReader(runtime.db);
+  const actionReader = new PgOperationalActionReader(runtime.db);
 
-  const [identity, songs, knowledge, angles, units] = await Promise.all([
+  const [identity, songs, knowledge, angles, units, operationalActions] = await Promise.all([
     artistReader.getIdentityHome(actorContext.artistId),
     artistReader.listSongs(actorContext.artistId),
     knowledgeReader.getHome(actorContext.artistId),
     factoryReader.listAngles(actorContext.artistId),
-    factoryReader.listUnits(actorContext.artistId)
+    factoryReader.listUnits(actorContext.artistId),
+    actionReader.listActions(actorContext.artistId, { statuses: ["OPEN", "IN_PROGRESS", "BLOCKED"], limit: 50 })
   ]);
 
   const approvedExecution = await Promise.all(
@@ -90,28 +115,46 @@ export default async function HomePage() {
   const brainPayload = knowledge.latestSnapshot?.payload as BrainPayload | undefined;
   const learningCount = brainPayload?.validatedLearnings?.length ?? 0;
 
-  const attention: AttentionItem[] = [];
-  if (!identity.activeVersion) {
-    attention.push({ tone: "amber", label: "FOUNDATION", title: "Activate your artist identity", reason: "Factory and future recommendations need one canonical active Identity Version.", href: "/identity", action: "Open Identity" });
-  }
-  if (unitsWithoutExecution[0]) {
-    attention.push({ tone: "violet", label: "NOW", title: `Finish execution · ${unitsWithoutExecution[0].unit.title}`, reason: "This Content Unit exists, but it has no approved execution source yet.", href: `/factory/units/${unitsWithoutExecution[0].unit.id}`, action: "Continue execution" });
-  }
-  if (approvedWithoutUnit.length > 0) {
-    attention.push({ tone: "cyan", label: "NEXT", title: `${approvedWithoutUnit.length} approved angle${approvedWithoutUnit.length === 1 ? "" : "s"} waiting for commitment`, reason: "Approval does not create a Content Unit automatically. Decide which idea should enter production.", href: "/factory", action: "Review approved angles" });
-  }
-  if (reviewAngles.length > 0) {
-    attention.push({ tone: "cyan", label: "REVIEW", title: `${reviewAngles.length} content angle${reviewAngles.length === 1 ? "" : "s"} need judgment`, reason: "Draft and deferred ideas remain proposals until you explicitly approve, reject or defer them.", href: "/factory", action: "Review angles" });
-  }
-  if (pendingKnowledge.length > 0) {
-    attention.push({ tone: "amber", label: "MEMORY", title: `${pendingKnowledge.length} knowledge candidate${pendingKnowledge.length === 1 ? "" : "s"} waiting`, reason: "Candidate knowledge stays outside permanent Artist Brain context until you review it.", href: "/knowledge", action: "Review Brain inbox" });
-  }
-  if (songs.length === 0) {
-    attention.push({ tone: "violet", label: "MUSIC", title: "Add your first song", reason: "Song Brain gives future content and strategy decisions track-specific context.", href: "/songs", action: "Add song" });
-  }
+  const projection = new AttentionProjectionService().project({
+    computedAt: new Date(),
+    activeObjective: null,
+    identity: {
+      active: Boolean(identity.activeVersion),
+      ...(identity.activeVersion ? { versionRef: { type: "IdentityVersion", id: identity.activeVersion.id, version: identity.activeVersion.versionNumber } } : {})
+    },
+    songsCount: songs.length,
+    pendingKnowledge: {
+      count: pendingKnowledge.length,
+      refs: pendingKnowledge.slice(0, 10).map((candidate) => ({ type: "CandidateKnowledge", id: candidate.id }))
+    },
+    reviewAngles: {
+      count: reviewAngles.length,
+      refs: reviewAngles.slice(0, 10).map((angle) => ({ type: "ContentAngle", id: angle.id }))
+    },
+    approvedAnglesWithoutUnit: {
+      count: approvedWithoutUnit.length,
+      refs: approvedWithoutUnit.slice(0, 10).map((angle) => ({ type: "ContentAngle", id: angle.id }))
+    },
+    unitsWithoutApprovedExecution: unitsWithoutExecution.map(({ unit }) => ({ id: unit.id, title: unit.title })),
+    operationalActions: operationalActions.map((action) => ({
+      id: action.id,
+      sourceDomain: action.sourceDomain,
+      sourceEntityType: action.sourceEntityType,
+      sourceEntityId: action.sourceEntityId,
+      title: action.title,
+      description: action.description,
+      status: action.status,
+      priority: action.priority,
+      dueAt: action.dueAt,
+      notBefore: action.notBefore,
+      externalUrl: action.externalUrl,
+      targetHref: hrefForOperationalSource(action.sourceEntityType, action.sourceEntityId),
+      version: action.version
+    }))
+  });
 
-  const primary = attention[0] ?? null;
-  const secondary = attention.slice(1, 4);
+  const primary = projection.items[0] ?? null;
+  const secondary = projection.items.slice(1, 4);
   const latestUnit = units[0] ?? null;
 
   return (
@@ -121,26 +164,27 @@ export default async function HomePage() {
           <div>
             <p className="eyebrow">TODAY · DAILY OS</p>
             <h1>What needs attention now?</h1>
-            <p>One selective surface across identity, music, memory and execution. Deep work stays in the owning domain.</p>
+            <p>One deterministic projection across domain state and OperationalActions. Deep work stays in the owning domain.</p>
           </div>
           <div className="today-context-state"><i />Context Ready</div>
         </header>
 
         {primary ? (
-          <section className={`today-hero-card tone-${primary.tone}`}>
+          <section className={`today-hero-card tone-${toneFor(primary)}`}>
             <div>
-              <span className="signal-label">{primary.label}</span>
+              <span className="signal-label">{labelFor(primary)}</span>
               <h2>{primary.title}</h2>
-              <p>{primary.reason}</p>
+              <p>{primary.whyThis[0]}</p>
+              {primary.objectiveAligned && <small className="today-objective-note">Aligned with current objective</small>}
             </div>
-            <a className="primary-action" href={primary.href}>{primary.action} →</a>
+            <a className="primary-action" href={primary.action.href}>{primary.action.label} →</a>
           </section>
         ) : (
           <section className="today-hero-card tone-emerald">
             <div>
               <span className="signal-label">CLEAR</span>
               <h2>No immediate blockers</h2>
-              <p>Your currently implemented workflows have no unresolved deterministic attention item. This is not a generic AI recommendation.</p>
+              <p>Your implemented workflows have no unresolved deterministic attention item. This is not a generic AI recommendation.</p>
             </div>
             <a className="primary-action" href="/factory">Create with context →</a>
           </section>
@@ -150,16 +194,16 @@ export default async function HomePage() {
           <article><span>IDENTITY</span><strong>{identity.activeVersion ? `v${identity.activeVersion.versionNumber} ACTIVE` : "NEEDS SETUP"}</strong><small>{identity.activeEra ? `Era · ${identity.activeEra.name}` : "Base identity context"}</small></article>
           <article><span>MUSIC</span><strong>{songs.length}</strong><small>song{songs.length === 1 ? "" : "s"} in Artist OS</small></article>
           <article><span>BRAIN</span><strong>{knowledge.latestSnapshot ? `v${knowledge.latestSnapshot.versionNumber}` : "NO SNAPSHOT"}</strong><small>{pendingKnowledge.length} pending review</small></article>
-          <article><span>EXECUTION</span><strong>{units.length}</strong><small>{unitsWithoutExecution.length} need approved execution</small></article>
+          <article><span>ACTIONS</span><strong>{operationalActions.length}</strong><small>active operational action{operationalActions.length === 1 ? "" : "s"}</small></article>
         </div>
 
         <div className="today-columns">
           <section className="attention-panel">
-            <div className="panel-heading"><div><span className="signal-label">NEXT</span><h2>Attention queue</h2></div><small>{attention.length} current signal{attention.length === 1 ? "" : "s"}</small></div>
+            <div className="panel-heading"><div><span className="signal-label">NEXT</span><h2>Attention queue</h2></div><small>{projection.items.length} current signal{projection.items.length === 1 ? "" : "s"}</small></div>
             {secondary.length === 0 ? <div className="quiet-state">No secondary attention items right now.</div> : secondary.map((item) => (
-              <a className="attention-row" href={item.href} key={`${item.label}-${item.title}`}>
-                <i className={`attention-dot ${item.tone}`} />
-                <div><span>{item.label}</span><strong>{item.title}</strong><p>{item.reason}</p></div>
+              <a className="attention-row" href={item.action.href} key={item.id}>
+                <i className={`attention-dot ${toneFor(item)}`} />
+                <div><span>{labelFor(item)}</span><strong>{item.title}</strong><p>{item.whyThis[0]}</p></div>
                 <b>→</b>
               </a>
             ))}
