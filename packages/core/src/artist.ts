@@ -37,6 +37,7 @@ export interface AuditEvidence {
 }
 
 export interface CreateArtistPersistenceRequest {
+  ownerUserId: string;
   artist: {
     id: string;
     name: string;
@@ -94,8 +95,16 @@ export class CreateArtistService {
       };
     }
 
+    if (context.actor.type !== "USER" || !context.actor.id) {
+      return {
+        status: "FORBIDDEN",
+        code: "ARTIST_OWNER_AUTH_REQUIRED",
+        message: "An authenticated user is required to create an artist workspace."
+      };
+    }
+
     const now = this.clock();
-    const actorFields = context.actor.id ? { actorId: context.actor.id } : {};
+    const actorFields = { actorId: context.actor.id };
     const event: DomainEvent<{ artistName: string }> = {
       eventId: this.idFactory(),
       eventType: "ArtistCreated",
@@ -128,6 +137,7 @@ export class CreateArtistService {
 
     try {
       const result = await this.writer.createArtistWorkspace({
+        ownerUserId: context.actor.id,
         artist: {
           id: context.artistId,
           name: parsed.data.name,
