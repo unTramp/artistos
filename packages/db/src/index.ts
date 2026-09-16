@@ -13,6 +13,7 @@ export * from "./knowledge-writer";
 export * from "./knowledge-reader";
 export * from "./content-factory-writer";
 export * from "./content-factory-reader";
+export * from "./content-angle-context-reader";
 export * from "./content-execution-writer";
 export * from "./content-execution-reader";
 export * from "./outbox-dispatcher";
