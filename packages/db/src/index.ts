@@ -1,6 +1,7 @@
 export * from "./schema";
 export * from "./knowledge-schema";
 export * from "./content-factory-schema";
+export * from "./content-execution-schema";
 export * from "./runtime";
 export * from "./artist-workspace-writer";
 export * from "./artist-scope";
@@ -12,5 +13,7 @@ export * from "./knowledge-writer";
 export * from "./knowledge-reader";
 export * from "./content-factory-writer";
 export * from "./content-factory-reader";
+export * from "./content-execution-writer";
+export * from "./content-execution-reader";
 export * from "./outbox-dispatcher";
 export * from "./job-queue";
