@@ -90,6 +90,32 @@ export const songs = pgTable("songs", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
 });
 
+export const songBrainStatements = pgTable("song_brain_statements", {
+  id: uuid("id").primaryKey(),
+  artistId: uuid("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" }),
+  songId: uuid("song_id").notNull().references(() => songs.id, { onDelete: "cascade" }),
+  statementType: text("statement_type").notNull(),
+  statement: text("statement").notNull(),
+  sourceLabel: text("source_label"),
+  createdByActorId: text("created_by_actor_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+});
+
+export const songIdentityContexts = pgTable("song_identity_contexts", {
+  id: uuid("id").primaryKey(),
+  artistId: uuid("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" }),
+  songId: uuid("song_id").notNull().references(() => songs.id, { onDelete: "cascade" }),
+  identityVersionId: uuid("identity_version_id").notNull().references(() => artistIdentityVersions.id, { onDelete: "restrict" }),
+  eraIdentityId: uuid("era_identity_id").references(() => eraIdentities.id, { onDelete: "restrict" }),
+  songSpecificVisualNotes: text("song_specific_visual_notes"),
+  songSpecificAnchors: jsonb("song_specific_anchors").notNull().default([]),
+  allowedOverrides: jsonb("allowed_overrides").notNull().default([]),
+  version: integer("version").notNull().default(1),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+}, (table) => [uniqueIndex("song_identity_contexts_song_uidx").on(table.songId)]);
+
 export const outboxEvents = pgTable("outbox_events", {
   id: uuid("id").primaryKey(),
   artistId: uuid("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" }),
