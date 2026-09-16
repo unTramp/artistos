@@ -65,8 +65,8 @@ GET /api/v1/identity/versions
 GET /api/v1/identity/eras
 GET /api/v1/songs
 GET /api/v1/songs/:songId
-GET /api/v1/releases                         [PROVISIONAL ACP-002]
-GET /api/v1/releases/:releaseId              [PROVISIONAL ACP-002]
+GET /api/v1/releases
+GET /api/v1/releases/:releaseId
 GET /api/v1/campaigns
 GET /api/v1/campaigns/:campaignId
 GET /api/v1/content/angles
@@ -111,9 +111,9 @@ POST /api/v1/identity/brand-book/generate
 ```text
 POST /api/v1/songs
 POST /api/v1/songs/:id/segments
-POST /api/v1/releases                        [PROVISIONAL ACP-002]
-POST /api/v1/releases/:id/schedule           [PROVISIONAL ACP-002]
-POST /api/v1/releases/:id/delay              [PROVISIONAL ACP-002]
+POST /api/v1/releases
+POST /api/v1/releases/:id/schedule
+POST /api/v1/releases/:id/delay
 ```
 
 ### Content
@@ -130,9 +130,9 @@ POST /api/v1/content/units/:id/novelty-check
 ### Planning
 
 ```text
-POST /api/v1/planning/objectives              [PROVISIONAL ACP-001]
-POST /api/v1/planning/objectives/:id/activate [PROVISIONAL ACP-001]
-POST /api/v1/planning/objectives/:id/complete [PROVISIONAL ACP-001]
+POST /api/v1/planning/objectives
+POST /api/v1/planning/objectives/:id/activate
+POST /api/v1/planning/objectives/:id/complete
 POST /api/v1/calendar/slots
 ```
 
@@ -141,15 +141,15 @@ POST /api/v1/calendar/slots
 ```text
 POST /api/v1/shoots
 POST /api/v1/shoots/:id/shots
-POST /api/v1/shots/:id/takes/start            [PROVISIONAL ACP-005]
-POST /api/v1/takes/:id/close                  [PROVISIONAL ACP-005]
-POST /api/v1/takes/:id/select                 [PROVISIONAL ACP-005]
+POST /api/v1/shots/:id/takes/start
+POST /api/v1/takes/:id/close
+POST /api/v1/takes/:id/select
 POST /api/v1/assets/upload-init
 POST /api/v1/assets/upload-complete
 POST /api/v1/assets/smart-ingest
 POST /api/v1/assets/:id/rights
 POST /api/v1/assets/rights/evaluate
-POST /api/v1/assets/derivations                [PROVISIONAL ACP-006]
+POST /api/v1/assets/derivations
 ```
 
 ### Distribution / DSP

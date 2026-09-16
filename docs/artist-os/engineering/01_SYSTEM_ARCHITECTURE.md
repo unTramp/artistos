@@ -1,7 +1,7 @@
 # Artist OS — Engineering Spec 01: System Architecture
 
-**Status:** DRAFT / Pass 1
-**Architecture baseline:** MASTER v1.3 §§36–47, 322–353, 339–350, 383–391.
+**Status:** PASS 1 / v1.4 reconciled
+**Architecture baseline:** MASTER v1.4 §§36–47, 322–353, 339–350, 383–391 + AR-001…AR-062.
 **Product baseline:** all 20 detailed Product Spec domains.
 
 ## ENG-SYS-001 — Deployment shape
@@ -128,7 +128,7 @@ ExperimentCompleted
 LearningValidated
 DecisionRecorded
 ReleaseDateChanged
-OperationalActionCompleted   # provisional ACP-004
+OperationalActionCompleted   # MASTER v1.4 §202A
 ```
 
 Event delivery inside the modular monolith may use a PostgreSQL-backed outbox/dispatcher; Kafka is explicitly unnecessary for MVP.
@@ -221,12 +221,12 @@ Concrete providers are selected through application configuration / dependency i
 Until architecture freeze:
 
 ```text
-PlanningObjective     # ACP-001
-Release/ReleaseTrack  # ACP-002
-Narrative link model  # ACP-003
-OperationalAction     # ACP-004
-Take/TakeAsset        # ACP-005
-AssetDerivation       # ACP-006
+PlanningObjective     # MASTER v1.4 §156
+Release/ReleaseTrack  # MASTER v1.4 §§49A–49B
+Narrative link model  # MASTER v1.4 §130A
+OperationalAction     # MASTER v1.4 §202A
+Take/TakeAsset        # MASTER v1.4 §§166A–166B
+AssetDerivation       # MASTER v1.4 §188
 ```
 
 may be represented in engineering diagrams/schema drafts, but migrations must be marked provisional and must not be merged as “MASTER-compliant” without ACP approval.

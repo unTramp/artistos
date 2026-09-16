@@ -1,8 +1,8 @@
 # Artist OS — Engineering Spec 03: Logical Data Model
 
-**Status:** DRAFT / Pass 1
+**Status:** PASS 1 / v1.4 reconciled
 **Purpose:** canonical ownership/cardinality map before physical PostgreSQL schema.
-**Important:** entities marked `PROVISIONAL[ACP-*]` are not MASTER-approved yet.
+**Architecture baseline:** MASTER v1.4. ACP-001…ACP-006 entities in this model are approved and normative.
 
 ## 1. Modeling vocabulary
 
@@ -54,7 +54,7 @@
 | NarrativeBeat | CHILD | narrative | NarrativeTrack 1:N | ordered/planned/told beat |
 | SignatureDifferentiator | ROOT/CHILD | narrative | IdentityVersion | cross-content differentiator |
 | NarrativeMixPlan | ROOT | narrative | Artist + period | target mix; actual is derived |
-| ContentNarrativeLink | CHILD `PROVISIONAL[ACP-003]` | narrative/content boundary | Angle/ContentUnit ↔ Track | exactly one primary max; secondary optional |
+| ContentNarrativeLink | CHILD | narrative/content boundary | Angle/ContentUnit ↔ Track | exactly one primary max; secondary optional |
 
 ### 2.4 Songs / releases
 
@@ -66,20 +66,20 @@
 | AudioAsset | ROOT/CHILD | music | Song?, Asset? | audio-specific work/version metadata |
 | AudioUsage | CHILD | music/content | AudioAsset + ContentUnit/Publication | records actual creative usage; incidental use ≠ primary Song |
 | SongIdentityContext | CHILD/VALUE | music | Song + IdentityVersion | song-scoped visual/interpretation overrides |
-| Release | ROOT `PROVISIONAL[ACP-002]` | music/release | Artist | canonical release lifecycle |
-| ReleaseTrack | CHILD `PROVISIONAL[ACP-002]` | music/release | Release N:M Song | sequence/focus/version label |
-| ReleaseExtension | CHILD/ROOT | music/release | parent Release → child Release | musical variants; VIDEO removed if ACP approved |
+| Release | ROOT | music/release | Artist | canonical release lifecycle |
+| ReleaseTrack | CHILD | music/release | Release N:M Song | sequence/focus/version label |
+| ReleaseExtension | CHILD/ROOT | music/release | parent Release → child Release | musical variants; VIDEO is not a ReleaseExtension in v1.4 |
 
 ### 2.5 Campaigns
 
 | Entity | Kind | Owner | Key relationships | Notes |
 |---|---|---|---|---|
 | Campaign | ROOT | campaigns | Artist | orchestration only; never child-domain truth owner |
-| CampaignTarget | CHILD `PROVISIONAL[ACP-002]` | campaigns | Campaign → Artist/Song/Release | one PRIMARY max + RELATED |
+| CampaignTarget | CHILD | campaigns | Campaign → Artist/Song/Release | one PRIMARY max + RELATED |
 | CampaignGoal configuration | VALUE | campaigns | Campaign | primary/secondary goal vocabulary |
 | LaunchActivationPlan | ROOT/CHILD | campaigns | Campaign + Release? | references actions/content/channels; does not own them |
 | ReadinessSnapshot | EVIDENCE/PROJECTION | campaigns/distribution | source subject + time | optional milestone snapshot per AR-009 |
-| OperationalAction | ROOT `PROVISIONAL[ACP-004]` | cross-cutting operations | source domain entity | human/external step, not Job |
+| OperationalAction | ROOT | cross-cutting operations | source domain entity | human/external step, not Job |
 
 ### 2.6 Content / planning
 
@@ -92,7 +92,7 @@
 | RecurringSeries | ROOT | planning/content | Artist | DRAFT/ACTIVE/PAUSED/ARCHIVED |
 | ContentRhythmTemplate | ROOT/CONFIG | planning | Artist | preferred cadence/mix; versionable |
 | ContentSlot | ROOT | planning | Artist + optional ContentUnit | planning intent/date window only |
-| PlanningObjective | ROOT `PROVISIONAL[ACP-001]` | planning | Artist + Campaign?/Release? | period operational focus |
+| PlanningObjective | ROOT | planning | Artist + Campaign?/Release? | period operational focus |
 | SeasonalOpportunity | ROOT/CHILD | growth | market/culture/date | Calendar consumes projection |
 
 `EvergreenPool` and `StarterContentPack` are projections/plans, not permanent roots.
@@ -105,8 +105,8 @@
 | EquipmentItem | CHILD/ROOT | production | CapabilityProfile | reusable owned/available gear |
 | ShootSession | ROOT | production | Artist, Campaign?, Songs? | batch execution context |
 | Shot | CHILD | production | ShootSession + ContentUnit | planned instruction |
-| Take | CHILD `PROVISIONAL[ACP-005]` | production | Shot 1:N | captured attempt |
-| TakeAsset | CHILD `PROVISIONAL[ACP-005]` | production/assets boundary | Take N:M Asset | confirmed media links |
+| Take | CHILD | production | Shot 1:N | captured attempt |
+| TakeAsset | CHILD | production/assets boundary | Take N:M Asset | confirmed media links |
 | ProductionCostEstimate | VALUE | production | ShootSession | planning estimate, not accounting root |
 
 No standalone `ProductionPlan` root in MVP.
@@ -119,7 +119,7 @@ No standalone `ProductionPlan` root in MVP.
 | TranscriptData | CHILD/derived | assets | source Asset 1:N versions | machine-readable timestamps/language |
 | AssetRights | CHILD | rights/assets | Asset 1:1/N | creator/license/commercial rules |
 | ExternalAssetSource | CONFIG | assets | provider registry | source/license knowledge |
-| AssetDerivation | CHILD `PROVISIONAL[ACP-006]` | assets | child Asset ↔ parent Asset | multi-parent lineage edge |
+| AssetDerivation | CHILD | assets | child Asset ↔ parent Asset | multi-parent lineage edge |
 | RepurposingPlan | ROOT | assets/content | source Asset | derivative planning |
 | RepurposingPlanItem | CHILD | assets/content | plan 1:N | becomes ContentUnit only after approval |
 
@@ -252,16 +252,16 @@ Artist
 │                    ├─ N IdentityConstraint
 │                    └─ N SymbolicAnchor
 ├─ N Song ── N SongSegment
-│      └─ N ReleaseTrack ── 1 Release [PROVISIONAL]
-├─ N Campaign ── N CampaignTarget [PROVISIONAL]
+│      └─ N ReleaseTrack ── 1 Release
+├─ N Campaign ── N CampaignTarget
 ├─ N NarrativeTrack
 ├─ N ContentAngle ── N ContentUnit
 │                       ├─ N Publication
 │                       ├─ N ContentExecutionRevision
 │                       └─ N Shot ← 1 ShootSession
-│                               └─ N Take [PROVISIONAL]
+│                               └─ N Take
 ├─ N Asset
-│    └─ N↔N AssetDerivation [PROVISIONAL]
+│    └─ N↔N AssetDerivation
 ├─ N MetricSnapshot
 ├─ N Experiment / Learning / Decision
 └─ N ResearchClaim / Knowledge artifacts

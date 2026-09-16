@@ -177,15 +177,15 @@ OAuth refresh tokens/API secrets use encrypted integration credential storage wi
 
 Fan audience data remains aggregated by default. Generic metadata/JSONB must not become an accidental dumping ground for person-level contact data.
 
-## ENG-DATA-028 — Provisional schema markers
+## ENG-DATA-028 — Future provisional schema markers
 
-Logical/physical schema docs tag ACP-dependent tables/fields as:
+ACP-001…ACP-006 are approved in MASTER v1.4 and must not carry provisional markers. For a **future unapproved ACP only**, logical/physical schema docs tag dependent tables/fields as:
 
 ```text
 PROVISIONAL[ACP-xxx]
 ```
 
-Migration filenames and code comments must not imply they are architecture-final before approval.
+Migration filenames and code comments must not imply a future ACP is architecture-final before approval.
 
 ## Definition of Done for a table/entity design
 

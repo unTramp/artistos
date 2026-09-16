@@ -48,8 +48,8 @@ credit != license
 one viral outlier not promoted as universal learning
 Campaign does not own Release/Content/DSP state
 Job retry does not duplicate external effect
-Take selection history preserved [PROVISIONAL ACP-005]
-Asset derivation graph is acyclic [PROVISIONAL ACP-006]
+Take selection history preserved [MASTER v1.4 §§166A–166B]
+Asset derivation graph is acyclic [MASTER v1.4 §188]
 ```
 
 ## 4. Migration tests

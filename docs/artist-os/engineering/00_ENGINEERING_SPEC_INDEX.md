@@ -1,5 +1,8 @@
 # Artist OS — Engineering Specification Index
 
+**Architecture baseline:** MASTER v1.4 + AR-001…AR-062 companion contracts.
+**Status:** Engineering Pass 1 complete; v1.4 consistency pass complete.
+
 ## Purpose
 
 Translate the Full Product Spec into implementation contracts without losing product intent, provenance or domain boundaries.
@@ -35,3 +38,4 @@ MASTER requirement
 | 13 Testing & Traceability | PASS 1 | requirement→test matrix |
 | 14 Migrations & Rollback | PASS 1 | safe schema evolution/backups |
 | 15 Deployment & Operations | PASS 1 | environments/workers/health |
+| v1.4 Consistency Pass | COMPLETE | ACP normalization, baseline update, cross-contract checks |

@@ -121,7 +121,7 @@ Rules:
 Coordinates:
 
 ```text
-PlanningObjective [PROVISIONAL ACP-001]
+PlanningObjective
 Campaign
 NarrativeMixPlan
 Evergreen requirements
@@ -166,7 +166,7 @@ Asset registration
 → human confirmation
 ```
 
-**PROVISIONAL ACP-005** for Take linkage.
+**Architecture:** Take linkage is normative under MASTER v1.4 §§166A–166B (approved ACP-005).
 
 No low-confidence suggestion becomes canonical without confirmation.
 
@@ -185,7 +185,7 @@ Must not rewrite ContentUnit creative premise.
 
 ### 3.10 ReleaseOrchestrator
 
-**PROVISIONAL ACP-002/ACP-004.**
+**Architecture:** Release and OperationalAction orchestration is normative under MASTER v1.4 (approved ACP-002/ACP-004).
 
 Coordinates canonical Release with:
 
@@ -283,7 +283,7 @@ Responsibilities:
 
 ### 3.19 OperationalActionService
 
-**PROVISIONAL ACP-004.**
+**Architecture:** OperationalAction is normative under MASTER v1.4 §202A (approved ACP-004).
 
 Creates/updates cross-domain human/external action state while preserving source-domain truth. Can surface due/blocked items to Overview projections.
 
