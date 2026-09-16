@@ -1,7 +1,8 @@
 import { readdir, readFile } from "node:fs/promises";
 import { extname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = new URL("../packages/core/src/", import.meta.url);
+const root = fileURLToPath(new URL("../packages/core/src/", import.meta.url));
 const forbidden = [
   /^next(?:\/|$)/,
   /^react(?:\/|$)/,
@@ -30,7 +31,7 @@ for (const file of await files(root)) {
   for (const match of specifiers) {
     const specifier = match[2];
     if (specifier && forbidden.some((rule) => rule.test(specifier))) {
-      violations.push(`${relative(root.pathname, file)} -> ${specifier}`);
+      violations.push(`${relative(root, file)} -> ${specifier}`);
     }
   }
 }
