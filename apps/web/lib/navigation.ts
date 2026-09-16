@@ -1,14 +1,17 @@
+export type ProductStage = "foundation" | "artist-foundation" | "content-factory";
+
 export interface NavigationItem {
   id: string;
-  label: string;
   href: string;
-  stage: "foundation" | "artist-foundation";
+  label: string;
+  stage: ProductStage;
 }
 
-export const navigation: readonly NavigationItem[] = [
-  { id: "overview", label: "Overview", href: "/", stage: "foundation" },
-  { id: "identity", label: "Identity", href: "/identity", stage: "artist-foundation" },
-  { id: "songs", label: "Songs", href: "/songs", stage: "artist-foundation" },
-  { id: "knowledge", label: "Knowledge", href: "/knowledge", stage: "artist-foundation" },
-  { id: "auth", label: "Account", href: "/auth", stage: "foundation" }
-] as const;
+export const navigation = [
+  { id: "overview", href: "/", label: "Overview", stage: "foundation" },
+  { id: "identity", href: "/identity", label: "Identity", stage: "artist-foundation" },
+  { id: "songs", href: "/songs", label: "Songs", stage: "artist-foundation" },
+  { id: "knowledge", href: "/knowledge", label: "Knowledge", stage: "artist-foundation" },
+  { id: "factory", href: "/factory", label: "Factory", stage: "content-factory" },
+  { id: "account", href: "/auth", label: "Account", stage: "foundation" }
+] satisfies NavigationItem[];

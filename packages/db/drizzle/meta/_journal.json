@@ -2,61 +2,17 @@
   "version": "7",
   "dialect": "postgresql",
   "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1789555200000,
-      "tag": "0000_stage0_foundation",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1789555260000,
-      "tag": "0001_artist_membership",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1789555320000,
-      "tag": "0002_auth_schema",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1789555380000,
-      "tag": "0003_better_auth",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1789555440000,
-      "tag": "0004_job_idempotency",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1789564200000,
-      "tag": "0005_artist_foundation",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1789566900000,
-      "tag": "0006_song_brain",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1789569600000,
-      "tag": "0007_knowledge_foundation",
-      "breakpoints": true
-    }
+    { "idx": 0, "version": "7", "when": 1789555200000, "tag": "0000_stage0_foundation", "breakpoints": true },
+    { "idx": 1, "version": "7", "when": 1789555260000, "tag": "0001_artist_membership", "breakpoints": true },
+    { "idx": 2, "version": "7", "when": 1789555320000, "tag": "0002_auth_schema", "breakpoints": true },
+    { "idx": 3, "version": "7", "when": 1789555380000, "tag": "0003_better_auth", "breakpoints": true },
+    { "idx": 4, "version": "7", "when": 1789555440000, "tag": "0004_job_idempotency", "breakpoints": true },
+    { "idx": 5, "version": "7", "when": 1789564200000, "tag": "0005_artist_foundation", "breakpoints": true },
+    { "idx": 6, "version": "7", "when": 1789566900000, "tag": "0006_song_brain", "breakpoints": true },
+    { "idx": 7, "version": "7", "when": 1789569600000, "tag": "0007_knowledge_foundation", "breakpoints": true },
+    { "idx": 8, "version": "7", "when": 1789572300000, "tag": "0008_content_factory", "breakpoints": true },
+    { "idx": 9, "version": "7", "when": 1789575000000, "tag": "0009_content_execution_revision", "breakpoints": true },
+    { "idx": 10, "version": "7", "when": 1789577700000, "tag": "0010_content_unit_execution_readiness", "breakpoints": true },
+    { "idx": 11, "version": "7", "when": 1789580400000, "tag": "0011_agent_runs", "breakpoints": true }
   ]
 }
