@@ -19,7 +19,7 @@ Artist OS connects two loops:
 
 ### Intelligence loop
 
-`Hypothesis → Experiment → Evidence → Learning → Decision → Reuse`
+`Evidence → Insight / Hypothesis → Experiment → Learning → Decision → Reuse`
 
 The user should feel the first loop every day; the second loop is what creates long-term compounding intelligence.
 
@@ -36,6 +36,8 @@ The user should feel the first loop every day; the second loop is what creates l
 - Passive context capture is preferred over additional forms.
 - PlanningObjective is first-class prioritization context, not a replacement for CampaignGoal or RevenueGoal.
 - Content Factory answers “What can we create?”; Today answers “What should we do now?”.
+- Prior Decisions are advisory memory, never hard policy that silently removes human agency.
+- Recommendation/action contracts must remain extensible for optional contextual guidance without requiring a Lesson/LMS domain.
 
 ## Visual direction
 
@@ -83,9 +85,23 @@ Every projected recommendation should be able to provide, through progressive di
 - `BASED ON` — PlanningObjective, domain state, evidence and memory refs;
 - `UNCERTAINTY` — known vs inferred;
 - `EXPECTED EFFECT` — what completing the action unlocks or changes;
-- `WHAT WE MAY LEARN` — only when meaningful.
+- `WHAT WE MAY LEARN` — only when meaningful;
+- `OPTIONAL GUIDANCE` — optional reference to contextual help/micro-guidance when the user may need knowledge before execution.
 
 Deterministic blockers require deterministic explanation, not an AI-generated rationale.
+
+Guidance metadata is an extension point only; Phase 2.5 does not require a new Lesson root entity or LMS architecture.
+
+## Official demo acceptance test
+
+Every representative Artist OS demo must demonstrate all four moments:
+
+1. **TODAY** — Artist OS knows what I should do now.
+2. **WHY** — Artist OS can explain why.
+3. **MEMORY** — Artist OS remembers what we tried, decided and learned.
+4. **LEARN** — when I lack context, Artist OS can offer relevant guidance before I act and return me to execution.
+
+A release that cannot demonstrate these four moments is not yet a complete Daily OS experience.
 
 ## Implementation order
 
@@ -115,7 +131,8 @@ Rules:
 - not a generic task manager;
 - actions may represent human/external work that cannot live only as owning-domain state;
 - completion must not overwrite owning-domain truth;
-- source context and provenance are required.
+- source context and provenance are required;
+- contract should permit optional guidance metadata/reference later without changing canonical action identity.
 
 Acceptance:
 - explicit human/external actions are durable and auditable;
@@ -152,7 +169,10 @@ Recommendation contract:
 - expected effect;
 - what may be learned;
 - objective ref where applicable;
+- optional guidance ref/descriptor;
 - action href.
+
+The optional guidance extension point must exist now even though actual guidance content/UI arrives later.
 
 ### PR 13 — Today v1 + Explainability + Bottleneck/Readiness → Action
 
@@ -172,7 +192,8 @@ Add Explainability Drawer:
 - BASED ON;
 - UNCERTAINTY;
 - EXPECTED EFFECT;
-- WHAT WE MAY LEARN.
+- WHAT WE MAY LEARN;
+- optional LEARN BEFORE DOING affordance when guidance metadata is present.
 
 Bottleneck projection:
 - detect supported deterministic bottleneck patterns;
@@ -199,15 +220,28 @@ Implement canonical Decision memory:
 
 Decision capture should be lightweight and often offered as a by-product of existing review flows.
 
-Conflict guard:
+Forward-compatibility requirement from day one:
+- Decision may exist with no Learning/Insight/Experiment;
+- schema/API identity and provenance model must be able to reference Evidence, Insight, Hypothesis, Experiment, Learning and OperationalAction later without redesigning the Decision aggregate;
+- PR 15 must be able to add lineage through links/refs, not by replacing the Decision contract.
+
+Conflict guard is advisory and human-controlled:
+
+`Detect conflict → explain prior context → ask for override rationale → allow human decision`
+
+Rules:
 - Strategy/recommendation assembly should surface relevant active prior Decisions;
 - if a proposal materially conflicts with prior Decision memory, the system must disclose the conflict;
 - generic AI best practice must not silently override artist-specific Decision history;
-- changed context may justify reconsideration, but must be explicit.
+- changed market, song, audience, creative, platform, timing or other context may justify reconsideration;
+- human override must always be possible;
+- override rationale should be preserved as evidence/decision context.
 
 Acceptance scenario:
 - prior strategy was tested and rejected due to weak downstream evidence;
-- a later recommendation either avoids repeating it or explains why context changed enough to reconsider.
+- later proposal detects the conflict and explains the old context;
+- user may explicitly re-test because conditions changed;
+- Artist OS records why the prior Decision was overridden instead of blocking the action.
 
 ### PR 15 — Learning Foundation + Decision Lineage
 
@@ -222,6 +256,12 @@ Keep Knowledge and Learning semantically distinct:
 - Learning = what was learned from actions/results.
 
 Validated Learnings become eligible Artist Brain context.
+
+Canonical intelligence direction remains:
+
+`Evidence → Insight / Hypothesis → Experiment → Learning → Decision`
+
+Decision is allowed to exist without upstream Learning when the choice is operational/strategic rather than evidence-derived.
 
 Lineage UX/data contract should support traversal where evidence exists:
 
@@ -264,7 +304,7 @@ Review completion should support:
 
 Do not build a full LMS.
 
-Introduce contextual human learning attached to current tasks.
+Introduce contextual human learning attached to current tasks using the extension point already present in Attention/Explainability.
 
 Separate naming from canonical system `Learning`.
 
@@ -331,7 +371,7 @@ Allowed Today v0 signals:
 - Memory Reuse Rate.
 - Automatic Context Capture Ratio.
 - Recommendation explainability usage (`Why this?` opened / recommendation acted on).
-- Prior-decision conflict detection count and resolution outcome once Decision Memory exists.
+- Prior-decision conflict detection count, override rate and override outcome once Decision Memory exists.
 
 ## Four WOW acceptance moments
 
@@ -350,4 +390,5 @@ Do not expand into another large horizontal domain until:
 - Learning Foundation exists;
 - at least one workflow demonstrates reusable memory affecting a later recommendation;
 - recommendation explainability is visible in UX;
-- Weekly Review can close into Decisions / Next Actions.
+- Weekly Review can close into Decisions / Next Actions;
+- human override of prior-decision conflict is implemented as explanation + rationale, never as a hard block.
