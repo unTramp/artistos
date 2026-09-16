@@ -56,7 +56,7 @@ test("creates Identity, Era, Song and Song Brain context through authenticated i
   await expect(page.getByText("Sectional readiness only · no universal Song score.", { exact: true })).toBeVisible();
 
   await page.getByLabel("Statement type").selectOption("ARTIST_INTERPRETATION");
-  await page.getByLabel("Statement").fill("This song is about choosing honesty over comfort.");
+  await page.getByRole("textbox", { name: "Statement", exact: true }).fill("This song is about choosing honesty over comfort.");
   await page.getByRole("button", { name: "Add to Song Brain" }).click();
   await expect(page.getByText("ARTIST INTERPRETATION", { exact: true })).toBeVisible();
   await expect(page.getByText("This song is about choosing honesty over comfort.", { exact: true })).toBeVisible();
