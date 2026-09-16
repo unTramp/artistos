@@ -1,7 +1,7 @@
 # ACP-005 — First-Class Take Entity and Shot/Take Semantics
 
 - **ACP ID:** ACP-005
-- **Status:** PROPOSED
+- **Status:** APPROVED — MASTER v1.4 freeze
 - **MASTER requirements affected:** 164–174, 187, 396, 400
 - **Open-question references:** OQ-085, OQ-086, OQ-087, OQ-092
 
@@ -16,7 +16,7 @@ MASTER v1.3 defines Shot statuses including `GOOD` and `SELECTED`, while On-Set 
 - Assets are imported after shooting and can be grouped.
 - No canonical `Take` entity exists.
 
-## Proposed change
+## Approved change
 
 Introduce **`Take`** as the execution attempt under a Shot.
 
@@ -53,7 +53,7 @@ SKIPPED
 
 Rules:
 
-1. `GOOD`/`BAD`/`SELECTED` belong to Take, not Shot, in the next MASTER revision.
+1. `GOOD`/`BAD`/`SELECTED` belong to Take, not Shot, in v1.4.
 2. `Shot = SHOT` means at least one captured/confirmed take exists; it does not imply quality.
 3. A Shot can have many Takes; a ShootSession can have many Shots.
 4. At most one Take is `SELECTED` per Shot by default; explicit multi-select may be supported later for montage/coverage workflows.
@@ -92,4 +92,4 @@ AI may suggest best takes only in deferred advanced media scope; MVP selection r
 
 ## Decision
 
-**PROPOSED:** add Take + TakeAsset and simplify Shot status to planning/execution semantics.
+**APPROVED for MASTER v1.4:** add Take + TakeAsset and simplify Shot status to planning/execution semantics.

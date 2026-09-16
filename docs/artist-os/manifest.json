@@ -1,7 +1,8 @@
 {
   "project": "Artist OS",
-  "master_architecture": "v1.3",
-  "master_status": "frozen",
+  "master_architecture": "v1.4",
+  "master_status": "frozen-on-merge",
+  "previous_master_architecture": "v1.3",
   "product_spec_status": "full-pass-1-complete",
   "domains": 20,
   "feature_specs": 181,
@@ -14,6 +15,6 @@
   "routed_calibration": 38,
   "routed_ux": 26,
   "deferred": 4,
-  "engineering_spec_status": "pass-1-in-progress",
+  "engineering_spec_status": "pass-1-complete",
   "integrity": "PASS"
 }

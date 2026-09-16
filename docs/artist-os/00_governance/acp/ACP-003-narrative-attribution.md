@@ -1,7 +1,7 @@
 # ACP-003 — Primary + Secondary Narrative Attribution
 
 - **ACP ID:** ACP-003
-- **Status:** PROPOSED
+- **Status:** APPROVED — MASTER v1.4 freeze
 - **MASTER requirements affected:** 94, 99–101, 130–132, 296
 - **Open-question references:** OQ-031, OQ-038, OQ-040
 
@@ -16,7 +16,7 @@ MASTER v1.3 gives `ContentAngle` a singular `narrativeTrackId?`, while real cont
 - NarrativeMixPlan compares target vs actual mix.
 - Narrative Analytics measures performance by narrative track.
 
-## Proposed change
+## Approved change
 
 Adopt **one primary narrative track + optional secondary narrative associations**.
 
@@ -69,4 +69,4 @@ Primary-only analytics remain clean; secondary overlap supports richer qualitati
 
 ## Decision
 
-**PROPOSED:** one PRIMARY + optional SECONDARY narrative links; primary-only default mix and publication-independent counting.
+**APPROVED for MASTER v1.4:** one PRIMARY + optional SECONDARY narrative links; primary-only default mix and publication-independent counting.

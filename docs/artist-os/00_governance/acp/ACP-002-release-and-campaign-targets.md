@@ -1,7 +1,7 @@
 # ACP-002 — First-Class Release Model and Campaign Target Relationship
 
 - **ACP ID:** ACP-002
-- **Status:** PROPOSED
+- **Status:** APPROVED — MASTER v1.4 freeze
 - **MASTER requirements affected:** 49–52, 112, 226–243, 401, 417, 430–431
 - **Open-question references:** OQ-052, OQ-055, OQ-058
 
@@ -17,7 +17,7 @@ MASTER v1.3 uses `Release` throughout DSP, launch, extensions, readiness and cam
 - DSPReleasePlan, EditorialPitch, Release Readiness and Release Momentum all require a Release identity.
 - `VIDEO` currently appears in `ReleaseExtension`, while DSPVideo and Content/Publication already model video surfaces.
 
-## Proposed change
+## Approved change
 
 Introduce first-class **`Release`** and **`ReleaseTrack`** entities and make release lifecycle canonical there.
 
@@ -58,11 +58,11 @@ Rules:
 
 1. A Campaign has at most one `PRIMARY` target in MVP, but may have multiple `RELATED` targets.
 2. Release lifecycle is owned by `Release`, not `Song.releaseStatus`.
-3. `Song.releaseStatus` becomes a derived compatibility projection and should not be the canonical persisted truth in the next architecture revision.
+3. `Song.releaseStatus` becomes a derived compatibility projection and is not canonical persisted truth in v1.4.
 4. A Song may appear in multiple Releases without duplication of Song Brain.
 5. Release-specific metadata belongs to Release/ReleaseTrack; song meaning/lyrics/segments remain Song-owned.
 6. `ReleaseExtension` remains for musical release variants (`REMIX`, `ACOUSTIC`, `LIVE`, `STRIPPED`, `ALT_VERSION`, `COLLAB`).
-7. **`VIDEO` should be removed from `ReleaseExtension`** in the next MASTER revision. Music/live/studio video is modeled by ContentUnit/DSPVideo/Publication, not as an audio Release.
+7. `VIDEO` is removed from `ReleaseExtension`. Music/live/studio video is modeled by ContentUnit/DSPVideo/Publication, not as an audio Release.
 
 ## Why clarification is insufficient
 
@@ -97,4 +97,4 @@ Release-level analytics can aggregate track/song evidence while retaining song-l
 
 ## Decision
 
-**PROPOSED:** add Release/ReleaseTrack and explicit CampaignTarget relationship; deprecate Song release lifecycle as source of truth and remove VIDEO from ReleaseExtension.
+**APPROVED for MASTER v1.4:** add Release/ReleaseTrack and explicit CampaignTarget relationship; deprecate Song release lifecycle as source of truth and remove VIDEO from ReleaseExtension.

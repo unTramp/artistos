@@ -1,7 +1,7 @@
 # ACP-004 — Shared OperationalAction for Human / External Tasks
 
 - **ACP ID:** ACP-004
-- **Status:** PROPOSED
+- **Status:** APPROVED — MASTER v1.4 freeze
 - **MASTER requirements affected:** 192–202, 226–230, 233, 348–353, 358, 364
 - **Open-question references:** OQ-059, OQ-103, OQ-106, OQ-114, OQ-116
 
@@ -16,7 +16,7 @@ Profile audits, Release Readiness, DSPReleasePlan, LaunchActivationPlan and publ
 - Campaign coordinates child domains.
 - Multiple product specs require user/external operational actions, but MASTER does not define their shared representation.
 
-## Proposed change
+## Approved change
 
 Introduce cross-cutting **`OperationalAction`**.
 
@@ -86,4 +86,4 @@ AI may draft/recommend actions. It cannot mark external work DONE without user c
 
 ## Decision
 
-**PROPOSED:** add OperationalAction as a cross-cutting operational primitive with strict domain ownership boundaries.
+**APPROVED for MASTER v1.4:** add OperationalAction as a cross-cutting operational primitive with strict domain ownership boundaries.
