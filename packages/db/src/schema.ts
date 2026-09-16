@@ -19,6 +19,17 @@ export const workspaceSettings = pgTable("workspace_settings", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
 }, (table) => [uniqueIndex("workspace_settings_artist_uidx").on(table.artistId)]);
 
+export const artistMemberships = pgTable("artist_memberships", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  artistId: uuid("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" }),
+  authUserId: text("auth_user_id").notNull(),
+  role: text("role").notNull().default("OWNER"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+}, (table) => [
+  uniqueIndex("artist_memberships_auth_user_uidx").on(table.authUserId),
+  uniqueIndex("artist_memberships_artist_user_uidx").on(table.artistId, table.authUserId)
+]);
+
 export const outboxEvents = pgTable("outbox_events", {
   id: uuid("id").primaryKey(),
   artistId: uuid("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" }),
