@@ -11,20 +11,17 @@ test("reviews an Angle, degrades AI safely, creates one Content Unit and version
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("content-factory-password-123");
   await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+
+  await page.waitForURL("**/onboarding");
+  await page.getByLabel("Your name").fill("Content Factory E2E");
+  await page.getByLabel("Artist name").fill("Content Factory E2E");
+  await page.getByLabel("Timezone").fill("UTC");
+  await page.getByLabel("Language / locale").fill("en");
+  await page.getByRole("button", { name: "Create my Artist OS" }).click();
+  await page.waitForURL("**/");
+  await expect(page.getByRole("heading", { name: "What needs attention now?" })).toBeVisible();
 
   const api = page.context().request;
-  const workspace = await api.post("/api/v1/artist", {
-    headers: { "idempotency-key": `workspace-${crypto.randomUUID()}` },
-    data: {
-      name: "Content Factory E2E",
-      artistName: "Content Factory E2E",
-      timezone: "UTC",
-      locale: "en",
-      reportingCurrency: "USD"
-    }
-  });
-  expect(workspace.status()).toBe(201);
 
   await page.goto("/identity");
   await page.getByLabel("New identity draft").fill("Factory Identity");
