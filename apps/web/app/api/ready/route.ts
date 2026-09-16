@@ -1,15 +1,16 @@
-import { NextResponse } from "next/server";
+import { apiErrorResponse, getTraceId, successResponse } from "../../../lib/http";
 import { getDatabaseRuntime } from "../../../lib/runtime";
 
 export async function GET(request: Request) {
-  const traceId = request.headers.get("x-trace-id") ?? crypto.randomUUID();
+  const traceId = getTraceId(request.headers);
   try {
     await getDatabaseRuntime().ping();
-    return NextResponse.json({ data: { status: "ready", dependencies: { database: "ok" } }, meta: { traceId } });
+    return successResponse({ status: "ready", dependencies: { database: "ok" } }, traceId);
   } catch {
-    return NextResponse.json(
-      { error: { code: "RUNTIME_NOT_READY", message: "Required runtime dependency is unavailable.", retryable: true }, meta: { traceId } },
-      { status: 503 }
+    return apiErrorResponse(
+      { code: "RUNTIME_NOT_READY", message: "Required runtime dependency is unavailable.", retryable: true },
+      traceId,
+      503
     );
   }
 }
