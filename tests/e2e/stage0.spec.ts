@@ -15,8 +15,9 @@ test("exposes liveness with a trace id", async ({ request }) => {
   expect(body.meta.traceId).toEqual(expect.any(String));
 });
 
-test("signs up, restores the session, renders authenticated shell, and signs out", async ({ page }) => {
+test("authenticates, creates server-owned artist scope, restores session, and signs out", async ({ page }) => {
   const email = `stage0-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`;
+  const traceId = `e2e-${crypto.randomUUID()}`;
 
   await page.goto("/auth");
   await page.getByRole("button", { name: "Sign up" }).click();
@@ -27,6 +28,40 @@ test("signs up, restores the session, renders authenticated shell, and signs out
 
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
   await expect(page.getByText(email)).toBeVisible();
+
+  const api = page.context().request;
+  const create = await api.post("/api/v1/artist", {
+    headers: {
+      "x-trace-id": traceId,
+      "idempotency-key": `e2e-${crypto.randomUUID()}`
+    },
+    data: {
+      name: "Stage 0 E2E Artist",
+      artistName: "Stage 0 E2E Artist",
+      timezone: "UTC",
+      locale: "en",
+      reportingCurrency: "USD"
+    }
+  });
+  expect(create.status()).toBe(201);
+  const created = await create.json();
+  expect(created).toMatchObject({
+    data: { existing: false, replayed: false },
+    meta: { traceId }
+  });
+  expect(created.data.artistId).toEqual(expect.any(String));
+  expect(create.headers()["x-trace-id"]).toBe(traceId);
+
+  const ensure = await api.post("/api/v1/artist", {
+    data: {
+      name: "Ignored because scope already exists",
+      artistName: "Ignored because scope already exists",
+      timezone: "UTC"
+    }
+  });
+  expect(ensure.status()).toBe(200);
+  const ensured = await ensure.json();
+  expect(ensured.data).toMatchObject({ artistId: created.data.artistId, existing: true });
 
   await page.reload();
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
