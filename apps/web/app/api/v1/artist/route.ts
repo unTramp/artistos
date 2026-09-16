@@ -1,6 +1,6 @@
 import { CreateArtistService, type CreateArtistCommand, type CommandStatus } from "@artist-os/core";
-import { PgArtistScopeReader, PgArtistWorkspaceWriter } from "@artist-os/db";
-import { auth } from "../../../../lib/auth";
+import { PgArtistWorkspaceWriter } from "@artist-os/db";
+import { resolveAuthenticatedActorContext } from "../../../../lib/actor-context";
 import { apiErrorResponse, getTraceId, successResponse } from "../../../../lib/http";
 import { getDatabaseRuntime } from "../../../../lib/runtime";
 
@@ -16,9 +16,9 @@ const statusByCommandStatus: Record<Exclude<CommandStatus, "SUCCESS">, number> =
 
 export async function POST(request: Request) {
   const traceId = getTraceId(request.headers);
-  const session = await auth.api.getSession({ headers: request.headers });
+  const actorContext = await resolveAuthenticatedActorContext(request.headers);
 
-  if (!session?.user?.id) {
+  if (!actorContext) {
     return apiErrorResponse(
       { code: "AUTH_REQUIRED", message: "Authentication is required." },
       traceId,
@@ -26,11 +26,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const { db } = getDatabaseRuntime();
-  const scopeReader = new PgArtistScopeReader(db);
-  const existingArtistId = await scopeReader.findArtistIdByAuthUserId(session.user.id);
-  if (existingArtistId) {
-    return successResponse({ artistId: existingArtistId, existing: true }, traceId);
+  if (actorContext.artistId) {
+    return successResponse({ artistId: actorContext.artistId, existing: true }, traceId);
   }
 
   let body: CreateArtistCommand;
@@ -46,14 +43,14 @@ export async function POST(request: Request) {
 
   const artistId = crypto.randomUUID();
   const commandId = crypto.randomUUID();
-  const writer = new PgArtistWorkspaceWriter(db);
+  const writer = new PgArtistWorkspaceWriter(getDatabaseRuntime().db);
   const service = new CreateArtistService(writer);
   const idempotencyKey = request.headers.get("idempotency-key")?.trim() || undefined;
 
   const result = await service.execute(body, {
     commandId,
     artistId,
-    actor: { type: "USER", id: session.user.id },
+    actor: actorContext.actor,
     requestedAt: new Date(),
     traceId,
     ...(idempotencyKey ? { idempotencyKey } : {})
