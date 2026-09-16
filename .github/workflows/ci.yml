@@ -3,6 +3,8 @@ on:
   pull_request:
   push:
     branches: [main]
+permissions:
+  contents: write
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -50,6 +52,25 @@ jobs:
             pnpm-lock.yaml
             packages/db/generated/better-auth.sql
           if-no-files-found: error
+      - name: Commit generated lockfile once
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/stage0-foundation'
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if git ls-tree -r "$HEAD_SHA" --name-only | grep -qx 'pnpm-lock.yaml'; then
+            echo 'pnpm-lock.yaml already tracked; nothing to commit.'
+            exit 0
+          fi
+          cp pnpm-lock.yaml /tmp/pnpm-lock.yaml
+          git fetch origin "$HEAD_REF"
+          git checkout "$HEAD_SHA"
+          cp /tmp/pnpm-lock.yaml pnpm-lock.yaml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pnpm-lock.yaml
+          git commit -m 'build: commit pnpm lockfile'
+          git push origin "HEAD:$HEAD_REF"
       - run: pnpm arch:check
       - run: pnpm lint
       - run: pnpm typecheck
