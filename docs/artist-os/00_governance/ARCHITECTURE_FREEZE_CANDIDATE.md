@@ -1,7 +1,7 @@
 # Artist OS — Architecture Freeze Candidate
 
-**Status:** CANDIDATE — not yet MASTER.  
-**Base:** MASTER v1.3 + Full Product Spec Pass 1 + Architecture Resolution Pass 1.  
+**Status:** CANDIDATE — not yet MASTER.
+**Base:** MASTER v1.3 + Full Product Spec Pass 1 + Architecture Resolution Pass 1.
 **Purpose:** define the exact change set that should be reviewed before producing the next frozen MASTER revision and full Engineering Specification.
 
 ## 1. What is frozen already

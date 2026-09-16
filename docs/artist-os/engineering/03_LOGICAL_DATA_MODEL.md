@@ -1,7 +1,7 @@
 # Artist OS — Engineering Spec 03: Logical Data Model
 
-**Status:** DRAFT / Pass 1  
-**Purpose:** canonical ownership/cardinality map before physical PostgreSQL schema.  
+**Status:** DRAFT / Pass 1
+**Purpose:** canonical ownership/cardinality map before physical PostgreSQL schema.
 **Important:** entities marked `PROVISIONAL[ACP-*]` are not MASTER-approved yet.
 
 ## 1. Modeling vocabulary

@@ -1,7 +1,7 @@
 # Artist OS — Engineering Spec 01: System Architecture
 
-**Status:** DRAFT / Pass 1  
-**Architecture baseline:** MASTER v1.3 §§36–47, 322–353, 339–350, 383–391.  
+**Status:** DRAFT / Pass 1
+**Architecture baseline:** MASTER v1.3 §§36–47, 322–353, 339–350, 383–391.
 **Product baseline:** all 20 detailed Product Spec domains.
 
 ## ENG-SYS-001 — Deployment shape
