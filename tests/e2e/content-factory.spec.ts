@@ -58,7 +58,8 @@ test("reviews an Angle, degrades AI safely, creates one Content Unit and version
   await page.getByLabel("Identity fit rationale").fill("Direct, emotionally open and understated rather than flashy.");
   await page.getByLabel("Production effort").fill("One location, one performance insert, simple edit.");
   await page.getByLabel("Learning value").fill("Tests whether story context improves interest before a music CTA.");
-  await page.getByLabel("Platform targets").fill("INSTAGRAM_REELS, TIKTOK");
+  const manualFactory = page.getByRole("region", { name: "Content Factory commands" });
+  await manualFactory.getByLabel("Platform targets").fill("INSTAGRAM_REELS, TIKTOK");
   await page.getByLabel("Required assets").fill("performance take, clean audio");
   await page.getByRole("button", { name: "Save Angle draft" }).click();
 
