@@ -1,4 +1,4 @@
-import { boolean, integer, jsonb, text, timestamp, uniqueIndex, uuid, pgTable } from "drizzle-orm/pg-core";
+import { boolean, date, integer, jsonb, text, timestamp, uniqueIndex, uuid, pgTable } from "drizzle-orm/pg-core";
 
 export const artists = pgTable("artists", {
   id: uuid("id").primaryKey(),
@@ -29,6 +29,66 @@ export const artistMemberships = pgTable("artist_memberships", {
   uniqueIndex("artist_memberships_auth_user_uidx").on(table.authUserId),
   uniqueIndex("artist_memberships_artist_user_uidx").on(table.artistId, table.authUserId)
 ]);
+
+export const artistIdentities = pgTable("artist_identities", {
+  id: uuid("id").primaryKey(),
+  artistId: uuid("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" }),
+  activeVersionId: uuid("active_version_id"),
+  version: integer("version").notNull().default(1),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+}, (table) => [uniqueIndex("artist_identities_artist_uidx").on(table.artistId)]);
+
+export const artistIdentityVersions = pgTable("artist_identity_versions", {
+  id: uuid("id").primaryKey(),
+  identityId: uuid("identity_id").notNull().references(() => artistIdentities.id, { onDelete: "cascade" }),
+  artistId: uuid("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" }),
+  versionNumber: integer("version_number").notNull(),
+  label: text("label"),
+  status: text("status").notNull().default("DRAFT"),
+  activatedAt: timestamp("activated_at", { withTimezone: true }),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+}, (table) => [uniqueIndex("artist_identity_versions_identity_version_uidx").on(table.identityId, table.versionNumber)]);
+
+export const eraIdentities = pgTable("era_identities", {
+  id: uuid("id").primaryKey(),
+  artistId: uuid("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" }),
+  identityVersionId: uuid("identity_version_id").notNull().references(() => artistIdentityVersions.id, { onDelete: "restrict" }),
+  name: text("name").notNull(),
+  startDate: date("start_date"),
+  endDate: date("end_date"),
+  narrativeChapter: text("narrative_chapter"),
+  visualOverrides: jsonb("visual_overrides").notNull().default({}),
+  newAnchors: jsonb("new_anchors").notNull().default([]),
+  retiredAnchors: jsonb("retired_anchors").notNull().default([]),
+  colorOverrides: jsonb("color_overrides").notNull().default({}),
+  status: text("status").notNull().default("DRAFT"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+});
+
+export const songs = pgTable("songs", {
+  id: uuid("id").primaryKey(),
+  artistId: uuid("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  type: text("type"),
+  originalArtist: text("original_artist"),
+  isOriginal: boolean("is_original").notNull(),
+  genre: text("genre"),
+  mood: text("mood"),
+  language: text("language"),
+  story: text("story"),
+  meaning: text("meaning"),
+  lyricsReference: text("lyrics_reference"),
+  isrc: text("isrc"),
+  platformLinks: jsonb("platform_links").notNull().default({}),
+  version: integer("version").notNull().default(1),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
+});
 
 export const outboxEvents = pgTable("outbox_events", {
   id: uuid("id").primaryKey(),
