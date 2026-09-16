@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { successResponse } from "../../../lib/http";
 
-export function GET() {
-  return NextResponse.json({ data: { status: "ok", service: "web" }, meta: { traceId: crypto.randomUUID() } });
+export function GET(request: Request) {
+  const traceId = request.headers.get("x-trace-id")?.trim() || crypto.randomUUID();
+  return successResponse({ status: "ok", service: "web" }, traceId);
 }
