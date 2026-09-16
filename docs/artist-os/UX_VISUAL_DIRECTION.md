@@ -86,7 +86,7 @@ Avoid giant marketing-style headings inside operational screens. Today may have 
 
 ### Sidebar
 
-Primary navigation stays shallow:
+Near-term primary navigation stays shallow:
 
 - Today
 - Create
@@ -94,7 +94,7 @@ Primary navigation stays shallow:
 - Brain
 - Account
 
-Future domain architecture must not automatically create sidebar entries.
+Future navigation may grow deeper as specialist workspaces arrive, but the user must never need to patrol the sidebar to reconstruct current priorities.
 
 Selected item:
 
@@ -142,21 +142,106 @@ Use thin status chips and small semantic dots.
 
 Do not introduce global `Career Score`, `Artist Health 87%`, or other pseudo-precise summary numbers.
 
+When readiness matters, prefer concrete state:
+
+```text
+RELEASE
+5 checks passed · 3 blockers
+```
+
+rather than an arbitrary percentage.
+
 ## 7. Today / Attention pattern
 
 Today is selective, not a duplicated dashboard.
 
 Recommended hierarchy:
 
-1. **NOW** — one primary next action.
-2. **NEXT / REVIEW** — 2–4 secondary attention items.
-3. **BLOCKED** — only real blockers.
-4. **MEMORY / LEARNING** — one meaningful reusable insight or explicit insufficient-evidence state.
-5. compact contextual state cards.
+1. **CURRENT FOCUS** — active PlanningObjective when present.
+2. **NOW** — one primary next action.
+3. **NEXT / REVIEW** — 2–4 secondary attention items.
+4. **BLOCKED** — only real blockers.
+5. **MEMORY / LEARNING** — one meaningful reusable insight or explicit insufficient-evidence state.
+6. compact contextual state cards.
 
 Every recommendation should expose why it exists.
 
-## 8. Song Brain / waveform
+### Attention cards
+
+Default card should remain compact:
+
+```text
+HIGH · 15 min
+Submit Spotify editorial pitch
+Release readiness · due tomorrow
+
+[Start] [Why this?]
+```
+
+Do not put full reasoning on the card. Use progressive disclosure.
+
+## 8. Explainability Drawer
+
+`Why this?` should open a right-side drawer using a consistent information order:
+
+### WHY THIS
+Concrete present-tense reason the recommendation matters now.
+
+### BASED ON
+Compact provenance references such as:
+- PlanningObjective;
+- owning-domain state;
+- validated Learning;
+- prior Decision;
+- current Identity / Song context;
+- deadline / blocker.
+
+### UNCERTAINTY
+Use qualitative language backed by known state. Never fabricate confidence precision.
+
+### EXPECTED EFFECT
+What completing the action unlocks, resolves or advances.
+
+### WHAT WE MAY LEARN
+Only show when the action meaningfully produces evidence. Operational housekeeping may explicitly say `No learning objective — execution blocker.`
+
+The drawer should feel evidential and calm, not like a verbose AI explanation panel.
+
+## 9. Bottleneck / Readiness → Action pattern
+
+Analytics should turn into work.
+
+Preferred bottleneck pattern:
+
+```text
+BOTTLENECK
+Production
+
+9 approved ContentUnits are waiting.
+
+RECOMMENDED ACTION
+Schedule a 60-minute batch shoot
+
+EXPECTED EFFECT
+Unlock 5–7 waiting units
+```
+
+Preferred readiness pattern:
+
+```text
+RELEASE
+Blocked
+
+Artwork missing
+Spotify pitch incomplete
+Smart link unverified
+
+[Resolve blockers]
+```
+
+Never show a bottleneck or blocker without a path into a resolvable action/workspace when such a path exists.
+
+## 10. Song Brain / waveform
 
 The approved prototype's waveform treatment is a signature visual pattern.
 
@@ -170,22 +255,65 @@ Use waveform/audio-segment visualization when real song/audio/segment data exist
 
 Song Brain should feel more like an audio-aware creative intelligence surface than a database record form.
 
-## 9. Drawers
+## 11. Provenance / Decision lineage
+
+When intelligence history exists, use a compact traversable lineage rather than a generic log.
+
+Example:
+
+```text
+EXP-014
+   ↓
+INS-037
+   ↓
+LEARN-008
+   ↓
+DEC-021
+   ↓
+ACTION-103
+```
+
+Use mono typography for IDs, subtle connector lines, restrained semantic accents and hover/click detail.
+
+Do not fabricate missing lineage nodes. Broken or unknown links should be visibly absent rather than inferred for visual completeness.
+
+## 12. Recommendation maturity
+
+Compounding memory should become visible without a fake intelligence score.
+
+Good patterns:
+
+```text
+EARLY CONTEXT
+Identity · Song Brain · platform knowledge
+```
+
+or, when real counts exist:
+
+```text
+ARTIST-SPECIFIC EVIDENCE
+42 publications · 7 experiments · 5 validated learnings · 12 decisions
+```
+
+Maturity is provenance density, not a gamified level.
+
+## 13. Drawers
 
 Use right-side drawers for deep context that should not replace the current working surface:
 
 - recommendation evidence;
+- Decision lineage;
 - Content Angle detail;
 - execution detail summary;
 - Candidate Knowledge review;
-- contextual help;
+- contextual help / guidance;
 - jobs / long-running work.
 
 Typical width: ~420–480px desktop.
 
 Do not put every CRUD form in a drawer. Drawers are for contextual depth, not entire applications.
 
-## 10. Contextual help
+## 14. Contextual help and guidance
 
 Prefer small info affordances and contextual explanations over permanent walls of instructional copy.
 
@@ -195,9 +323,19 @@ Help should answer:
 - Why does it matter?
 - What should I do here?
 
+Where current work reveals a knowledge gap, help may evolve into contextual guidance:
+
+```text
+Learn before doing · 6 min
+How Spotify editorial pitching works
+[Learn] → [Continue to pitch]
+```
+
+Keep canonical system `Learning` distinct from human education/guidance.
+
 Product language should describe artist outcomes, not internal architecture unless the user explicitly opens technical provenance/debug information.
 
-## 11. AI UX
+## 15. AI UX
 
 AI is a contextual proposal layer.
 
@@ -207,6 +345,7 @@ Primary surfaces should show:
 - why;
 - based on what;
 - uncertainty / blockers;
+- expected effect;
 - learning opportunity;
 - explicit human action.
 
@@ -220,7 +359,9 @@ Do not expose by default:
 
 Technical provenance may be available in developer/debug detail where appropriate.
 
-## 12. Forms
+AI should appear inside the operating system. A chatbot may exist as an optional command surface, but it must not be the required front door.
+
+## 16. Forms
 
 Canonical model richness does not justify giant default forms.
 
@@ -238,7 +379,7 @@ Song
 
 Goal / audience / identity fit / learning value / effort / platforms can be proposed or progressively disclosed.
 
-## 13. Empty states
+## 17. Empty states
 
 Cold start must remain honest and visually intentional.
 
@@ -250,7 +391,7 @@ Bad:
 
 filling an empty card with generic AI advice to make the interface look complete.
 
-## 14. Motion
+## 18. Motion
 
 Use restrained motion only for:
 
@@ -261,7 +402,7 @@ Use restrained motion only for:
 
 Avoid consumer-app animation for its own sake.
 
-## 15. Responsive behavior
+## 19. Responsive behavior
 
 Desktop is the primary deep-work surface.
 
@@ -273,21 +414,23 @@ Mobile/PWA should simplify aggressively:
 - sidebar becomes compact navigation;
 - dense analytical tables should adapt or move to detail views.
 
-## 16. Design anti-patterns
+## 20. Design anti-patterns
 
 Do not drift toward:
 
 - generic white/gray SaaS dashboards;
 - neon cyberpunk overload;
 - giant gradient cards everywhere;
-- 20-domain sidebar navigation;
+- exposing every domain as mandatory primary navigation;
+- forcing users to inspect multiple workspaces to reconstruct priorities;
 - fake charts with no canonical evidence;
 - fake waveform decoration;
 - AI chat as the product homepage;
 - large mandatory forms mirroring every database field;
-- decorative status scores without operational meaning.
+- decorative status scores without operational meaning;
+- black-box recommendations without `Why this?`.
 
-## 17. Implementation rule
+## 21. Implementation rule
 
 Every new primary UI PR should explicitly state:
 
@@ -295,4 +438,6 @@ Every new primary UI PR should explicitly state:
 2. which canonical state it reads/writes;
 3. why the information deserves primary-surface visibility;
 4. how it follows `Complex system, simple surface`;
-5. how it follows this visual direction.
+5. how it follows this visual direction;
+6. how a recommendation exposes reason/evidence/uncertainty when applicable;
+7. whether it makes accumulated memory more visible or reusable.
