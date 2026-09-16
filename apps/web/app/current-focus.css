@@ -1,0 +1,212 @@
+.today-focus-empty,
+.today-focus-card {
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(139,92,246,.035), transparent), var(--surface);
+}
+
+.today-focus-empty {
+  min-height: 92px;
+  padding: 17px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.today-focus-empty > div:first-child {
+  min-width: 0;
+}
+
+.today-focus-empty strong,
+.today-focus-card strong,
+.focus-editor-heading strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.today-focus-empty p,
+.today-focus-card p,
+.focus-editor-heading p {
+  margin: 5px 0 0;
+  color: #6d727d;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.focus-set-button,
+.focus-complete-button,
+.focus-cancel-button {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #0d0f13;
+  color: #b8bdc7;
+  font: 600 10px/1 Inter, sans-serif;
+  cursor: pointer;
+}
+
+.focus-set-button,
+.focus-complete-button {
+  min-height: 36px;
+  padding: 0 13px;
+}
+
+.focus-set-button:hover,
+.focus-complete-button:hover,
+.focus-cancel-button:hover {
+  border-color: rgba(139,92,246,.42);
+  color: #fff;
+}
+
+.focus-set-button:disabled,
+.focus-complete-button:disabled,
+.focus-cancel-button:disabled,
+.focus-editor-footer .primary-action:disabled {
+  cursor: wait;
+  opacity: .6;
+}
+
+.today-focus-card {
+  padding: 17px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-color: rgba(139,92,246,.2);
+}
+
+.today-focus-copy {
+  min-width: 0;
+  max-width: 860px;
+}
+
+.today-focus-actions {
+  flex: 0 0 auto;
+  display: grid;
+  justify-items: end;
+  gap: 9px;
+}
+
+.today-focus-actions > small {
+  color: #606672;
+  font: 9px ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.today-focus-empty.is-open {
+  display: block;
+  padding: 0;
+}
+
+.focus-editor-form {
+  padding: 18px;
+}
+
+.focus-editor-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.focus-editor-heading > div {
+  max-width: 720px;
+}
+
+.focus-cancel-button {
+  min-height: 32px;
+  padding: 0 10px;
+}
+
+.focus-editor-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.focus-field {
+  display: grid;
+  gap: 7px;
+}
+
+.focus-field-wide {
+  grid-column: 1 / -1;
+}
+
+.focus-field > span {
+  color: #858b96;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.focus-field input,
+.focus-field textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #0c0e12;
+  color: var(--text);
+  padding: 11px 12px;
+  font: 11px/1.45 Inter, sans-serif;
+  outline: none;
+}
+
+.focus-field textarea {
+  resize: vertical;
+  min-height: 82px;
+}
+
+.focus-field input:focus,
+.focus-field textarea:focus {
+  border-color: rgba(139,92,246,.52);
+  box-shadow: 0 0 0 3px rgba(139,92,246,.08);
+}
+
+.focus-editor-footer {
+  margin-top: 16px;
+  padding-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.focus-editor-footer > span {
+  color: #595f6a;
+  font: 8px ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .09em;
+}
+
+.focus-form-message {
+  display: block;
+  margin: 10px 0 0;
+  color: #f59e0b;
+  font-size: 9px;
+}
+
+@media (max-width: 720px) {
+  .today-focus-empty,
+  .today-focus-card,
+  .focus-editor-heading,
+  .focus-editor-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .today-focus-actions {
+    justify-items: stretch;
+  }
+
+  .focus-editor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .focus-field-wide {
+    grid-column: auto;
+  }
+}
