@@ -84,6 +84,17 @@ describe("Stage 0 PostgreSQL foundation", () => {
         (select count(*)::int from outbox_events where artist_id = ${artistId}::uuid and published_at is not null) as published
     `);
     expect(inbox.rows[0]).toMatchObject({ inbox: 1, published: 1 });
+
+    await db.execute(sql`update outbox_events set published_at = null where id = ${consumed?.id}::uuid`);
+    const redelivered = await consumer.consumeNext("stage0-integration");
+    expect(redelivered).toMatchObject({ id: consumed?.id, correlationId: traceId, duplicate: true });
+
+    const afterRedelivery = await db.execute(sql`
+      select
+        (select count(*)::int from consumer_inbox where consumer = 'stage0-integration' and event_id = ${consumed?.id}::uuid) as inbox,
+        (select count(*)::int from outbox_events where id = ${consumed?.id}::uuid and published_at is not null) as published
+    `);
+    expect(afterRedelivery.rows[0]).toMatchObject({ inbox: 1, published: 1 });
   });
 
   it("replays the same user idempotently without duplicating artist or outbox state", async () => {
