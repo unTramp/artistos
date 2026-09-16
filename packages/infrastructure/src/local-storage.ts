@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { StorageObjectHead, StorageProvider } from "./index";
+import type { StorageAccessGrant, StorageObjectHead, StorageProvider } from "./index";
 
 const assertOpaqueKey = (key: string) => {
   if (!/^[a-zA-Z0-9/_-]+$/.test(key) || key.includes("..") || key.startsWith("/")) {
@@ -43,7 +43,7 @@ export class LocalStorageProvider implements StorageProvider {
     await rm(this.resolve(key), { force: true });
   }
 
-  async createAccessUrl(_key: string, _ttlSeconds: number): Promise<string> {
+  async createAccessUrl(_key: string, _ttlSeconds: number): Promise<StorageAccessGrant> {
     throw new Error("Local storage does not expose public access URLs. Use an authenticated server delivery route in development.");
   }
 }
