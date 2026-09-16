@@ -43,6 +43,13 @@
       "when": 1789564200000,
       "tag": "0005_artist_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789566900000,
+      "tag": "0006_song_brain",
+      "breakpoints": true
     }
   ]
 }
