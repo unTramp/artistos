@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("creates Identity, Era and Song through authenticated idempotent commands", async ({ page }) => {
+test("creates Identity, Era, Song and Song Brain context through authenticated idempotent commands", async ({ page }) => {
   const email = `foundation-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`;
 
   await page.goto("/auth");
@@ -50,4 +50,23 @@ test("creates Identity, Era and Song through authenticated idempotent commands",
   await expect(page.getByText("E2E Song", { exact: true })).toBeVisible();
   await expect(page.getByText("Original", { exact: true })).toBeVisible();
   await expect(page.getByText("ISRC unknown", { exact: true })).toBeVisible();
+
+  await page.getByRole("link", { name: "E2E Song", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "E2E Song", exact: true })).toBeVisible();
+  await expect(page.getByText("Sectional readiness only · no universal Song score.", { exact: true })).toBeVisible();
+
+  await page.getByLabel("Statement type").selectOption("ARTIST_INTERPRETATION");
+  await page.getByLabel("Statement").fill("This song is about choosing honesty over comfort.");
+  await page.getByRole("button", { name: "Add to Song Brain" }).click();
+  await expect(page.getByText("ARTIST INTERPRETATION", { exact: true })).toBeVisible();
+  await expect(page.getByText("This song is about choosing honesty over comfort.", { exact: true })).toBeVisible();
+
+  await page.getByLabel("Visual notes").fill("Warm evening light without changing the base identity.");
+  await page.getByLabel("Song anchors").fill("window light");
+  await page.getByLabel("Allowed overrides").fill("warmer palette");
+  await page.getByRole("button", { name: "Save Identity Context" }).click();
+
+  await expect(page.getByRole("heading", { name: "Identity Version 1", exact: true })).toBeVisible();
+  await expect(page.getByText("Era: E2E Era", { exact: true })).toBeVisible();
+  await expect(page.getByText("Warm evening light without changing the base identity.", { exact: true })).toBeVisible();
 });
