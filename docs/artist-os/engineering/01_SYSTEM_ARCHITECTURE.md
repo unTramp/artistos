@@ -216,9 +216,9 @@ An unavailable integration must degrade only workflows that depend on it. Exampl
 
 Concrete providers are selected through application configuration / dependency injection. Replacing an AI/storage/publishing/analytics provider must not require a domain migration unless provider-specific external IDs/data are explicitly stored in adapter-owned records.
 
-## ENG-SYS-018 — Provisional ACP boundaries
+## ENG-SYS-018 — Frozen v1.4 architecture boundaries
 
-Until architecture freeze:
+The following architecture contracts are approved and normative in MASTER v1.4:
 
 ```text
 PlanningObjective     # MASTER v1.4 §156
@@ -229,7 +229,7 @@ Take/TakeAsset        # MASTER v1.4 §§166A–166B
 AssetDerivation       # MASTER v1.4 §188
 ```
 
-may be represented in engineering diagrams/schema drafts, but migrations must be marked provisional and must not be merged as “MASTER-compliant” without ACP approval.
+Engineering schema/API/migration work for these entities must implement the frozen v1.4 contracts directly. `PROVISIONAL[ACP-*]` markers are reserved only for future unapproved architecture proposals.
 
 ## ENG-SYS-019 — Single-artist-first, artist-scoped data
 
@@ -246,4 +246,4 @@ Do not create premature generic engines such as universal workflow builder, univ
 - Worker can run independently from web process.
 - Every cross-domain mutation path names an owning application service.
 - Every projection has a rebuild/source definition.
-- ACP-provisional entities are visibly marked in schema docs.
+- ACP-001…ACP-006 dependent entities are implemented as normative v1.4 contracts, not provisional schema.

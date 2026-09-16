@@ -472,6 +472,6 @@ future spend actions
 - Every Product Spec mutation maps to at least one named command.
 - Every externally observable lifecycle change maps to a named event or documented reason not to emit one.
 - No event name is imperative.
-- No ACP-dependent command is marked final before architecture approval.
+- ACP-001…ACP-006 dependent commands are final under frozen MASTER v1.4; only future unapproved ACP-dependent commands may be marked provisional.
 - External side-effect commands define idempotency and reconciliation.
 - AI-triggered mutations cannot bypass approval rules.

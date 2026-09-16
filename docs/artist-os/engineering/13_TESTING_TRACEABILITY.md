@@ -81,5 +81,5 @@ traceability updated
 
 - every P0 product flow has E2E coverage plan;
 - every architecture invariant has automated test;
-- ACP-provisional tests are tagged;
+- ACP-001…ACP-006 dependent tests reference their frozen MASTER v1.4 / AR contracts; only future unapproved ACP work may be tagged provisional;
 - AI eval regression blocks configuration promotion according to policy.

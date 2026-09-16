@@ -269,4 +269,4 @@ Conflict resolution never fabricates Take/Asset lineage.
 - Large media bypasses app server binary proxy in production design.
 - Null metric semantics preserved.
 - PWA On-Set sync is replay-safe.
-- ACP-dependent routes are visibly provisional.
+- ACP-001…ACP-006 dependent routes are normative under frozen MASTER v1.4; only future unapproved ACP-dependent routes may be marked provisional.
