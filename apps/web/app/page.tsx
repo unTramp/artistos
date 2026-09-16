@@ -1,3 +1,5 @@
+import { navigation } from "../lib/navigation";
+
 const foundation = [
   ["Runtime", "Web + worker modular monolith"],
   ["Data", "PostgreSQL + Drizzle foundation"],
@@ -10,7 +12,11 @@ export default function HomePage() {
     <main className="shell">
       <aside className="sidebar">
         <div className="brand">ARTIST <span>OS</span></div>
-        <nav aria-label="Primary"><a className="active" href="#overview">Overview</a><a href="#foundation">Foundation</a><a href="/auth">Authentication</a></nav>
+        <nav aria-label="Primary">
+          {navigation.map((item) => (
+            <a className={item.id === "overview" ? "active" : undefined} href={item.href} key={item.id}>{item.label}</a>
+          ))}
+        </nav>
         <div className="stage">Stage 0 · Foundation</div>
       </aside>
       <section className="content" id="overview">
