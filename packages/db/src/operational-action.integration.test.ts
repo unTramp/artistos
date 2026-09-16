@@ -87,8 +87,8 @@ describe("OperationalAction foundation", () => {
         oa.source_domain as "sourceDomain",
         oa.source_entity_type as "sourceEntityType",
         oa.source_entity_id as "sourceEntityId",
-        (select count(*)::int from outbox_events oe where oe.aggregate_id = oa.id and oe.event_type = 'OperationalActionCreated') as "createdEvents",
-        (select count(*)::int from audit_events ae where ae.entity_id = oa.id and ae.action = 'OPERATIONAL_ACTION_CREATED') as "auditEvents"
+        (select count(*)::int from outbox_events oe where oe.aggregate_id = oa.id::text and oe.event_type = 'OperationalActionCreated') as "createdEvents",
+        (select count(*)::int from audit_events ae where ae.entity_id = oa.id::text and ae.action = 'OPERATIONAL_ACTION_CREATED') as "auditEvents"
       from operational_actions oa where oa.id = ${first.data.actionId}::uuid
     `);
     expect(persisted.rows[0]).toMatchObject({
