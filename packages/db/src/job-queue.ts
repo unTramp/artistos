@@ -36,13 +36,15 @@ export class PgJobQueue {
         ${input.payloadVersion ?? 1}, ${input.idempotencyKey ?? null}, ${input.maxAttempts ?? 5},
         ${input.correlationId}, ${input.causationId ?? null}, 'QUEUED'
       )
+      on conflict (type, idempotency_key)
+      do update set type = excluded.type
       returning id
     `);
     return String((rows.rows[0] as { id: string }).id);
   }
 
   async claim(workerId: string, leaseSeconds = 60): Promise<ClaimedJob | null> {
-    const result = await this.db.transaction(async (tx) => {
+    return this.db.transaction(async (tx) => {
       const selected = await tx.execute(sql`
         select id
         from jobs
@@ -73,7 +75,6 @@ export class PgJobQueue {
       `);
       return (claimed.rows[0] as ClaimedJob | undefined) ?? null;
     });
-    return result;
   }
 
   async heartbeat(jobId: string, workerId: string) {
@@ -87,7 +88,7 @@ export class PgJobQueue {
     await this.db.execute(sql`
       update jobs
       set status = 'SUCCEEDED', finished_at = now(), locked_at = null, locked_by = null
-      where id = ${jobId}::uuid and locked_by = ${workerId}
+      where id = ${jobId}::uuid and status = 'RUNNING' and locked_by = ${workerId}
     `);
   }
 
@@ -100,7 +101,43 @@ export class PgJobQueue {
           finished_at = ${exhausted ? new Date() : null},
           locked_at = null,
           locked_by = null
-      where id = ${job.id}::uuid and locked_by = ${workerId}
+      where id = ${job.id}::uuid and status = 'RUNNING' and locked_by = ${workerId}
+    `);
+  }
+
+  async failPermanently(jobId: string, workerId: string) {
+    await this.db.execute(sql`
+      update jobs
+      set status = 'FAILED', finished_at = now(), locked_at = null, locked_by = null
+      where id = ${jobId}::uuid and status = 'RUNNING' and locked_by = ${workerId}
+    `);
+  }
+
+  async requestCancellation(jobId: string) {
+    await this.db.execute(sql`
+      update jobs
+      set cancel_requested = true,
+          status = case when status = 'QUEUED' then 'CANCELLED' else status end,
+          finished_at = case when status = 'QUEUED' then now() else finished_at end
+      where id = ${jobId}::uuid and status in ('QUEUED', 'RUNNING')
+    `);
+  }
+
+  async isCancellationRequested(jobId: string): Promise<boolean> {
+    const result = await this.db.execute(sql`
+      select cancel_requested as "cancelRequested"
+      from jobs
+      where id = ${jobId}::uuid
+      limit 1
+    `);
+    return Boolean((result.rows[0] as { cancelRequested?: boolean } | undefined)?.cancelRequested);
+  }
+
+  async cancelRunning(jobId: string, workerId: string) {
+    await this.db.execute(sql`
+      update jobs
+      set status = 'CANCELLED', cancel_requested = true, finished_at = now(), locked_at = null, locked_by = null
+      where id = ${jobId}::uuid and status = 'RUNNING' and locked_by = ${workerId}
     `);
   }
 }
