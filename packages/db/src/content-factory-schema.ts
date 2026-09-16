@@ -64,7 +64,7 @@ export const contentUnits = pgTable("content_units", {
   title: text("title").notNull(),
   idea: text("idea").notNull(),
   pillar: text("pillar").notNull(),
-  format: text("format").notNull(),
+  format: text("format"),
   platformTargets: jsonb("platform_targets").$type<string[]>().notNull().default([]),
   hookType: text("hook_type"),
   hookText: text("hook_text"),
