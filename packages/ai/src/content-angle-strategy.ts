@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AIDisabledError, type AIProvider } from "./index";
+import { AIDisabledError, type AIProvider } from "./provider";
 
 export const CONTENT_ANGLE_STRATEGY_PROMPT_VERSION = "content-angle-strategy.v1";
 
