@@ -25,7 +25,7 @@ test("creates Identity, Era and Song through authenticated idempotent commands",
   expect(workspace.status()).toBe(201);
 
   await page.goto("/identity");
-  await expect(page.getByRole("heading", { name: "Identity" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Identity", exact: true })).toBeVisible();
   await page.getByLabel("New identity draft").fill("E2E Identity");
   await page.getByRole("button", { name: "Create draft" }).click();
   await expect(page.getByText("Version 1 · E2E Identity", { exact: true })).toBeVisible();
@@ -42,7 +42,7 @@ test("creates Identity, Era and Song through authenticated idempotent commands",
   await expect(page.getByText("E2E Era · ACTIVE", { exact: true })).toBeVisible();
 
   await page.goto("/songs");
-  await expect(page.getByRole("heading", { name: "Songs" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Songs", exact: true })).toBeVisible();
   await page.getByLabel("Title").fill("E2E Song");
   await page.getByLabel("Language").fill("en");
   await page.getByRole("button", { name: "Create Song" }).click();
