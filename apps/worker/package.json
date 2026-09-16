@@ -12,7 +12,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@artist-os/core": "workspace:*",
+    "@artist-os/db": "workspace:*",
     "@artist-os/infrastructure": "workspace:*",
     "tsx": "4.23.13"
   }

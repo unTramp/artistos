@@ -1,6 +1,7 @@
 import pino from "pino";
 
 export * from "./env";
+export * from "./local-storage";
 
 export const createLogger = ({ service }: { service: string }) => pino({
   base: { service, environment: process.env.NODE_ENV ?? "development" },
