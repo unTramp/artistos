@@ -43,6 +43,9 @@ header > p:last-child, .focus p:last-child { color: var(--muted); max-width: 720
 .focus { margin-top: 14px; padding: 32px; }
 .focus h2 { font-size: 30px; margin: 8px 0 6px; }
 .inline-link { display: inline-block; margin-top: 18px; color: var(--accent); font-weight: 700; }
+.empty-state { margin-top: 34px; padding: 26px 28px; border: 1px dashed #343946; border-radius: var(--radius); background: rgba(17, 19, 25, .62); }
+.empty-state h2 { margin: 8px 0; font-size: 24px; }
+.empty-state > p:last-of-type { max-width: 700px; margin: 0; color: var(--muted); line-height: 1.6; }
 
 .auth-shell, .state-shell { min-height: 100vh; display: grid; place-items: center; padding: 32px 20px; }
 .auth-card, .state-card { width: min(100%, 520px); background: linear-gradient(180deg, var(--surface2), var(--surface)); border: 1px solid var(--border); border-radius: 24px; padding: 34px; box-shadow: 0 28px 80px rgba(0, 0, 0, .28); }
@@ -74,4 +77,5 @@ header > p:last-child, .focus p:last-child { color: var(--muted); max-width: 720
   h1 { font-size: 44px; }
   .grid { grid-template-columns: 1fr; }
   .auth-card, .state-card { padding: 26px 22px; border-radius: 18px; }
+  .empty-state { padding: 22px; }
 }
