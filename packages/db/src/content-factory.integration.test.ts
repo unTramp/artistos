@@ -13,6 +13,7 @@ import {
 } from "@artist-os/core";
 import { createDatabase, type Stage0Database } from "./runtime";
 import { PgContentFactoryWriter } from "./content-factory-writer";
+import { contentExecutionRevisions } from "./content-execution-schema";
 import { artistIdentities, artistIdentityVersions, artists, eraIdentities, songs } from "./schema";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -56,6 +57,7 @@ beforeAll(async () => {
   db = runtime.db;
   await db.execute(sql`
     truncate table
+      content_execution_revisions,
       content_unit_status_history,
       content_units,
       content_angle_revisions,
@@ -191,7 +193,7 @@ describe("Content Factory manual-first vertical", () => {
     ]));
   });
 
-  it("enforces the ContentUnit state machine instead of jumping to publication truth", async () => {
+  it("enforces execution readiness before SCRIPT_READY and still blocks publication jumps", async () => {
     const writer = new PgContentFactoryWriter(db);
     const create = new CreateContentAngleService(writer);
     const approve = new ApproveContentAngleService(writer);
@@ -208,6 +210,36 @@ describe("Content Factory manual-first vertical", () => {
 
     await expect(changeStatus.execute({ contentUnitId: unit.data.contentUnitId, status: "PUBLISHED" }, context()))
       .resolves.toMatchObject({ status: "CONFLICT", code: "CONTENT_UNIT_INVALID_TRANSITION" });
+
+    await expect(db.execute(sql`update content_units set status = 'SCRIPT_READY' where id = ${unit.data.contentUnitId}::uuid`))
+      .rejects.toThrow(/CONTENT_UNIT_EXECUTION_REQUIRED/);
+
+    await db.insert(contentExecutionRevisions).values({
+      id: crypto.randomUUID(),
+      artistId,
+      contentUnitId: unit.data.contentUnitId,
+      revisionNumber: 1,
+      status: "APPROVED",
+      sourceType: "MANUAL",
+      format: "VERTICAL_PERFORMANCE",
+      productionIntent: "AUTHENTIC",
+      identityVersionId,
+      eraIdentityId: eraId,
+      snapshot: {
+        schemaVersion: 1,
+        format: "VERTICAL_PERFORMANCE",
+        productionIntent: "AUTHENTIC",
+        structure: "OPEN → PERFORMANCE",
+        scriptOrPerformanceConcept: "One direct line, then performance.",
+        shotList: [],
+        editBrief: "Keep the take natural.",
+        platformNotes: [],
+        feasibilityNotes: "Existing setup is sufficient.",
+        rightsStatus: "UNKNOWN"
+      },
+      sourceProvenance: { test: true }
+    });
+
     await expect(changeStatus.execute({ contentUnitId: unit.data.contentUnitId, status: "SCRIPT_READY" }, context()))
       .resolves.toMatchObject({ status: "SUCCESS", data: { status: "SCRIPT_READY" } });
   });
