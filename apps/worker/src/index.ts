@@ -40,6 +40,12 @@ async function processJobOnce() {
   if (!job) return false;
 
   try {
+    if (await queue.isCancellationRequested(job.id)) {
+      await queue.cancelRunning(job.id, workerId);
+      logger.info({ operation: "job.cancelled", traceId: job.correlationId, jobId: job.id }, "Job cancelled before handler execution");
+      return true;
+    }
+
     const handler = handlers[job.type];
     if (!handler) throw new Error(`No handler registered for ${job.type}`);
     await handler(job);
