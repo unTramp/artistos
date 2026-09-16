@@ -144,6 +144,64 @@ describe("Stage 0 PostgreSQL foundation", () => {
     await expect(scopeReader.findArtistIdByAuthUserId(userB)).resolves.toBe(artistB);
   });
 
+  it("deduplicates durable job enqueue by type and idempotency key", async () => {
+    const queue = new PgJobQueue(db);
+    const idempotencyKey = `job-${crypto.randomUUID()}`;
+    const first = await queue.enqueue({ type: "STAGE0_IDEMPOTENT", idempotencyKey, correlationId: `trace-${crypto.randomUUID()}` });
+    const second = await queue.enqueue({ type: "STAGE0_IDEMPOTENT", idempotencyKey, correlationId: `trace-${crypto.randomUUID()}` });
+
+    expect(second).toBe(first);
+    const count = await db.execute(sql`select count(*)::int as count from jobs where type = 'STAGE0_IDEMPOTENT' and idempotency_key = ${idempotencyKey}`);
+    expect(count.rows[0]).toMatchObject({ count: 1 });
+
+    await queue.requestCancellation(first);
+    const cancelled = await db.execute(sql`select status, cancel_requested as "cancelRequested" from jobs where id = ${first}::uuid`);
+    expect(cancelled.rows[0]).toMatchObject({ status: "CANCELLED", cancelRequested: true });
+  });
+
+  it("reclaims an expired running lease without losing correlation", async () => {
+    const queue = new PgJobQueue(db);
+    const correlationId = `trace-${crypto.randomUUID()}`;
+    const jobId = await queue.enqueue({ type: "STAGE0_LEASE_RECOVERY", correlationId });
+
+    const first = await queue.claim("worker-lease-a", 60);
+    expect(first).toMatchObject({ id: jobId, correlationId, attemptCount: 1 });
+    await db.execute(sql`update jobs set locked_at = now() - interval '120 seconds' where id = ${jobId}::uuid`);
+
+    const reclaimed = await queue.claim("worker-lease-b", 60);
+    expect(reclaimed).toMatchObject({ id: jobId, correlationId, attemptCount: 2 });
+    if (!reclaimed) throw new Error("reclaimed job missing");
+    await queue.complete(reclaimed.id, "worker-lease-b");
+
+    const status = await db.execute(sql`select status from jobs where id = ${jobId}::uuid`);
+    expect(status.rows[0]).toMatchObject({ status: "SUCCEEDED" });
+  });
+
+  it("supports permanent failure and cooperative running cancellation states", async () => {
+    const queue = new PgJobQueue(db);
+
+    const failedId = await queue.enqueue({ type: "STAGE0_PERMANENT_FAILURE", correlationId: `trace-${crypto.randomUUID()}` });
+    const failedClaim = await queue.claim("worker-failed");
+    expect(failedClaim?.id).toBe(failedId);
+    if (!failedClaim) throw new Error("permanent failure claim missing");
+    await queue.failPermanently(failedClaim.id, "worker-failed");
+
+    const cancelId = await queue.enqueue({ type: "STAGE0_RUNNING_CANCEL", correlationId: `trace-${crypto.randomUUID()}` });
+    const cancelClaim = await queue.claim("worker-cancel");
+    expect(cancelClaim?.id).toBe(cancelId);
+    if (!cancelClaim) throw new Error("cancellation claim missing");
+    await queue.requestCancellation(cancelId);
+    await expect(queue.isCancellationRequested(cancelId)).resolves.toBe(true);
+    await queue.cancelRunning(cancelId, "worker-cancel");
+
+    const states = await db.execute(sql`
+      select id, status from jobs where id in (${failedId}::uuid, ${cancelId}::uuid) order by id
+    `);
+    const byId = Object.fromEntries(states.rows.map((row) => [String((row as { id: string }).id), String((row as { status: string }).status)]));
+    expect(byId[failedId]).toBe("FAILED");
+    expect(byId[cancelId]).toBe("CANCELLED");
+  });
+
   it("retries durable jobs and dead-letters after max attempts", async () => {
     const queue = new PgJobQueue(db);
     const correlationId = `trace-${crypto.randomUUID()}`;
