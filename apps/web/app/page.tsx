@@ -33,6 +33,16 @@ export default async function HomePage() {
           <h1>Artist OS</h1>
           <p>{session?.user ? "Authenticated foundation runtime is active for the current session." : "Foundation runtime is active. Authenticate to establish the user → artist workspace boundary."}</p>
         </header>
+
+        {!session?.user && (
+          <section className="empty-state" aria-label="Workspace context empty state">
+            <p className="eyebrow">NO WORKSPACE CONTEXT</p>
+            <h2>Artist scope has not been established</h2>
+            <p>Sign in or create an account. Artist OS will then resolve the authenticated user boundary before any artist-owned command can run.</p>
+            <a className="inline-link" href="/auth">Establish workspace context →</a>
+          </section>
+        )}
+
         <div className="grid" id="foundation">{foundation.map(([title, value]) => <article key={title}><span>{title}</span><strong>{value}</strong></article>)}</div>
         <section className="focus"><p className="eyebrow">CURRENT FOCUS</p><h2>Make the architecture executable</h2><p>Authenticated request → application command → domain → PostgreSQL/outbox → worker → trace.</p><a className="inline-link" href="/auth">{session?.user ? "Manage Stage 0 session →" : "Open Stage 0 authentication →"}</a></section>
       </section>
