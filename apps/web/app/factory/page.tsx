@@ -115,7 +115,7 @@ export default async function FactoryPage() {
       </section>
 
       <section className="collection-section">
-        <div className="section-heading"><p className="eyebrow">CONTENT UNITS</p><h2>Production commitments</h2><p className="muted-note">Execution revisions and production state controls arrive in the next slice. A Unit here is canonical concept truth, not a fake completed package.</p></div>
+        <div className="section-heading"><p className="eyebrow">CONTENT UNITS</p><h2>Production commitments</h2><p className="muted-note">Each Unit owns versioned execution revisions. Concept truth stays stable while production instructions can evolve without rewriting the approved Angle.</p></div>
         {units.length === 0 ? (
           <div className="empty-state compact-empty"><h3>No production commitment yet</h3><p>Approve an Angle, then explicitly convert it. Approval alone never creates or schedules content.</p></div>
         ) : (
@@ -124,8 +124,9 @@ export default async function FactoryPage() {
               <article key={unit.id}>
                 <div><span className="unit-code">{unit.unitCode}</span><span className="candidate-status candidate-status-approved">{unit.status}</span></div>
                 <h3>{unit.title}</h3>
-                <p>{unit.songTitle ?? "Artist-level"} · {unit.pillar} · {unit.format ?? "Execution format not defined yet"}</p>
+                <p>{unit.songTitle ?? "Artist-level"} · {unit.pillar} · {unit.format ?? "Execution format lives in revisions"}</p>
                 <small>Identity snapshot {unit.identityVersionId.slice(0, 8)}…{unit.eraIdentityId ? ` · Era ${unit.eraIdentityId.slice(0, 8)}…` : ""}</small>
+                <a className="inline-link factory-execution-link" href={`/factory/units/${unit.id}`}>Open execution workspace →</a>
               </article>
             ))}
           </div>
