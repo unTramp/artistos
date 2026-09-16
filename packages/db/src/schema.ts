@@ -99,4 +99,4 @@ export const jobs = pgTable("jobs", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   startedAt: timestamp("started_at", { withTimezone: true }),
   finishedAt: timestamp("finished_at", { withTimezone: true })
-});
+}, (table) => [uniqueIndex("jobs_type_idempotency_uidx").on(table.type, table.idempotencyKey)]);
