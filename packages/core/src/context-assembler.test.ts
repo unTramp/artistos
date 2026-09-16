@@ -86,9 +86,9 @@ describe("ContentAngleContextAssembler", () => {
   it("removes lower-priority optional evidence until the token budget is met", () => {
     const assembler = new ContentAngleContextAssembler();
     const roomy = assembler.assemble(request(), sources());
-    const constrained = assembler.assemble(request({ budget: { maxChunks: 8, maxTokens: 520, maxExamples: 4, maxLearnings: 4 } }), sources());
+    const constrained = assembler.assemble(request({ budget: { maxChunks: 8, maxTokens: 350, maxExamples: 4, maxLearnings: 4 } }), sources());
 
-    expect(constrained.budget.estimatedTokens).toBeLessThanOrEqual(520);
+    expect(constrained.budget.estimatedTokens).toBeLessThanOrEqual(350);
     expect(constrained.budget.truncated).toBe(true);
     expect(constrained.identity).toEqual(roomy.identity);
     expect(constrained.song?.id).toBe("song-1");
