@@ -1,6 +1,14 @@
 import type { ReactNode } from "react";
 import { navigation } from "../../lib/navigation";
 
+const primaryNavByRoute: Record<string, string> = {
+  overview: "today",
+  identity: "brain",
+  knowledge: "brain",
+  songs: "music",
+  factory: "create"
+};
+
 export function AppShell({
   activeId,
   sessionEmail,
@@ -13,6 +21,8 @@ export function AppShell({
   stage?: string | undefined;
   children: ReactNode;
 }) {
+  const primaryActiveId = primaryNavByRoute[activeId] ?? activeId;
+
   return (
     <main className="shell">
       <aside className="sidebar">
@@ -34,7 +44,7 @@ export function AppShell({
 
         <nav aria-label="Primary">
           {navigation.map((item) => (
-            <a className={item.id === activeId ? "active" : undefined} href={item.href} key={item.id}>{item.label}</a>
+            <a className={item.id === primaryActiveId ? "active" : undefined} href={item.href} key={item.id}>{item.label}</a>
           ))}
         </nav>
 
