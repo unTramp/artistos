@@ -1,8 +1,9 @@
 import { headers } from "next/headers";
 import { PgArtistFoundationReader } from "@artist-os/db";
 import { AppShell } from "../components/app-shell";
-import { resolveAuthenticatedActorContext } from "../../lib/actor-context";
-import { getDatabaseRuntime } from "../../lib/runtime";
+import { resolveAuthenticatedActorContext } from "@/lib/actor-context";
+import { getDatabaseRuntime } from "@/lib/runtime";
+import { SongCreateForm } from "./song-create-form";
 
 export default async function SongsPage() {
   const actorContext = await resolveAuthenticatedActorContext(await headers());
@@ -48,6 +49,8 @@ export default async function SongsPage() {
         <span className="status-chip">{songs.length} {songs.length === 1 ? "SONG" : "SONGS"}</span>
         <span className="muted-note">No release status/date is stored on Song in MASTER v1.4.</span>
       </div>
+
+      <SongCreateForm />
 
       {songs.length === 0 ? (
         <section className="empty-state">
