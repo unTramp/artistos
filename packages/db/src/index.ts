@@ -19,6 +19,7 @@ export * from "./content-execution-writer";
 export * from "./content-execution-reader";
 export * from "./agent-run-writer";
 export * from "./agent-run-reader";
+export * from "./ai-proposal-angle-writer";
 export * from "./request-idempotency";
 export * from "./outbox-dispatcher";
 export * from "./job-queue";
