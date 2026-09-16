@@ -11,5 +11,6 @@ export * from "./song-brain-reader";
 export * from "./knowledge-writer";
 export * from "./knowledge-reader";
 export * from "./content-factory-writer";
+export * from "./content-factory-reader";
 export * from "./outbox-dispatcher";
 export * from "./job-queue";
