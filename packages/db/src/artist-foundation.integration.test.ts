@@ -181,12 +181,9 @@ describe("Artist Foundation vertical", () => {
 
     const counts = await db.execute(sql`
       select
-        count(*) filter (where title = 'Idempotent Song')::int as "songs",
-        count(*) filter (where event_type = 'SongCreated' and aggregate_id = ${first.data.songId}::uuid)::int as "events",
+        (select count(*)::int from songs where artist_id = ${artistId}::uuid and title = 'Idempotent Song') as "songs",
+        (select count(*)::int from outbox_events where artist_id = ${artistId}::uuid and event_type = 'SongCreated' and aggregate_id = ${first.data.songId}::uuid) as "events",
         (select count(*)::int from idempotency_records where command_name = 'CreateSong' and artist_id = ${artistId}::uuid and key = ${idempotencyKey}) as "records"
-      from songs s
-      left join outbox_events o on o.artist_id = s.artist_id
-      where s.artist_id = ${artistId}::uuid
     `);
     expect(counts.rows[0]).toMatchObject({ songs: 1, events: 1, records: 1 });
   });
