@@ -1,8 +1,9 @@
 import { headers } from "next/headers";
 import { PgArtistFoundationReader } from "@artist-os/db";
 import { AppShell } from "../components/app-shell";
-import { resolveAuthenticatedActorContext } from "../../lib/actor-context";
-import { getDatabaseRuntime } from "../../lib/runtime";
+import { resolveAuthenticatedActorContext } from "@/lib/actor-context";
+import { getDatabaseRuntime } from "@/lib/runtime";
+import { IdentityActions } from "./identity-actions";
 
 export default async function IdentityPage() {
   const actorContext = await resolveAuthenticatedActorContext(await headers());
@@ -46,14 +47,20 @@ export default async function IdentityPage() {
 
       <div className="status-row">
         <span className="status-chip">{identity.state.replaceAll("_", " ")}</span>
-        <span className="muted-note">Read model online · write actions unlock after the idempotency gate.</span>
+        <span className="muted-note">Every mutation is authenticated, artist-scoped, idempotent and auditable.</span>
       </div>
+
+      <IdentityActions
+        activeVersionId={identity.activeVersion?.id ?? null}
+        draftVersions={identity.draftVersions}
+        eras={identity.eras}
+      />
 
       {identity.state === "NO_IDENTITY" ? (
         <section className="empty-state">
           <p className="eyebrow">NO IDENTITY YET</p>
           <h2>Start with a versioned identity draft</h2>
-          <p>No AI-generated identity fact is fabricated here. The first draft will be created through an explicit authenticated command.</p>
+          <p>No AI-generated identity fact is fabricated here. Create a human-controlled draft above, then activate it explicitly when it is ready.</p>
         </section>
       ) : (
         <div className="product-grid">
