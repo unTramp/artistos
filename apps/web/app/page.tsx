@@ -10,6 +10,7 @@ import {
 } from "@artist-os/db";
 import { AppShell } from "./components/app-shell";
 import { AttentionExplainability } from "./components/attention-explainability";
+import { CurrentFocusEditor } from "./components/current-focus-editor";
 import { resolveAuthenticatedActorContext } from "@/lib/actor-context";
 import { getDatabaseRuntime } from "@/lib/runtime";
 
@@ -183,16 +184,18 @@ export default async function HomePage() {
           <div className="today-context-state"><i />Context Ready</div>
         </header>
 
-        {currentObjective && (
-          <section className="today-focus-card">
-            <div>
-              <span className="signal-label">CURRENT FOCUS · {currentObjective.priority}</span>
-              <strong>{currentObjective.title}</strong>
-              <p>{currentObjective.statement}</p>
-            </div>
-            <small>{currentObjective.periodStart} → {currentObjective.periodEnd}</small>
-          </section>
-        )}
+        <CurrentFocusEditor
+          currentDate={currentDate}
+          current={currentObjective ? {
+            id: currentObjective.id,
+            title: currentObjective.title,
+            statement: currentObjective.statement,
+            periodStart: currentObjective.periodStart,
+            periodEnd: currentObjective.periodEnd,
+            priority: currentObjective.priority,
+            version: currentObjective.version
+          } : null}
+        />
 
         {primary ? (
           <section className={`today-hero-card tone-${toneFor(primary)}`}>
