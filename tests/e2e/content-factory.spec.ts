@@ -79,4 +79,32 @@ test("reviews an Angle before creating one canonical Content Unit", async ({ pag
   await expect(unit.getByText("Factory Song · STORY · Execution format not defined yet", { exact: true })).toBeVisible();
   await expect(unit.locator(".unit-code")).toContainText("FACTORY-SONG-STORY-");
   await expect(page.locator(".factory-convert-list").filter({ hasText: angleTitle })).toHaveCount(0);
+
+  const homeResponse = await api.get("/api/v1/content-factory");
+  expect(homeResponse.status()).toBe(200);
+  const home = await homeResponse.json() as {
+    data: {
+      angles: Array<{ id: string; title: string }>;
+      units: Array<{ id: string; angleId: string | null }>;
+    };
+  };
+  const angle = home.data.angles.find((item) => item.title === angleTitle);
+  expect(angle).toBeTruthy();
+  if (!angle) throw new Error("E2E angle missing from Factory read model");
+  expect(home.data.units.filter((item) => item.angleId === angle.id)).toHaveLength(1);
+
+  const duplicate = await api.post(`/api/v1/content-factory/angles/${angle.id}/content-unit`, {
+    headers: { "idempotency-key": `duplicate-unit-${crypto.randomUUID()}` },
+    data: { priority: "HIGH" }
+  });
+  expect(duplicate.status()).toBe(409);
+  const duplicateBody = await duplicate.json() as { error?: { code?: string } };
+  expect(duplicateBody.error?.code).toBe("ANGLE_ALREADY_CONVERTED");
+
+  const finalHomeResponse = await api.get("/api/v1/content-factory");
+  expect(finalHomeResponse.status()).toBe(200);
+  const finalHome = await finalHomeResponse.json() as {
+    data: { units: Array<{ angleId: string | null }> };
+  };
+  expect(finalHome.data.units.filter((item) => item.angleId === angle.id)).toHaveLength(1);
 });
