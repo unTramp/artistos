@@ -1,5 +1,7 @@
 import { z } from "zod";
-import type { AIProvider } from "./index";
+import { AIDisabledError, type AIProvider } from "./index";
+
+export const CONTENT_ANGLE_STRATEGY_PROMPT_VERSION = "content-angle-strategy.v1";
 
 const pillarSchema = z.enum([
   "PERFORMANCE", "ACOUSTIC", "STORY", "PERSONALITY", "BTS", "LYRICS",
@@ -92,10 +94,11 @@ export class ContentAngleStrategyAgent {
 
     try {
       const response = await this.provider.runStructured({
-        operation: "strategy.generate-content-angles",
-        schema: contentAngleProposalBatchSchema,
+        workflow: "strategy.generate-content-angles",
+        outputSchema: contentAngleProposalBatchSchema,
         input: {
           task: "Generate distinct Content Angle Cards, not captions or finished posts.",
+          promptVersion: CONTENT_ANGLE_STRATEGY_PROMPT_VERSION,
           maxCandidates,
           rules: [
             "Return fewer candidates rather than generic filler.",
@@ -109,27 +112,29 @@ export class ContentAngleStrategyAgent {
         },
         traceId: request.traceId
       });
-      const parsed = contentAngleProposalBatchSchema.safeParse(response.data);
+
+      const parsed = contentAngleProposalBatchSchema.safeParse(response.output);
       if (!parsed.success) {
         return { status: "REJECTED_OUTPUT", code: "ANGLE_PROPOSAL_SCHEMA_INVALID", message: "AI output did not match the Content Angle proposal schema." };
       }
+
       const allowed = new Set(request.sourceReferences.map((reference) => `${reference.entityType}:${reference.entityId}`));
       const proposals = parsed.data.proposals.slice(0, maxCandidates);
       const hasUnknownSource = proposals.some((proposal) => proposal.basedOn.some((reference) => !allowed.has(`${reference.entityType}:${reference.entityId}`)));
       if (hasUnknownSource) {
         return { status: "REJECTED_OUTPUT", code: "ANGLE_PROPOSAL_SOURCE_UNGROUNDED", message: "AI output referenced a source that was not present in the assembled context manifest." };
       }
+
       return {
         status: "PROPOSALS",
         proposals,
         coverageNote: parsed.data.coverageNote,
         provider: response.provider,
         model: response.model,
-        promptVersion: response.promptVersion
+        promptVersion: CONTENT_ANGLE_STRATEGY_PROMPT_VERSION
       };
     } catch (error) {
-      const message = error instanceof Error ? error.message : "AI provider failed";
-      if (message === "AI_PROVIDER_DISABLED") {
+      if (error instanceof AIDisabledError) {
         return { status: "PROVIDER_UNAVAILABLE", code: "AI_PROVIDER_DISABLED", message: "AI generation is disabled. Manual Content Factory remains fully available." };
       }
       return { status: "PROVIDER_UNAVAILABLE", code: "AI_PROVIDER_FAILED", message: "AI provider is unavailable. Manual Content Factory remains fully available." };
