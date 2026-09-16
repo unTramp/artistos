@@ -42,13 +42,14 @@ jobs:
           mkdir -p packages/db/generated
           pnpm auth:generate
           test -s packages/db/generated/better-auth.sql
-          echo "AUTH_SQL_BEGIN"
-          cat packages/db/generated/better-auth.sql
-          echo "AUTH_SQL_END"
-          echo "LOCKFILE_GZIP_BASE64_BEGIN"
-          gzip -c pnpm-lock.yaml | base64 -w0
-          echo
-          echo "LOCKFILE_GZIP_BASE64_END"
+      - name: Upload generated artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage0-generated
+          path: |
+            pnpm-lock.yaml
+            packages/db/generated/better-auth.sql
+          if-no-files-found: error
       - run: pnpm arch:check
       - run: pnpm lint
       - run: pnpm typecheck
