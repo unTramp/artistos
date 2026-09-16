@@ -61,7 +61,7 @@ const mapPersistenceError = <T>(error: unknown): CommandResult<T> => {
 };
 
 export interface CreateIdentityDraftCommand {
-  label?: string;
+  label?: string | undefined;
 }
 
 export interface CreateIdentityDraftResult {
@@ -81,9 +81,9 @@ export interface ActivateIdentityVersionResult {
 export interface CreateEraCommand {
   identityVersionId: string;
   name: string;
-  startDate?: string;
-  endDate?: string;
-  narrativeChapter?: string;
+  startDate?: string | undefined;
+  endDate?: string | undefined;
+  narrativeChapter?: string | undefined;
 }
 
 export interface EraResult {
@@ -95,17 +95,17 @@ export interface EraResult {
 
 export interface CreateSongCommand {
   title: string;
-  type?: string;
+  type?: string | undefined;
   isOriginal: boolean;
-  originalArtist?: string;
-  genre?: string;
-  mood?: string;
-  language?: string;
-  story?: string;
-  meaning?: string;
-  lyricsReference?: string;
-  isrc?: string;
-  platformLinks?: Record<string, string>;
+  originalArtist?: string | undefined;
+  genre?: string | undefined;
+  mood?: string | undefined;
+  language?: string | undefined;
+  story?: string | undefined;
+  meaning?: string | undefined;
+  lyricsReference?: string | undefined;
+  isrc?: string | undefined;
+  platformLinks?: Record<string, string> | undefined;
 }
 
 export interface SongResult {
