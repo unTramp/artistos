@@ -1,0 +1,22 @@
+{
+  "name": "artist-os",
+  "private": true,
+  "packageManager": "pnpm@12.4.1",
+  "engines": { "node": ">=22.16.0" },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @artist-os/web --filter @artist-os/worker dev",
+    "dev:web": "pnpm --filter @artist-os/web dev",
+    "dev:worker": "pnpm --filter @artist-os/worker dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "db:generate": "pnpm --filter @artist-os/db db:generate",
+    "db:migrate": "pnpm --filter @artist-os/db db:migrate"
+  },
+  "devDependencies": {
+    "@types/node": "26.5.1",
+    "typescript": "5.9.3",
+    "vitest": "5.0.1"
+  }
+}
