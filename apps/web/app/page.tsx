@@ -5,7 +5,8 @@ import {
   PgContentExecutionReader,
   PgContentFactoryReader,
   PgKnowledgeReader,
-  PgOperationalActionReader
+  PgOperationalActionReader,
+  PgPlanningObjectiveReader
 } from "@artist-os/db";
 import { AppShell } from "./components/app-shell";
 import { AttentionExplainability } from "./components/attention-explainability";
@@ -94,14 +95,18 @@ export default async function HomePage() {
   const factoryReader = new PgContentFactoryReader(runtime.db);
   const executionReader = new PgContentExecutionReader(runtime.db);
   const actionReader = new PgOperationalActionReader(runtime.db);
+  const objectiveReader = new PgPlanningObjectiveReader(runtime.db);
+  const computedAt = new Date();
+  const currentDate = computedAt.toISOString().slice(0, 10);
 
-  const [identity, songs, knowledge, angles, units, operationalActions] = await Promise.all([
+  const [identity, songs, knowledge, angles, units, operationalActions, currentObjective] = await Promise.all([
     artistReader.getIdentityHome(actorContext.artistId),
     artistReader.listSongs(actorContext.artistId),
     knowledgeReader.getHome(actorContext.artistId),
     factoryReader.listAngles(actorContext.artistId),
     factoryReader.listUnits(actorContext.artistId),
-    actionReader.listActions(actorContext.artistId, { statuses: ["OPEN", "IN_PROGRESS", "BLOCKED"], limit: 50 })
+    actionReader.listActions(actorContext.artistId, { statuses: ["OPEN", "IN_PROGRESS", "BLOCKED"], limit: 50 }),
+    objectiveReader.getCurrentPrimary(actorContext.artistId, currentDate)
   ]);
 
   const approvedExecution = await Promise.all(
@@ -117,8 +122,16 @@ export default async function HomePage() {
   const learningCount = brainPayload?.validatedLearnings?.length ?? 0;
 
   const projection = new AttentionProjectionService().project({
-    computedAt: new Date(),
-    activeObjective: null,
+    computedAt,
+    activeObjective: currentObjective ? {
+      id: currentObjective.id,
+      title: currentObjective.title,
+      statement: currentObjective.statement,
+      priority: currentObjective.priority,
+      scope: currentObjective.scope,
+      ...(currentObjective.campaignId ? { campaignId: currentObjective.campaignId } : {}),
+      ...(currentObjective.releaseId ? { releaseId: currentObjective.releaseId } : {})
+    } : null,
     identity: {
       active: Boolean(identity.activeVersion),
       ...(identity.activeVersion ? { versionRef: { type: "IdentityVersion", id: identity.activeVersion.id, version: identity.activeVersion.versionNumber } } : {})
@@ -169,6 +182,17 @@ export default async function HomePage() {
           </div>
           <div className="today-context-state"><i />Context Ready</div>
         </header>
+
+        {currentObjective && (
+          <section className="today-focus-card">
+            <div>
+              <span className="signal-label">CURRENT FOCUS · {currentObjective.priority}</span>
+              <strong>{currentObjective.title}</strong>
+              <p>{currentObjective.statement}</p>
+            </div>
+            <small>{currentObjective.periodStart} → {currentObjective.periodEnd}</small>
+          </section>
+        )}
 
         {primary ? (
           <section className={`today-hero-card tone-${toneFor(primary)}`}>
