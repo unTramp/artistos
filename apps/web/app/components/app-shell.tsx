@@ -10,6 +10,7 @@ export function AppShell({
   activeId: string;
   sessionEmail?: string | null | undefined;
   workspaceLabel?: string | undefined;
+  stage?: string | undefined;
   children: ReactNode;
 }) {
   return (
