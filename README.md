@@ -1,5 +1,7 @@
 # Artist OS
 
-Artist OS is a documentation-first product and engineering project for an independent music artist operating system.
+Artist OS is a human-controlled, AI-assisted operating system for independent artists.
 
-The approved architecture, Full Product Specification, architecture-resolution work, and Engineering Specification live under `docs/artist-os/` on the documentation branch until reviewed and merged.
+The repository is implementing Stage 0 of the runtime foundation from the frozen MASTER v1.4 architecture.
+
+See `docs/artist-os/implementation/STAGE_0_CODEX_IMPLEMENTATION_HANDOFF.md` for the current implementation gate.
