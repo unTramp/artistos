@@ -12,10 +12,21 @@ export const createLogger = ({ service }: { service: string }) => pino({
   }
 });
 
-export interface StorageObjectHead { key: string; size: number; checksum?: string; }
+export interface StorageObjectHead {
+  key: string;
+  size: number;
+  checksum?: string;
+}
+
+export interface StorageAccessGrant {
+  url: string;
+  expiresAt: Date;
+  visibility: "PRIVATE";
+}
+
 export interface StorageProvider {
   put(key: string, data: Uint8Array): Promise<void>;
   head(key: string): Promise<StorageObjectHead | null>;
   delete(key: string): Promise<void>;
-  createAccessUrl(key: string, ttlSeconds: number): Promise<string>;
+  createAccessUrl(key: string, ttlSeconds: number): Promise<StorageAccessGrant>;
 }
