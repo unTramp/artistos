@@ -41,6 +41,11 @@ export class PgRequestIdempotency {
       status: "SUCCESS",
       result: result as Record<string, unknown>,
       updatedAt: now
-    }).where(eq(idempotencyRecords.id, recordId));
+    }).where(and(eq(idempotencyRecords.id, recordId), eq(idempotencyRecords.status, "IN_PROGRESS")));
+  }
+
+  async abandon(recordId: string): Promise<void> {
+    await this.db.delete(idempotencyRecords)
+      .where(and(eq(idempotencyRecords.id, recordId), eq(idempotencyRecords.status, "IN_PROGRESS")));
   }
 }
