@@ -1,0 +1,46 @@
+name: Bootstrap Artist OS docs
+
+on:
+  push:
+    branches:
+      - docs/artist-os-spec-completion
+    paths:
+      - '.docbundle/READY'
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: docs/artist-os-spec-completion
+          fetch-depth: 0
+
+      - name: Reconstruct documentation source bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .docbundle/artist-os-docs.tar.gz.b64.part-* > /tmp/artist-os-docs.tar.gz.b64
+          base64 --decode /tmp/artist-os-docs.tar.gz.b64 > /tmp/artist-os-docs.tar.gz
+          rm -rf /tmp/artist-os-docs docs/artist-os
+          mkdir -p /tmp/artist-os-docs docs
+          tar -xzf /tmp/artist-os-docs.tar.gz -C /tmp
+          mv /tmp/artist-os-docs docs/artist-os
+
+      - name: Commit expanded documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/artist-os
+          if git diff --cached --quiet; then
+            echo "No documentation changes to commit."
+            exit 0
+          fi
+          git commit -m "docs: sync complete Artist OS product and engineering specification"
+          git push origin HEAD:docs/artist-os-spec-completion
