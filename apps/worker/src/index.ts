@@ -1,11 +1,13 @@
-import { PgJobQueue, createDatabase, type ClaimedJob } from "@artist-os/db";
+import { PgJobQueue, PgOutboxConsumer, createDatabase, type ClaimedJob } from "@artist-os/db";
 import { createLogger, getRuntimeEnv } from "@artist-os/infrastructure";
 
 const env = getRuntimeEnv();
 const logger = createLogger({ service: "worker" });
 const runtime = createDatabase(env.DATABASE_URL);
 const queue = new PgJobQueue(runtime.db);
+const outbox = new PgOutboxConsumer(runtime.db);
 const workerId = `worker-${process.pid}-${crypto.randomUUID()}`;
+const outboxConsumerName = "stage0-worker";
 let stopping = false;
 
 const handlers: Record<string, (job: ClaimedJob) => Promise<void>> = {
@@ -14,23 +16,47 @@ const handlers: Record<string, (job: ClaimedJob) => Promise<void>> = {
   }
 };
 
+async function processOutboxOnce() {
+  const event = await outbox.consumeNext(outboxConsumerName);
+  if (!event) return false;
+
+  logger.info(
+    {
+      operation: "outbox.consumed",
+      traceId: event.correlationId,
+      eventId: event.id,
+      eventType: event.eventType,
+      artistId: event.artistId,
+      duplicate: event.duplicate
+    },
+    "Outbox event consumed"
+  );
+  return true;
+}
+
+async function processJobOnce() {
+  const job = await queue.claim(workerId);
+  if (!job) return false;
+
+  try {
+    const handler = handlers[job.type];
+    if (!handler) throw new Error(`No handler registered for ${job.type}`);
+    await handler(job);
+    await queue.complete(job.id, workerId);
+  } catch (error) {
+    logger.error({ operation: "job.failed", traceId: job.correlationId, jobId: job.id, error: error instanceof Error ? error.message : "Unknown error" }, "Job failed");
+    await queue.fail(job, workerId);
+  }
+  return true;
+}
+
 async function runLoop() {
   logger.info({ operation: "worker.boot", workerId }, "Artist OS worker started");
   while (!stopping) {
-    const job = await queue.claim(workerId);
-    if (!job) {
+    const consumedEvent = await processOutboxOnce();
+    const processedJob = await processJobOnce();
+    if (!consumedEvent && !processedJob) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      continue;
-    }
-
-    try {
-      const handler = handlers[job.type];
-      if (!handler) throw new Error(`No handler registered for ${job.type}`);
-      await handler(job);
-      await queue.complete(job.id, workerId);
-    } catch (error) {
-      logger.error({ operation: "job.failed", traceId: job.correlationId, jobId: job.id, error: error instanceof Error ? error.message : "Unknown error" }, "Job failed");
-      await queue.fail(job, workerId);
     }
   }
 }
