@@ -32,9 +32,9 @@ export interface AddToneCorpusItemCommand {
   textContent: string;
   label: ToneCorpusLabel;
   sourceType: string;
-  sourceReference?: string;
-  language?: string;
-  isPrivate?: boolean;
+  sourceReference?: string | undefined;
+  language?: string | undefined;
+  isPrivate?: boolean | undefined;
 }
 
 export interface ToneCorpusItemResult {
@@ -53,8 +53,8 @@ export interface CreateCandidateKnowledgeCommand {
   sourceId: string;
   content: string;
   destination: CandidateKnowledgeDestination;
-  destinationTargetId?: string;
-  confidenceMetadata?: Record<string, unknown>;
+  destinationTargetId?: string | undefined;
+  confidenceMetadata?: Record<string, unknown> | undefined;
 }
 
 export interface CandidateKnowledgeResult {
@@ -72,7 +72,7 @@ export interface AcceptCandidateKnowledgeCommand {
 
 export interface RejectCandidateKnowledgeCommand {
   candidateId: string;
-  reason?: string;
+  reason?: string | undefined;
 }
 
 export interface MergeCandidateKnowledgeCommand {
