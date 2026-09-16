@@ -15,7 +15,7 @@ test("exposes liveness with a trace id", async ({ request }) => {
   expect(body.meta.traceId).toEqual(expect.any(String));
 });
 
-test("signs up, completes onboarding, explains Today attention and signs out", async ({ page }) => {
+test("signs up, manages current focus, explains Today attention and signs out", async ({ page }) => {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const email = `daily-os-${suffix}@example.test`;
 
@@ -39,6 +39,21 @@ test("signs up, completes onboarding, explains Today attention and signs out", a
   await expect(page.getByText("Activate your artist identity", { exact: true })).toBeVisible();
   await expect(page.getByText(email, { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Today", exact: true })).toHaveClass(/active/);
+
+  await expect(page.getByText("No primary focus yet", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Set current focus" }).click();
+  await page.getByLabel("Focus title").fill("Build release momentum");
+  await page.getByLabel("What does success look like?").fill("Keep the next release moving through one coherent artist-level operational focus.");
+  await page.getByLabel("Starts").fill("2026-09-01");
+  await page.getByLabel("Ends").fill("2026-09-30");
+  await page.getByRole("button", { name: "Set focus", exact: true }).click();
+
+  const focus = page.getByRole("region", { name: "Current focus" });
+  await expect(focus).toBeVisible();
+  await expect(focus.getByText("Build release momentum", { exact: true })).toBeVisible();
+  await expect(focus.getByText("Keep the next release moving through one coherent artist-level operational focus.", { exact: true })).toBeVisible();
+  await focus.getByRole("button", { name: "Complete focus" }).click();
+  await expect(page.getByText("No primary focus yet", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Why this recommendation: Activate your artist identity" }).click();
   const drawer = page.getByRole("dialog", { name: "Activate your artist identity" });
