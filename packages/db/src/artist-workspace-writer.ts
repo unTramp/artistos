@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import type { ArtistWorkspaceWritePort, CreateArtistPersistenceRequest, CreateArtistResult } from "@artist-os/core";
 import type { Stage0Database } from "./runtime";
-import { artists, auditEvents, idempotencyRecords, outboxEvents, workspaceSettings } from "./schema";
+import { artistMemberships, artists, auditEvents, idempotencyRecords, outboxEvents, workspaceSettings } from "./schema";
 
 export class PgArtistWorkspaceWriter implements ArtistWorkspaceWritePort {
   constructor(private readonly db: Stage0Database) {}
@@ -33,6 +33,15 @@ export class PgArtistWorkspaceWriter implements ArtistWorkspaceWritePort {
         }
       }
 
+      const [existingMembership] = await tx.select({ artistId: artistMemberships.artistId })
+        .from(artistMemberships)
+        .where(eq(artistMemberships.authUserId, request.ownerUserId))
+        .limit(1);
+
+      if (existingMembership) {
+        throw new Error("AUTH_USER_ALREADY_HAS_ARTIST");
+      }
+
       await tx.insert(artists).values({
         id: request.artist.id,
         name: request.artist.name,
@@ -52,6 +61,13 @@ export class PgArtistWorkspaceWriter implements ArtistWorkspaceWritePort {
 
       if (!workspace) throw new Error("WORKSPACE_SETTINGS_NOT_CREATED");
 
+      await tx.insert(artistMemberships).values({
+        artistId: request.artist.id,
+        authUserId: request.ownerUserId,
+        role: "OWNER",
+        createdAt: request.artist.createdAt
+      });
+
       await tx.insert(outboxEvents).values({
         id: request.event.eventId,
         artistId: request.event.artistId,
@@ -60,9 +76,9 @@ export class PgArtistWorkspaceWriter implements ArtistWorkspaceWritePort {
         aggregateId: request.event.aggregateId,
         aggregateVersion: request.event.aggregateVersion,
         actorType: request.event.actorType,
-        ...(request.event.actorId ? { actorId: request.event.actorId } : {}),
+        actorId: request.event.actorId,
         correlationId: request.event.correlationId,
-        ...(request.event.causationId ? { causationId: request.event.causationId } : {}),
+        causationId: request.event.causationId,
         payloadVersion: request.event.payloadVersion,
         payload: request.event.payload,
         occurredAt: request.event.occurredAt,
@@ -73,7 +89,7 @@ export class PgArtistWorkspaceWriter implements ArtistWorkspaceWritePort {
         id: request.audit.id,
         artistId: request.audit.artistId,
         actorType: request.audit.actorType,
-        ...(request.audit.actorId ? { actorId: request.audit.actorId } : {}),
+        actorId: request.audit.actorId,
         action: request.audit.action,
         entityType: request.audit.entityType,
         entityId: request.audit.entityId,
