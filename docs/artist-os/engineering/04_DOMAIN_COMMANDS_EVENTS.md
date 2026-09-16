@@ -1,7 +1,7 @@
 # Artist OS — Engineering Spec 04: Domain Commands & Events
 
-**Status:** DRAFT / Pass 1
-**Architecture baseline:** MASTER v1.3 + Architecture Resolution Pass 1 + Architecture Freeze Candidate.
+**Status:** PASS 1 / v1.4 reconciled
+**Architecture baseline:** MASTER v1.4 + AR-001…AR-062 companion contracts.
 **Product baseline:** Full Product Spec Pass 1.
 
 ## 1. Purpose
@@ -194,7 +194,7 @@ RemoveNarrativeLink
 CreateSignatureDifferentiator
 ```
 
-**ARCHITECTURE STATUS: PROVISIONAL — ACP-003** for primary/secondary link cardinality.
+**Architecture traceability:** MASTER v1.4 §130A / approved ACP-003.
 
 Events include `NarrativeTrackCreated`, `NarrativeBeatAdvanced`, `NarrativeAssignmentChanged`, `NarrativeMixPlanCreated`.
 
@@ -219,7 +219,7 @@ CancelRelease
 CreateReleaseExtension
 ```
 
-**ARCHITECTURE STATUS: PROVISIONAL — ACP-002** for Release/ReleaseTrack.
+**Architecture traceability:** MASTER v1.4 §§49A–49B / approved ACP-002.
 
 Rules:
 - Song meaning/lyrics/segments remain Song-owned.
@@ -250,7 +250,7 @@ UpdateRecurringSeries
 ArchiveRecurringSeries
 ```
 
-**ARCHITECTURE STATUS: PROVISIONAL — ACP-001/ACP-002**.
+**Architecture traceability:** MASTER v1.4 §§49A–49B, 52A, 156 / approved ACP-001 and ACP-002.
 
 Events include `CampaignCreated`, `CampaignTargetChanged`, `CampaignPhaseChanged`, `PlanningObjectiveActivated`, `PlanningObjectiveCompleted`, `ContentSlotChanged`.
 
@@ -301,7 +301,7 @@ UnselectTake
 CompleteShootSession
 ```
 
-**ARCHITECTURE STATUS: PROVISIONAL — ACP-005** for Take/TakeAsset.
+**Architecture traceability:** MASTER v1.4 §§166A–166B / approved ACP-005.
 
 Rules:
 - Shot holds plan/execution status only;
@@ -328,7 +328,7 @@ EvaluateRightsForUsage
 OverrideRightsBlock
 ```
 
-**ARCHITECTURE STATUS: PROVISIONAL — ACP-006** for AssetDerivation.
+**Architecture traceability:** MASTER v1.4 §188 / approved ACP-006.
 
 Rules:
 - original metadata is append-only/immutable where possible;
@@ -376,7 +376,7 @@ ExpireOperationalAction
 ReopenOperationalAction
 ```
 
-**ARCHITECTURE STATUS: PROVISIONAL — ACP-004**.
+**Architecture traceability:** MASTER v1.4 §202A / approved ACP-004.
 
 Rule: completion does not directly mutate foreign domain truth; a separate validated domain command performs that mutation.
 

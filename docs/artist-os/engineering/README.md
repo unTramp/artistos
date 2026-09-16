@@ -1,12 +1,11 @@
 # Artist OS — Engineering Specification Workspace
 
-**Status:** Pass 1 started.
-**Normative inputs:** MASTER v1.3 + approved Product Specs.
-**Provisional inputs:** Architecture Freeze Candidate / ACPs marked PROPOSED.
+**Status:** Pass 1 complete; v1.4 architecture consistency pass complete.
+**Normative inputs:** MASTER v1.4 + AR-001…AR-062 companion contracts + approved Product Specs.
 
-Engineering documents may specify **how** to implement an approved product/architecture contract. They may not silently change domain ownership, human-approval rules, evidence semantics or scope boundaries.
+Engineering documents specify **how** to implement approved product/architecture contracts. They may not silently change domain ownership, human-approval rules, evidence semantics or scope boundaries.
 
-## Planned engineering documents
+## Engineering documents
 
 ```text
 00_ENGINEERING_SPEC_INDEX.md
@@ -25,19 +24,24 @@ Engineering documents may specify **how** to implement an approved product/archi
 13_TESTING_TRACEABILITY.md
 14_MIGRATIONS_ROLLBACK.md
 15_DEPLOYMENT_OPERATIONS.md
+ENGINEERING_V1.4_CONSISTENCY_PASS.md
 ```
 
-## Provisional rule
+## Architecture baseline rule
 
-Any schema/API contract depending on ACP-001…ACP-006 must include:
+ACP-001…ACP-006 are approved and incorporated into MASTER v1.4. Their dependent entities/contracts are normative engineering inputs:
 
 ```text
-ARCHITECTURE STATUS: PROVISIONAL
-ACP: <id>
+PlanningObjective
+Release / ReleaseTrack / CampaignTarget
+ContentNarrativeLink primary + secondary semantics
+OperationalAction
+Take / TakeAsset
+AssetDerivation
 ```
 
-until the ACP is approved and merged into the next frozen MASTER.
+`PROVISIONAL[ACP-*]` markers are reserved only for future architecture proposals that have not yet been approved. They must not be used for ACP-001…ACP-006 after the v1.4 freeze.
 
 ## Pass 1 milestone
 
-Engineering Spec Pass 1 now covers documents 01–15. ACP-001…ACP-006 dependent contracts remain explicitly PROVISIONAL until architecture freeze approval. Next pass is consistency/traceability review against all 2,334 product requirements and Stage 0 Codex handoff generation.
+Engineering Spec Pass 1 covers documents 01–15 and has been reconciled against frozen MASTER v1.4. The next engineering deliverable is the Stage 0 Codex implementation handoff, followed by vertical MVP slices.

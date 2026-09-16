@@ -88,7 +88,7 @@ transcription preview
 
 ## 9. Derivation graph
 
-**ARCHITECTURE STATUS: PROVISIONAL — ACP-006.**
+**Architecture:** AssetDerivation is normative under MASTER v1.4 §188 (approved ACP-006).
 
 Media edits/composites create AssetDerivation edges. Graph constraints:
 
@@ -104,7 +104,7 @@ Rights traversal follows publish-relevant parent edges.
 
 ## 10. Take/media relation
 
-**ARCHITECTURE STATUS: PROVISIONAL — ACP-005.**
+**Architecture:** Take/TakeAsset is normative under MASTER v1.4 §§166A–166B (approved ACP-005).
 
 A Take may link multiple assets (multi-camera, external audio, still/photo) through TakeAsset roles. Asset registration can precede mapping; Smart Ingest suggests links.
 
