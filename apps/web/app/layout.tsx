@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./commands.css";
+import "./execution.css";
 
 export const metadata: Metadata = {
   title: "Artist OS",
