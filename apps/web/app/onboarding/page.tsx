@@ -9,6 +9,8 @@ export default async function OnboardingPage() {
   if (!actorContext) redirect("/auth");
   if (actorContext.artistId) redirect("/");
 
+  const defaultName = actorContext.user.email.split("@")[0] ?? "";
+
   return (
     <AppShell activeId="today" sessionEmail={actorContext.user.email}>
       <section className="onboarding-shell">
@@ -26,7 +28,7 @@ export default async function OnboardingPage() {
           <span className="signal-label">STEP 1 OF 1</span>
           <h2>Create workspace</h2>
           <p>We can establish Identity and add your first Song after this.</p>
-          <OnboardingForm defaultName={actorContext.user.name ?? ""} />
+          <OnboardingForm defaultName={defaultName} />
         </section>
       </section>
     </AppShell>
