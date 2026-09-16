@@ -96,12 +96,11 @@ CREATE TABLE "content_units" (
   CONSTRAINT "content_units_identity_version_id_fk" FOREIGN KEY ("identity_version_id") REFERENCES "public"."artist_identity_versions"("id") ON DELETE restrict ON UPDATE no action,
   CONSTRAINT "content_units_era_identity_id_fk" FOREIGN KEY ("era_identity_id") REFERENCES "public"."era_identities"("id") ON DELETE set null ON UPDATE no action,
   CONSTRAINT "content_units_status_check" CHECK ("status" IN ('IDEA','APPROVED','SCRIPT_READY','TO_SHOOT','SHOT','EDITING','REVIEW','READY','SCHEDULED','PUBLISHED','MEASURING','ANALYZED','ARCHIVED','BLOCKED','REJECTED','PAUSED')),
-  CONSTRAINT "content_units_artist_code_uidx" UNIQUE("artist_id", "unit_code")
+  CONSTRAINT "content_units_artist_code_uidx" UNIQUE("artist_id", "unit_code"),
+  CONSTRAINT "content_units_angle_uidx" UNIQUE("angle_id")
 );
 --> statement-breakpoint
 CREATE INDEX "content_units_artist_status_idx" ON "content_units" USING btree ("artist_id", "status");
---> statement-breakpoint
-CREATE INDEX "content_units_angle_idx" ON "content_units" USING btree ("angle_id");
 --> statement-breakpoint
 CREATE TABLE "content_unit_status_history" (
   "id" uuid PRIMARY KEY NOT NULL,
