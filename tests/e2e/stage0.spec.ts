@@ -15,7 +15,7 @@ test("exposes liveness with a trace id", async ({ request }) => {
   expect(body.meta.traceId).toEqual(expect.any(String));
 });
 
-test("signs up, restores the session, and signs out", async ({ page }) => {
+test("signs up, restores the session, renders authenticated shell, and signs out", async ({ page }) => {
   const email = `stage0-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`;
 
   await page.goto("/auth");
@@ -32,6 +32,11 @@ test("signs up, restores the session, and signs out", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
   await expect(page.getByText(email)).toBeVisible();
 
+  await page.getByRole("link", { name: "Open Artist OS" }).click();
+  await expect(page.getByText("AUTHENTICATED")).toBeVisible();
+  await expect(page.getByText(email)).toBeVisible();
+
+  await page.goto("/auth");
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
 });
