@@ -68,5 +68,5 @@ test("creates Identity, Era, Song and Song Brain context through authenticated i
 
   await expect(page.getByRole("heading", { name: "Identity Version 1", exact: true })).toBeVisible();
   await expect(page.getByText("Era: E2E Era", { exact: true })).toBeVisible();
-  await expect(page.getByText("Warm evening light without changing the base identity.", { exact: true })).toBeVisible();
+  await expect(page.locator("p.brain-note").filter({ hasText: "Warm evening light without changing the base identity." })).toBeVisible();
 });
