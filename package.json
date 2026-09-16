@@ -11,12 +11,14 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "test:integration": "pnpm --filter @artist-os/db test:integration",
+    "test:e2e": "playwright test",
     "lint": "pnpm -r lint",
     "arch:check": "node scripts/check-architecture.mjs",
     "db:generate": "pnpm --filter @artist-os/db db:generate",
     "db:migrate": "pnpm --filter @artist-os/db db:migrate"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@types/node": "26.5.1",
     "typescript": "5.9.3",
     "vitest": "5.0.1"
