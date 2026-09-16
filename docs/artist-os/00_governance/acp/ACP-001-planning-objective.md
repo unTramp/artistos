@@ -1,7 +1,7 @@
 # ACP-001 — PlanningObjective as a First-Class Planning Entity
 
 - **ACP ID:** ACP-001
-- **Status:** PROPOSED
+- **Status:** APPROVED — MASTER v1.4 freeze
 - **MASTER requirements affected:** 151–156, 358, 403, 417, 429
 - **Open-question references:** OQ-001, OQ-078
 
@@ -16,7 +16,7 @@ MASTER v1.3 repeatedly uses **Monthly Objective** as an input to planning and th
 - Overview exposes Current Focus and upcoming decisions.
 - No `MonthlyObjective` entity exists in the canonical model.
 
-## Proposed change
+## Approved change
 
 Introduce a first-class **`PlanningObjective`** entity. “Monthly Objective” becomes a UX preset/view over a generic period-scoped planning objective rather than a month-only data model.
 
@@ -82,4 +82,4 @@ AI may suggest objective wording and success criteria, but activation/completion
 
 ## Decision
 
-**PROPOSED:** add `PlanningObjective` in the next MASTER revision; keep `Monthly Objective` as a default UX period preset.
+**APPROVED for MASTER v1.4:** add `PlanningObjective`; keep `Monthly Objective` as a default UX period preset.
