@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
 
-test("renders the Artist OS Stage 0 shell", async ({ page }) => {
+test("renders the unauthenticated Daily OS front door", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Artist OS" })).toBeVisible();
-  await expect(page.getByText("Make the architecture executable")).toBeVisible();
-  await expect(page.getByText("Stage 0 · Foundation")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Know what matters next." })).toBeVisible();
+  await expect(page.getByText("YOUR CAREER · ONE OPERATING SYSTEM", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Sign in →" })).toBeVisible();
 });
 
 test("exposes liveness with a trace id", async ({ request }) => {
@@ -15,63 +15,33 @@ test("exposes liveness with a trace id", async ({ request }) => {
   expect(body.meta.traceId).toEqual(expect.any(String));
 });
 
-test("authenticates, creates server-owned artist scope, restores session, and signs out", async ({ page }) => {
-  const email = `stage0-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`;
-  const traceId = `e2e-${crypto.randomUUID()}`;
+test("signs up, completes onboarding, opens Today and signs out", async ({ page }) => {
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const email = `daily-os-${suffix}@example.test`;
 
   await page.goto("/auth");
   await page.getByRole("button", { name: "Sign up" }).click();
-  await page.getByLabel("Name").fill("Stage 0 Test User");
+  await page.getByLabel("Name").fill("Daily OS Test User");
   await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill("stage0-test-password-123");
+  await page.getByLabel("Password").fill("daily-os-test-password-123");
   await page.getByRole("button", { name: "Create account" }).click();
 
-  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
-  await expect(page.getByText(email)).toBeVisible();
+  await page.waitForURL("**/onboarding");
+  await expect(page.getByRole("heading", { name: "Start with the minimum useful context." })).toBeVisible();
+  await page.getByLabel("Your name").fill("Daily OS Test User");
+  await page.getByLabel("Artist name").fill("Daily OS Artist");
+  await page.getByLabel("Timezone").fill("UTC");
+  await page.getByLabel("Language / locale").fill("en");
+  await page.getByRole("button", { name: "Create my Artist OS" }).click();
 
-  const api = page.context().request;
-  const create = await api.post("/api/v1/artist", {
-    headers: {
-      "x-trace-id": traceId,
-      "idempotency-key": `e2e-${crypto.randomUUID()}`
-    },
-    data: {
-      name: "Stage 0 E2E Artist",
-      artistName: "Stage 0 E2E Artist",
-      timezone: "UTC",
-      locale: "en",
-      reportingCurrency: "USD"
-    }
-  });
-  expect(create.status()).toBe(201);
-  const created = await create.json();
-  expect(created).toMatchObject({
-    data: { existing: false, replayed: false },
-    meta: { traceId }
-  });
-  expect(created.data.artistId).toEqual(expect.any(String));
-  expect(create.headers()["x-trace-id"]).toBe(traceId);
-
-  const ensure = await api.post("/api/v1/artist", {
-    data: {
-      name: "Ignored because scope already exists",
-      artistName: "Ignored because scope already exists",
-      timezone: "UTC"
-    }
-  });
-  expect(ensure.status()).toBe(200);
-  const ensured = await ensure.json();
-  expect(ensured.data).toMatchObject({ artistId: created.data.artistId, existing: true });
-
-  await page.reload();
-  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
-  await expect(page.getByText(email)).toBeVisible();
-
-  await page.getByRole("link", { name: "Open Artist OS" }).click();
-  await expect(page.getByText("AUTHENTICATED", { exact: true })).toBeVisible();
-  await expect(page.getByText(email)).toBeVisible();
+  await page.waitForURL("**/");
+  await expect(page.getByRole("heading", { name: "What needs attention now?" })).toBeVisible();
+  await expect(page.getByText("Activate your artist identity", { exact: true })).toBeVisible();
+  await expect(page.getByText(email, { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Today", exact: true })).toHaveClass(/active/);
 
   await page.goto("/auth");
+  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
 });
