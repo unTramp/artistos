@@ -2,36 +2,62 @@
 
 Artist OS is a human-controlled, AI-assisted operating system for independent artists.
 
-The repository is implementing **Stage 0 — Foundation** from the frozen MASTER v1.4 architecture. Stage 0 proves the reusable runtime architecture; it does not implement Phase 1+ product domains yet.
+Its product thesis is not “more dashboards” or “an AI writer”. Artist OS should remember the artist's career, connect context across work and help answer what matters next.
 
-## Runtime shape
+Core product formula:
 
-```text
-Browser / PWA
-  → Next.js web
-  → application commands/services
-  → owning domain module
-  → PostgreSQL transaction + audit/outbox
-  → worker / jobs / adapters
-```
+`Context + Memory + Decisions + Execution`
 
-The deterministic product core must continue to work when AI and optional external providers are disabled.
+## Current implementation status
 
-## Requirements and selected pins
+- **Stage 0 — Foundation** ✅
+  - modular monolith runtime;
+  - Next.js web + durable worker;
+  - PostgreSQL / pgvector;
+  - Better Auth;
+  - audit / outbox / jobs / idempotency;
+  - provider boundaries and AI-disabled degraded mode.
+- **Phase 1 — Artist Foundation** ✅
+  - Artist Identity versions / Era;
+  - Songs and Song Brain;
+  - Knowledge Inbox / Tone Corpus / Artist Brain projection.
+- **Phase 2 — Content Factory** ✅
+  - Content Angles and human review;
+  - Content Units;
+  - versioned Content Execution Revisions;
+  - bounded Context Assembler;
+  - structured AI Angle proposals / AgentRun provenance;
+  - manual workflows continue to work with AI disabled.
+- **Phase 2.5 — Daily OS / Decision Intelligence** 🚧
+  - Today / attention surface;
+  - product coherence and onboarding;
+  - next: OperationalAction, AttentionProjection, Decision Memory, Learning and Weekly Review.
 
-- Node.js `>=22.16.0`
-- pnpm `12.4.1`
-- Next.js `16.3.5`
-- React / React DOM `19.3.0`
-- Better Auth runtime + CLI `1.7.3`
-- Drizzle ORM `0.45.2` / Drizzle Kit `0.31.10`
-- TypeScript `5.9.3`
-- Vitest `5.0.1`
-- Playwright `1.63.0`
-- PostgreSQL 17 + pgvector for local/CI infrastructure
-- Docker / Docker Compose for local PostgreSQL
+MASTER v1.4 remains the frozen architecture Source of Truth. Phase 2.5 changes product priority and surface, not canonical domain ownership.
 
-Package manifests remain the executable authority for dependency versions.
+## Product principles
+
+See `docs/artist-os/PRODUCT_PRINCIPLES.md`.
+
+Key rules:
+
+- Complex system, simple surface.
+- Context before generation.
+- Memory must compound.
+- Decisions preserve why.
+- AI proposes; humans commit.
+- Unknown is better than invented.
+- Daily usefulness before feature breadth.
+- Deep domains, shallow navigation.
+
+## Requirements
+
+- Node.js `>=22.16.0` — use native Apple Silicon Node on Apple Silicon Macs when possible;
+- pnpm `12.4.1` through Corepack;
+- Docker / Docker Compose;
+- PostgreSQL 17 + pgvector through the local compose stack.
+
+Package manifests are the executable authority for exact dependency versions.
 
 ## Local setup
 
@@ -44,40 +70,57 @@ pnpm db:migrate
 pnpm dev
 ```
 
-Web: `http://127.0.0.1:3000`
+Open:
 
-Run the processes independently when debugging runtime boundaries:
+```text
+http://localhost:3000
+```
+
+`pnpm dev` starts both web and worker. The worker dev command loads the repository-root `.env` explicitly.
+
+For isolated debugging:
 
 ```bash
 pnpm dev:web
 pnpm dev:worker
 ```
 
-Health endpoints:
+If port 3000 is already occupied by an old Next.js process, stop that process before starting another dev server.
+
+## First-run product flow
+
+1. Open `/auth`.
+2. Create an account.
+3. Signup redirects to `/onboarding`.
+4. Create the Artist workspace in the UI.
+5. Open Today and establish Identity / Songs / Brain progressively.
+
+No DevTools API call should be required for normal onboarding.
+
+## AI provider modes
+
+`.env` supports:
 
 ```text
-GET /api/live
-GET /api/ready
+AI_PROVIDER=disabled
+AI_PROVIDER=mock
 ```
 
-`/api/ready` requires PostgreSQL but intentionally does not require AI or external platform providers.
+`disabled` is a supported product mode, not an error condition. Canonical manual workflows and Today must remain useful without AI.
 
-## Environment
+`mock` exists for deterministic local/demo proposal flows without a paid provider.
 
-`.env.example` contains development-safe examples only. Never commit production credentials.
+## Database migrations
 
-| Variable | Required | Purpose |
-| --- | --- | --- |
-| `NODE_ENV` | no | `development`, `test`, or `production` |
-| `DATABASE_URL` | yes | PostgreSQL connection string |
-| `AUTH_SECRET` | yes | Better Auth server secret; minimum 32 characters |
-| `AUTH_BASE_URL` | yes | canonical web/auth origin |
-| `ARTIST_OS_DEFAULT_TIMEZONE` | no | fallback workspace timezone; defaults to `UTC` |
-| `AI_PROVIDER` | no | `disabled` or `mock` in Stage 0; defaults to `disabled` |
-| `LOG_LEVEL` | no | structured pino log level |
-| `STORAGE_ROOT` | no | private local-development object root |
+Canonical migrations live in `packages/db/drizzle/` and are applied with:
 
-Environment values are validated at runtime. Validation errors identify invalid fields without echoing secret values.
+```bash
+pnpm db:migrate
+```
+
+Do not use destructive schema push as the production migration path.
+
+Better Auth tables are infrastructure-owned and live in PostgreSQL schema `auth`. They are created by reviewed project migrations (`0002_auth_schema`, `0003_better_auth`), not by running ad-hoc auth migrations in normal local setup.
 
 ## Quality commands
 
@@ -91,96 +134,52 @@ pnpm build
 pnpm test:e2e
 ```
 
-`test:integration` requires PostgreSQL and applied migrations. `test:e2e` expects a production web build; Playwright starts the web process automatically.
+CI applies migrations to clean PostgreSQL before the integration/build/E2E gates.
 
-## Database and migration workflow
+## Runtime shape
 
-PostgreSQL + pgvector is the canonical transactional foundation. Reviewable SQL migrations live under `packages/db/drizzle/`; Drizzle migration history lives in `packages/db/drizzle/meta/_journal.json`.
-
-Normal domain-schema workflow:
-
-```bash
-# 1. change packages/db/src/schema.ts
-pnpm db:generate
-# 2. review the generated SQL and migration metadata
-# 3. apply it through the canonical migrator
-pnpm db:migrate
-# 4. run integration tests against a clean/migrated database
-pnpm test:integration
+```text
+Browser / PWA
+  → Next.js presentation / route handlers
+  → application services
+  → owning domain modules
+  → PostgreSQL transaction + audit / outbox
+  → worker / jobs / provider adapters
 ```
 
-Do **not** use destructive schema push as the production migration path.
-
-Better Auth provider tables are infrastructure-owned and live in the dedicated PostgreSQL `auth` schema. Better Auth `1.7.3` uses the PostgreSQL `search_path` approach in this repository. The provider output is reproducible with:
-
-```bash
-pnpm auth:generate
-```
-
-The clean CLI output is retained at `packages/db/generated/better-auth.sql`. The reviewed Drizzle migration adds only the schema-selection wrapper required to apply that generated SQL under `auth`. If the auth configuration or pinned Better Auth version changes, regenerate and review the diff before changing migrations.
-
-## Worker, jobs and recovery
-
-The worker is an independent Node process backed by PostgreSQL, not an in-memory queue.
-
-- jobs are claimed with `FOR UPDATE SKIP LOCKED`;
-- claims have a lease timestamp and expired running jobs can be reclaimed;
-- retries are bounded by `maxAttempts`;
-- exhausted retries enter `DEAD_LETTER`;
-- permanent failures can enter `FAILED`;
-- cancellation is cooperative and supports `CANCELLED`;
-- `(job type, idempotency key)` prevents duplicate logical job enqueue;
-- `correlationId` / `causationId` survive into worker execution;
-- `SIGINT` / `SIGTERM` stop new claims and let in-flight work finish before the DB runtime closes;
-- outbox events remain durable across process restarts;
-- consumer inbox records prevent duplicate durable event handling.
-
-A worker crash therefore does not delete queued work. Recovery happens from PostgreSQL state on the next worker process.
-
-## Storage and security foundation
-
-Application code depends on `StorageProvider`, not direct filesystem/S3 APIs. The Stage 0 local provider:
-
-- accepts opaque object keys and rejects traversal/absolute-path keys;
-- stores private bytes under `STORAGE_ROOT`;
-- exposes checksum/head verification;
-- does not issue public URLs;
-- models future access URLs as private, expiring grants.
-
-Structured logging redacts password/token/secret/authorization fields. Browser error envelopes contain safe messages rather than stack traces or credentials.
+The deterministic product core must continue to work when AI and optional external providers are unavailable.
 
 ## Workspace
 
 ```text
 apps/
-  web/             Next.js runtime, auth boundary, HTTP routes, shell
+  web/             Next.js product runtime and UI
   worker/          durable worker runtime
 packages/
   core/            domain/application contracts
-  db/              Drizzle schema, migrations and PostgreSQL adapters
-  infrastructure/  env, storage and logging adapters
-  ai/              AI provider boundary; disabled adapter in Stage 0
+  db/              schema, migrations, readers/writers
+  infrastructure/  env, storage, logging
+  ai/              provider abstraction and structured agents
   shared/          primitives only
-scripts/
-  check-architecture.mjs
-  tests/e2e/       browser smoke/session proof
+docs/artist-os/
+  00_governance/   frozen MASTER / architecture governance
+  engineering/     reconciled engineering contracts
+  implementation/  implementation plans / completion reports
 ```
-
-`packages/core` may not import Next.js, React, Better Auth, Drizzle, PostgreSQL or concrete provider SDKs. `pnpm arch:check` enforces this Stage 0 boundary.
 
 ## Normative implementation sources
 
 1. `docs/artist-os/00_governance/MASTER_ARCHITECTURE_v1.4.md`
-2. `docs/artist-os/engineering/`
-3. `docs/artist-os/implementation/STAGE_0_CODEX_IMPLEMENTATION_HANDOFF.md`
-4. `docs/artist-os/implementation/STAGE_0_ACCEPTANCE_CHECKLIST.md`
+2. approved AR / ACP contracts;
+3. `docs/artist-os/engineering/`;
+4. phase-specific implementation plans.
 
-Implementation convenience is not authority to change frozen architecture.
+Product principles guide prioritization and UX but do not silently rewrite frozen domain architecture.
 
-## Stage 0 limitations / deferred work
+## Current product priority
 
-- no Phase 1 Identity, Songs, Knowledge, Content, DSP or Analytics product implementation;
-- no live AI provider or agent orchestration;
-- no S3/cloud object provider yet; local private storage proves the port contract;
-- no multi-artist/multi-user collaboration model beyond the single-artist owner membership boundary;
-- no Phase 1 product navigation or product metrics; the shell only exposes foundation/system state.
+Do not expand into another large horizontal domain until Daily OS proves the core loop:
+
+`Open → understand state → next action → why → act → preserve evidence/decision → future recommendation improves`.
+
+The active roadmap is documented in `docs/artist-os/implementation/PHASE_2_5_DAILY_OS_PLAN.md`.
