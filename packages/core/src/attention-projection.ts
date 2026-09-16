@@ -56,6 +56,7 @@ export interface AttentionOperationalActionInput {
   dueAt?: Date | null;
   notBefore?: Date | null;
   externalUrl?: string | null;
+  targetHref?: string | null;
   version: number;
 }
 
@@ -186,7 +187,7 @@ export class AttentionProjectionService {
         basedOn: [{ type: "OperationalAction", id: action.id, version: action.version }, { type: action.sourceEntityType, id: action.sourceEntityId }],
         uncertainty: [], blockedBy: isBlocked ? [{ type: action.sourceEntityType, id: action.sourceEntityId }] : [],
         expectedEffect: "Advances the linked workflow without changing source-domain truth by itself.",
-        action: { label: action.externalUrl ? "Open action" : "View action", href: action.externalUrl ?? "/" },
+        action: { label: action.externalUrl ? "Open action" : "View action", href: action.externalUrl ?? action.targetHref ?? "/" },
         objectiveAligned: aligned
       }, operationalPriorityScore[action.priority] + dueStateScore(action, input.computedAt) + (aligned ? 25 : 0) + (isBlocked ? 20 : 0));
     }
