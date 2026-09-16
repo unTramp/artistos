@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("reviews an Angle before creating one canonical Content Unit", async ({ page }) => {
+test("reviews an Angle, creates one Content Unit and versions execution without rewriting history", async ({ page }) => {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const email = `factory-${suffix}@example.test`;
   const angleTitle = `E2E Story Angle ${suffix}`;
@@ -64,7 +64,6 @@ test("reviews an Angle before creating one canonical Content Unit", async ({ pag
   await expect(page.locator(".factory-angle-card").filter({ hasText: angleTitle })).toContainText("Identity captured");
 
   await reviewRow.getByRole("button", { name: "Approve" }).click();
-
   const approvedCard = page.locator(".factory-angle-card").filter({ hasText: angleTitle });
   await expect(approvedCard.getByText("APPROVED", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "No production commitment yet" })).toBeVisible();
@@ -76,7 +75,7 @@ test("reviews an Angle before creating one canonical Content Unit", async ({ pag
   const unit = page.locator(".factory-unit-list article").filter({ hasText: angleTitle });
   await expect(unit).toBeVisible();
   await expect(unit.getByText("APPROVED", { exact: true })).toBeVisible();
-  await expect(unit.getByText("Factory Song · STORY · Execution format not defined yet", { exact: true })).toBeVisible();
+  await expect(unit.getByText("Factory Song · STORY · Execution format lives in revisions", { exact: true })).toBeVisible();
   await expect(unit.locator(".unit-code")).toContainText("FACTORY-SONG-STORY-");
   await expect(page.locator(".factory-convert-list").filter({ hasText: angleTitle })).toHaveCount(0);
 
@@ -91,7 +90,11 @@ test("reviews an Angle before creating one canonical Content Unit", async ({ pag
   const angle = home.data.angles.find((item) => item.title === angleTitle);
   expect(angle).toBeTruthy();
   if (!angle) throw new Error("E2E angle missing from Factory read model");
-  expect(home.data.units.filter((item) => item.angleId === angle.id)).toHaveLength(1);
+  const canonicalUnits = home.data.units.filter((item) => item.angleId === angle.id);
+  expect(canonicalUnits).toHaveLength(1);
+  const contentUnitId = canonicalUnits[0]?.id;
+  expect(contentUnitId).toBeTruthy();
+  if (!contentUnitId) throw new Error("E2E Content Unit missing from Factory read model");
 
   const duplicate = await api.post(`/api/v1/content-factory/angles/${angle.id}/content-unit`, {
     headers: { "idempotency-key": `duplicate-unit-${crypto.randomUUID()}` },
@@ -101,10 +104,54 @@ test("reviews an Angle before creating one canonical Content Unit", async ({ pag
   const duplicateBody = await duplicate.json() as { error?: { code?: string } };
   expect(duplicateBody.error?.code).toBe("ANGLE_ALREADY_CONVERTED");
 
-  const finalHomeResponse = await api.get("/api/v1/content-factory");
-  expect(finalHomeResponse.status()).toBe(200);
-  const finalHome = await finalHomeResponse.json() as {
-    data: { units: Array<{ angleId: string | null }> };
-  };
-  expect(finalHome.data.units.filter((item) => item.angleId === angle.id)).toHaveLength(1);
+  await unit.getByRole("link", { name: "Open execution workspace" }).click();
+  await expect(page.getByRole("heading", { name: angleTitle, exact: true })).toBeVisible();
+  await expect(page.getByText("No approved execution source yet", { exact: true })).toBeVisible();
+  await expect(page.getByText("Rights domain is not connected in this slice.", { exact: true })).toBeVisible();
+
+  await page.getByLabel("Execution format").fill("VERTICAL_PERFORMANCE_STORY");
+  await page.getByLabel("Production intent").selectOption("AUTHENTIC");
+  await page.getByLabel("Hook type").fill("PERSONAL_LINE");
+  await page.getByLabel("Hook text").fill("I did not know how to explain this song when I wrote it.");
+  await page.getByLabel("Execution structure").fill("PERSONAL LINE → FIRST VERSE → CHORUS → QUIET CTA");
+  await page.getByLabel("Script or performance concept").fill("One honest sentence, then move directly into a live performance with no promotional interruption.");
+  await page.getByLabel("Shot list").fill("Locked waist-up personal line\nStay in the same frame for the first verse\nOne restrained closer crop for the chorus");
+  await page.getByLabel("Edit brief").fill("Keep natural pauses and breath. No speed ramps or fake reaction cuts.");
+  await page.getByLabel("Execution caption").fill("A small part of the story behind this song.");
+  await page.getByLabel("Execution CTA").fill("Listen if this feels familiar.");
+  await page.getByLabel("Platform notes").fill("INSTAGRAM_REELS: Keep the spoken line inside the safe title area.\nTIKTOK: Keep the same master premise.");
+  await page.getByLabel("Feasibility notes").fill("One room, one camera and the existing audio setup are enough.");
+  await page.getByLabel("Fallback plan").fill("If the full performance take fails, capture a simpler acoustic version without changing the story premise.");
+  await page.getByRole("button", { name: "Save new execution revision" }).click();
+
+  const revision1 = page.locator(".execution-revision-list article").filter({ hasText: "REV 1" });
+  await expect(revision1.getByText("DRAFT", { exact: true })).toBeVisible();
+  await expect(revision1).toContainText("PERSONAL LINE → FIRST VERSE → CHORUS → QUIET CTA");
+
+  await page.getByRole("button", { name: "Approve execution" }).click();
+  await expect(page.getByRole("heading", { name: "Revision 1", exact: true })).toBeVisible();
+  await expect(page.locator(".execution-revision-list article").filter({ hasText: "REV 1" }).getByText("APPROVED", { exact: true })).toBeVisible();
+
+  await page.getByLabel("Execution structure").fill("PERSONAL LINE → FIRST VERSE → CHORUS → SILENT END FRAME");
+  await page.getByLabel("Edit brief").fill("Revision two removes the CTA cut and holds the final frame for two seconds.");
+  await page.getByRole("button", { name: "Save new execution revision" }).click();
+
+  const revision2 = page.locator(".execution-revision-list article").filter({ hasText: "REV 2" });
+  await expect(revision2.getByText("DRAFT", { exact: true })).toBeVisible();
+  await expect(revision1).toContainText("PERSONAL LINE → FIRST VERSE → CHORUS → QUIET CTA");
+  await expect(revision2).toContainText("PERSONAL LINE → FIRST VERSE → CHORUS → SILENT END FRAME");
+
+  const draftReview = page.locator(".execution-review-list .factory-review-row").filter({ hasText: "Revision 2" });
+  await draftReview.getByRole("button", { name: "Approve execution" }).click();
+  await expect(page.getByRole("heading", { name: "Revision 2", exact: true })).toBeVisible();
+  await expect(page.locator(".execution-revision-list article").filter({ hasText: "REV 2" }).getByText("APPROVED", { exact: true })).toBeVisible();
+  await expect(page.locator(".execution-revision-list article").filter({ hasText: "REV 1" }).getByText("SUPERSEDED", { exact: true })).toBeVisible();
+
+  const executionResponse = await api.get(`/api/v1/content-factory/units/${contentUnitId}/execution-revisions`);
+  expect(executionResponse.status()).toBe(200);
+  const execution = await executionResponse.json() as { data: { revisions: Array<{ revisionNumber: number; status: string; snapshot: { structure: string } }> } };
+  expect(execution.data.revisions).toEqual(expect.arrayContaining([
+    expect.objectContaining({ revisionNumber: 1, status: "SUPERSEDED", snapshot: expect.objectContaining({ structure: "PERSONAL LINE → FIRST VERSE → CHORUS → QUIET CTA" }) }),
+    expect.objectContaining({ revisionNumber: 2, status: "APPROVED", snapshot: expect.objectContaining({ structure: "PERSONAL LINE → FIRST VERSE → CHORUS → SILENT END FRAME" }) })
+  ]));
 });
