@@ -1,4 +1,4 @@
-export type ProductStage = "foundation" | "artist-foundation" | "content-factory";
+export type ProductStage = "daily-os" | "artist-foundation" | "content-factory";
 
 export interface NavigationItem {
   id: string;
@@ -8,10 +8,9 @@ export interface NavigationItem {
 }
 
 export const navigation = [
-  { id: "overview", href: "/", label: "Overview", stage: "foundation" },
-  { id: "identity", href: "/identity", label: "Identity", stage: "artist-foundation" },
-  { id: "songs", href: "/songs", label: "Songs", stage: "artist-foundation" },
-  { id: "knowledge", href: "/knowledge", label: "Knowledge", stage: "artist-foundation" },
-  { id: "factory", href: "/factory", label: "Factory", stage: "content-factory" },
-  { id: "account", href: "/auth", label: "Account", stage: "foundation" }
+  { id: "today", href: "/", label: "Today", stage: "daily-os" },
+  { id: "create", href: "/factory", label: "Create", stage: "content-factory" },
+  { id: "music", href: "/songs", label: "Music", stage: "artist-foundation" },
+  { id: "brain", href: "/knowledge", label: "Brain", stage: "artist-foundation" },
+  { id: "account", href: "/auth", label: "Account", stage: "daily-os" }
 ] satisfies NavigationItem[];
