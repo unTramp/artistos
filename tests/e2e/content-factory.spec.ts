@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("reviews an Angle, creates one Content Unit and versions execution without rewriting history", async ({ page }) => {
+test("reviews an Angle, degrades AI safely, creates one Content Unit and versions execution without rewriting history", async ({ page }) => {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const email = `factory-${suffix}@example.test`;
   const angleTitle = `E2E Story Angle ${suffix}`;
@@ -41,7 +41,11 @@ test("reviews an Angle, creates one Content Unit and versions execution without 
 
   await page.goto("/factory");
   await expect(page.getByRole("heading", { name: "Make fewer ideas matter more" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Not connected yet — by design" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Generate bounded Angle Cards" })).toBeVisible();
+  await page.getByLabel("Song scope").selectOption({ label: "Factory Song" });
+  await page.getByRole("button", { name: "Generate Angles" }).click();
+  await expect(page.getByText("AI_PROVIDER_DISABLED", { exact: true })).toBeVisible();
+  await expect(page.getByText("Manual Angle creation below remains the canonical fallback.", { exact: true })).toBeVisible();
 
   await page.getByLabel("Angle title").fill(angleTitle);
   await page.getByLabel("Song context").selectOption({ label: "Factory Song" });
