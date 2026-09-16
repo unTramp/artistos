@@ -10,6 +10,7 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
+    "test:integration": "pnpm --filter @artist-os/db test:integration",
     "lint": "pnpm -r lint",
     "arch:check": "node scripts/check-architecture.mjs",
     "db:generate": "pnpm --filter @artist-os/db db:generate",
