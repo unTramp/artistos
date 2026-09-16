@@ -16,8 +16,11 @@ Never fabricate historical facts to satisfy new schema. Unknown legacy state rem
 ## 2. Migration metadata
 Track migration ID, appliedAt, application version, checksum and environment.
 
-## 3. ACP migrations
-Until ACP approval, schema migrations for PlanningObjective, Release, narrative links, OperationalAction, Take and AssetDerivation remain provisional/dev-only.
+## 3. Architecture-approved migrations
+
+PlanningObjective, Release/ReleaseTrack/CampaignTarget, primary/secondary narrative links, OperationalAction, Take/TakeAsset and AssetDerivation are approved in MASTER v1.4. Their schema migrations are normal reviewed product migrations and must not be labeled provisional solely because they originated in ACP-001…ACP-006.
+
+Future migrations that depend on an unapproved ACP remain provisional/dev-only until that architecture proposal is explicitly approved.
 
 ## 4. Data backfill jobs
 Large backfills run as resumable/idempotent jobs rather than one giant transaction when volume warrants.
