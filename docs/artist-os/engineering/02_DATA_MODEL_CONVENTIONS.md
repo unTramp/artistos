@@ -63,9 +63,9 @@ Decision
 IdentityVersion
 NarrativeTrack
 ShootSession
-OperationalAction (provisional)
-Take (provisional)
-Release (provisional)
+OperationalAction
+Take
+Release
 ```
 
 ## ENG-DATA-008 — JSONB is for bounded sparse configuration, not entity dumping
@@ -159,7 +159,7 @@ Use polymorphic `entityType/entityId` only for genuinely cross-cutting concerns 
 
 ## ENG-DATA-023 — Graph relationships
 
-Use typed edge tables only when many-to-many/graph semantics are real (e.g. provisional AssetDerivation). Do not replace ordinary relational FKs with a universal entity graph.
+Use typed edge tables only when many-to-many/graph semantics are real (for example `AssetDerivation`). Do not replace ordinary relational FKs with a universal entity graph.
 
 ## ENG-DATA-024 — Search/vector data
 
