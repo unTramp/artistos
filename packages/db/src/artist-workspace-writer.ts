@@ -38,9 +38,7 @@ export class PgArtistWorkspaceWriter implements ArtistWorkspaceWritePort {
         .where(eq(artistMemberships.authUserId, request.ownerUserId))
         .limit(1);
 
-      if (existingMembership) {
-        throw new Error("AUTH_USER_ALREADY_HAS_ARTIST");
-      }
+      if (existingMembership) throw new Error("AUTH_USER_ALREADY_HAS_ARTIST");
 
       await tx.insert(artists).values({
         id: request.artist.id,
@@ -76,9 +74,9 @@ export class PgArtistWorkspaceWriter implements ArtistWorkspaceWritePort {
         aggregateId: request.event.aggregateId,
         aggregateVersion: request.event.aggregateVersion,
         actorType: request.event.actorType,
-        actorId: request.event.actorId,
+        ...(request.event.actorId ? { actorId: request.event.actorId } : {}),
         correlationId: request.event.correlationId,
-        causationId: request.event.causationId,
+        ...(request.event.causationId ? { causationId: request.event.causationId } : {}),
         payloadVersion: request.event.payloadVersion,
         payload: request.event.payload,
         occurredAt: request.event.occurredAt,
@@ -89,7 +87,7 @@ export class PgArtistWorkspaceWriter implements ArtistWorkspaceWritePort {
         id: request.audit.id,
         artistId: request.audit.artistId,
         actorType: request.audit.actorType,
-        actorId: request.audit.actorId,
+        ...(request.audit.actorId ? { actorId: request.audit.actorId } : {}),
         action: request.audit.action,
         entityType: request.audit.entityType,
         entityId: request.audit.entityId,
