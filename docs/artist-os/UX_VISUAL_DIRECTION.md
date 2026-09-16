@@ -178,6 +178,12 @@ Release readiness · due tomorrow
 [Start] [Why this?]
 ```
 
+If contextual guidance is available, the card or drawer may additionally expose:
+
+```text
+[Learn 5 min]
+```
+
 Do not put full reasoning on the card. Use progressive disclosure.
 
 ## 8. Explainability Drawer
@@ -205,9 +211,47 @@ What completing the action unlocks, resolves or advances.
 ### WHAT WE MAY LEARN
 Only show when the action meaningfully produces evidence. Operational housekeeping may explicitly say `No learning objective — execution blocker.`
 
+### LEARN BEFORE DOING
+Optional contextual guidance affordance. Show only when relevant guidance metadata exists. Guidance must return the user to the originating action/workflow.
+
 The drawer should feel evidential and calm, not like a verbose AI explanation panel.
 
-## 9. Bottleneck / Readiness → Action pattern
+## 9. Prior-decision conflict UX
+
+A conflict with prior Decision memory must never look like a disabled action or hard policy block.
+
+Preferred pattern:
+
+```text
+CONFLICT WITH PRIOR DECISION
+Direct cold Spotify acquisition was previously paused.
+Reason: cheap clicks, weak downstream listening quality.
+
+[Review prior context]
+[Proceed anyway]
+```
+
+If the user chooses to proceed, request a lightweight rationale:
+
+```text
+What changed?
+○ Market
+○ Song
+○ Audience
+○ Creative
+○ Platform conditions
+○ Timing
+○ Other
+
+Rationale
+[________________________]
+
+[Confirm re-test]
+```
+
+The visual semantics should communicate caution, not prohibition. Preserve human agency.
+
+## 10. Bottleneck / Readiness → Action pattern
 
 Analytics should turn into work.
 
@@ -241,7 +285,7 @@ Smart link unverified
 
 Never show a bottleneck or blocker without a path into a resolvable action/workspace when such a path exists.
 
-## 10. Song Brain / waveform
+## 11. Song Brain / waveform
 
 The approved prototype's waveform treatment is a signature visual pattern.
 
@@ -255,7 +299,7 @@ Use waveform/audio-segment visualization when real song/audio/segment data exist
 
 Song Brain should feel more like an audio-aware creative intelligence surface than a database record form.
 
-## 11. Provenance / Decision lineage
+## 12. Provenance / Decision lineage
 
 When intelligence history exists, use a compact traversable lineage rather than a generic log.
 
@@ -275,9 +319,11 @@ ACTION-103
 
 Use mono typography for IDs, subtle connector lines, restrained semantic accents and hover/click detail.
 
+Decision may also appear without an upstream Learning/Experiment. Do not visually imply missing lineage that does not exist.
+
 Do not fabricate missing lineage nodes. Broken or unknown links should be visibly absent rather than inferred for visual completeness.
 
-## 12. Recommendation maturity
+## 13. Recommendation maturity
 
 Compounding memory should become visible without a fake intelligence score.
 
@@ -297,11 +343,12 @@ ARTIST-SPECIFIC EVIDENCE
 
 Maturity is provenance density, not a gamified level.
 
-## 13. Drawers
+## 14. Drawers
 
 Use right-side drawers for deep context that should not replace the current working surface:
 
 - recommendation evidence;
+- prior-decision conflict context;
 - Decision lineage;
 - Content Angle detail;
 - execution detail summary;
@@ -313,7 +360,7 @@ Typical width: ~420–480px desktop.
 
 Do not put every CRUD form in a drawer. Drawers are for contextual depth, not entire applications.
 
-## 14. Contextual help and guidance
+## 15. Contextual help and guidance
 
 Prefer small info affordances and contextual explanations over permanent walls of instructional copy.
 
@@ -333,9 +380,11 @@ How Spotify editorial pitching works
 
 Keep canonical system `Learning` distinct from human education/guidance.
 
+The Action/Recommendation UX must remain open to an optional guidance reference before the guidance content system itself is implemented.
+
 Product language should describe artist outcomes, not internal architecture unless the user explicitly opens technical provenance/debug information.
 
-## 15. AI UX
+## 16. AI UX
 
 AI is a contextual proposal layer.
 
@@ -361,7 +410,7 @@ Technical provenance may be available in developer/debug detail where appropriat
 
 AI should appear inside the operating system. A chatbot may exist as an optional command surface, but it must not be the required front door.
 
-## 16. Forms
+## 17. Forms
 
 Canonical model richness does not justify giant default forms.
 
@@ -379,7 +428,7 @@ Song
 
 Goal / audience / identity fit / learning value / effort / platforms can be proposed or progressively disclosed.
 
-## 17. Empty states
+## 18. Empty states
 
 Cold start must remain honest and visually intentional.
 
@@ -391,7 +440,7 @@ Bad:
 
 filling an empty card with generic AI advice to make the interface look complete.
 
-## 18. Motion
+## 19. Motion
 
 Use restrained motion only for:
 
@@ -402,7 +451,7 @@ Use restrained motion only for:
 
 Avoid consumer-app animation for its own sake.
 
-## 19. Responsive behavior
+## 20. Responsive behavior
 
 Desktop is the primary deep-work surface.
 
@@ -414,7 +463,18 @@ Mobile/PWA should simplify aggressively:
 - sidebar becomes compact navigation;
 - dense analytical tables should adapt or move to detail views.
 
-## 20. Design anti-patterns
+## 21. Official demo acceptance test
+
+A representative UI demo must visibly demonstrate:
+
+1. **TODAY** — one clear meaningful next action;
+2. **WHY** — explainability with evidence/context;
+3. **MEMORY** — prior Decision/Learning/history affecting current UX;
+4. **LEARN** — contextual guidance before an action when the user needs it.
+
+These are product acceptance moments, not marketing-only labels.
+
+## 22. Design anti-patterns
 
 Do not drift toward:
 
@@ -428,9 +488,10 @@ Do not drift toward:
 - AI chat as the product homepage;
 - large mandatory forms mirroring every database field;
 - decorative status scores without operational meaning;
-- black-box recommendations without `Why this?`.
+- black-box recommendations without `Why this?`;
+- hard-blocking a human because a prior Decision conflicts with a new proposal.
 
-## 21. Implementation rule
+## 23. Implementation rule
 
 Every new primary UI PR should explicitly state:
 
@@ -440,4 +501,6 @@ Every new primary UI PR should explicitly state:
 4. how it follows `Complex system, simple surface`;
 5. how it follows this visual direction;
 6. how a recommendation exposes reason/evidence/uncertainty when applicable;
-7. whether it makes accumulated memory more visible or reusable.
+7. whether it makes accumulated memory more visible or reusable;
+8. whether human override remains possible when prior memory conflicts with a new choice;
+9. whether an optional guidance extension point is preserved when the action may require learning-before-doing.
