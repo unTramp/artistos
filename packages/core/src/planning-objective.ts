@@ -103,8 +103,18 @@ export class CreatePlanningObjectiveService {
     const denied = requireUser<PlanningObjectiveResult>(context); if (denied) return denied;
     const parsed = createSchema.safeParse(command);
     if (!parsed.success) return { status: "VALIDATION_ERROR", code: "PLANNING_OBJECTIVE_INVALID", message: "Planning Objective is invalid.", fieldErrors: fieldErrors(parsed.error.issues) };
+    const normalized: CreatePlanningObjectiveCommand = {
+      title: parsed.data.title,
+      statement: parsed.data.statement,
+      periodStart: parsed.data.periodStart,
+      periodEnd: parsed.data.periodEnd,
+      scope: parsed.data.scope,
+      priority: parsed.data.priority,
+      ...(parsed.data.campaignId ? { campaignId: parsed.data.campaignId } : {}),
+      ...(parsed.data.releaseId ? { releaseId: parsed.data.releaseId } : {})
+    };
     try {
-      return { status: "SUCCESS", data: await this.writer.createObjective({ artistId: context.artistId, objectiveId: this.idFactory(), command: parsed.data, evidence: evidenceFrom(context) }) };
+      return { status: "SUCCESS", data: await this.writer.createObjective({ artistId: context.artistId, objectiveId: this.idFactory(), command: normalized, evidence: evidenceFrom(context) }) };
     } catch (error) { return mapPersistenceError(error); }
   }
 }
