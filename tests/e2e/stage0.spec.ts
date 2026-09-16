@@ -68,7 +68,7 @@ test("authenticates, creates server-owned artist scope, restores session, and si
   await expect(page.getByText(email)).toBeVisible();
 
   await page.getByRole("link", { name: "Open Artist OS" }).click();
-  await expect(page.getByText("AUTHENTICATED")).toBeVisible();
+  await expect(page.getByText("AUTHENTICATED", { exact: true })).toBeVisible();
   await expect(page.getByText(email)).toBeVisible();
 
   await page.goto("/auth");
