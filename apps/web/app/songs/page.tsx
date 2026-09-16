@@ -64,7 +64,7 @@ export default async function SongsPage() {
           {songs.map((song) => (
             <article className="song-row" key={song.id}>
               <div>
-                <strong>{song.title}</strong>
+                <a className="song-link" href={`/songs/${song.id}`}>{song.title}</a>
                 <span>{song.isOriginal ? "Original" : `Cover${song.originalArtist ? ` · ${song.originalArtist}` : ""}`}</span>
               </div>
               <div>
