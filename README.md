@@ -97,6 +97,26 @@ If port 3000 is already occupied by an old Next.js process, stop that process be
 
 No DevTools API call should be required for normal onboarding.
 
+## Local demo data
+
+After onboarding, an otherwise empty local Artist workspace can be populated with realistic development data:
+
+```bash
+pnpm demo:seed
+```
+
+The command is intentionally safe-by-default:
+
+- it requires an existing authenticated Artist workspace;
+- it refuses to run if that Artist already has Identity, Songs or Content Angles;
+- with more than one local Artist workspace, choose one explicitly:
+
+```bash
+DEMO_EMAIL=you@example.test pnpm demo:seed
+```
+
+Demo data is never part of migrations and never runs in production. It exists only to exercise the product visually and during local UX development.
+
 ## AI provider modes
 
 `.env` supports:
