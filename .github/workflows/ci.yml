@@ -6,6 +6,15 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://artistos:artistos@127.0.0.1:5432/artistos_ci
+      AUTH_SECRET: stage0-ci-secret-is-at-least-32-characters-long
+      AUTH_BASE_URL: http://127.0.0.1:3000
+      ARTIST_OS_DEFAULT_TIMEZONE: UTC
+      AI_PROVIDER: disabled
+      LOG_LEVEL: error
+      STORAGE_ROOT: .data/storage
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
