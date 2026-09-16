@@ -1,0 +1,204 @@
+id,domain,feature,question
+1,01_overview_command_center,01_overview-home.md,Should `MonthlyObjective` become a first-class entity or remain a Campaign/Planning projection? MASTER references the concept but does not define an entity.
+2,01_overview_command_center,01_overview-home.md,Should Attention dismissals expire only on source-state change or also after a configurable time window?
+3,01_overview_command_center,01_overview-home.md,How many “Attention Now” items should be visible before collapsing? Product default must be validated; no architecture dependency.
+4,01_overview_command_center,01_overview-home.md,"Should Current Focus allow multiple simultaneous pinned contexts or exactly one primary focus in MVP? Recommended MVP: one primary focus, with other urgent items still visible via Attention."
+5,01_overview_command_center,02_attention-model.md,Persist AttentionItem occurrences or compute entirely from domain events/projections? Engineering audit should decide based on audit/history needs.
+6,01_overview_command_center,02_attention-model.md,Default snooze presets are UX-level and require validation.
+7,01_overview_command_center,02_attention-model.md,Whether user can configure category visibility in MVP; recommended: no advanced configuration initially.
+8,01_overview_command_center,03_global-command-palette.md,Whether global entity search is part of v1 MVP or only command navigation; recommended: lightweight Song/Campaign search once those lists exist.
+9,01_overview_command_center,03_global-command-palette.md,Whether mobile needs a search palette at all; recommended MVP: Quick Add sheet only.
+10,01_overview_command_center,04_onboarding.md,Exact `MINIMUM_READY` conditions should be validated during UX prototyping; recommended base: Artist exists + initial intent selected + at least minimal identity context or explicit choice to defer.
+11,01_overview_command_center,04_onboarding.md,"Should “first useful action” completion mark onboarding `COMPLETED`, or should completion happen when user explicitly dismisses setup? Recommended: minimum ready is automatic, completed is explicit/after first value action."
+12,01_overview_command_center,04_onboarding.md,Whether to introduce `MonthlyObjective` during onboarding depends on its future entity decision from Overview spec.
+13,02_identity,01_identity-home.md,Exact checklist components required for `Identity Minimum Ready` versus `Identity Complete` should be UX-tested.
+14,02_identity,01_identity-home.md,Whether multiple simultaneous active Eras are ever allowed; recommended v1.3: one active Era per artist time context.
+15,02_identity,02_identity-wizard.md,Exact required vs optional step matrix for initial activation should be decided after UX prototyping; MASTER gives sequence but not mandatory completeness thresholds.
+16,02_identity,03_archetype-discovery.md,Whether confidence should be categorical rather than numeric. Recommended: categorical + explanation to avoid fake precision.
+17,02_identity,04_listening-session.md,Prompt library/versioning belongs in UX/content design; should be eval-tested for leading bias.
+18,02_identity,05_sensory-associations.md,Protection as status vs separate visibility field should be decided in data model audit; separate visibility is likely cleaner.
+19,02_identity,06_moodboard.md,Whether remote images should be mirrored or referenced only depends on rights/storage policy; engineering/legal product review required.
+20,02_identity,07_visual-dna.md,`EnvironmentRules` fields are named in MASTER but not structurally enumerated; detailed schema should be defined during DB/product data-model pass based on query/use cases.
+21,02_identity,08_typography.md,Exact representation of `headlineRules/bodyRules` should be defined from supported design surfaces rather than over-modeling arbitrary typography properties now.
+22,02_identity,09_narrative-identity.md,Whether fictional persona facts need a first-class epistemic tag inside Identity Narrative or can be handled by field-level metadata; data-model pass should decide.
+23,02_identity,10_symbolic-anchors.md,Exact category enum should remain extensible until real usage proves stable categories.
+24,02_identity,11_mystique-interpretation.md,Whether Song-specific interpretation policy should be a first-class entity or live in SongIdentityContext/Knowledge; MASTER implies song explanation level but does not define per-song schema.
+25,02_identity,12_vertical-rules.md,Exact persistent schema should follow Stage 0 relational/JSONB reasoning because many vertical fields may be sparse and evolve.
+26,02_identity,13_eras.md,Formal threshold for “too much override → major Identity Version” cannot be a magic score; initially use explainable rule/conflict review + human choice.
+27,02_identity,14_identity-constraints.md,"Materiality threshold for requiring formal deviation versus simple soft Guard warning should be UX-defined by constraint priority/type, not a universal numerical score."
+28,02_identity,15_identity-guard.md,"Severity taxonomy for individual findings can reuse attention-style categorical levels, but should be domain-specific enough to distinguish hard constraint vs stylistic tension."
+29,02_identity,16_brand-book.md,"Exact sharing/access-link feature is outside current spec; export is defined, collaboration permissions are deferred."
+30,02_identity,17_identity-versioning.md,"Whether version labels are user-editable or system-suggested with confirmation; recommended: system proposes semantic next version, user confirms during review."
+31,03_narrative,01_narrative-home.md,Whether one Content Unit may have multiple first-class Narrative Track links or one primary + secondary tags; MASTER only defines `narrativeTrackId?` on Content Angle. Schema pass must resolve without losing multi-story historical cases.
+32,03_narrative,01_narrative-home.md,Whether Narrative Home needs a first-class `NarrativeAttentionItem` persistence model or can derive attention from domain state like Overview does.
+33,03_narrative,02_tracks.md,Confirm concrete enum behind generic MASTER `NarrativeTrack.status` during schema pass.
+34,03_narrative,02_tracks.md,Decide whether Track-to-Song/Campaign associations need explicit join entities or remain usage-derived from Beats/Content/Campaign references.
+35,03_narrative,03_beats.md,Whether reopening TOLD should be a direct state transition or create a successor Beat; decide after UX prototyping and event-history design.
+36,03_narrative,04_signature-differentiators.md,"Whether Differentiator needs explicit lifecycle (`ACTIVE/DORMANT/RETIRED`) in schema; MASTER does not define status, so defer to data-model review."
+37,03_narrative,05_mix-plan.md,Primary actual-mix unit for default UX: Content Units vs published Content Units vs Publications. MASTER says `actualMix[]` but does not resolve denominator semantics.
+38,03_narrative,05_mix-plan.md,Multi-Track Content Unit weighting if supported (full count vs primary track + secondary tags vs fractional); must be decided with schema model.
+39,03_narrative,06_narrative-analytics.md,"Exact confidence computation remains a cross-domain Analytics/Intelligence design decision; Narrative must consume explainable confidence, not invent a separate model."
+40,03_narrative,06_narrative-analytics.md,"If multi-Track Content Units are supported, analytics attribution weighting must be defined globally rather than locally here."
+41,04_songs_music,01_song-library.md,Exact `Song.releaseStatus` enum is not defined in MASTER and must be resolved during schema/product lifecycle pass.
+42,04_songs_music,02_song-home.md,Whether Brain section readiness should be persisted or fully derived; prefer derived until a workflow proves persistence useful.
+43,04_songs_music,03_story-meaning.md,Whether statement-level normalized entity belongs in Song Brain schema or generic Knowledge system. MASTER gives labels but not storage granularity; schema pass should choose one canonical model.
+44,04_songs_music,04_lyrics.md,Whether canonical lyrics live as DOCUMENT Asset + structured section index or a dedicated LyricVersion entity; MASTER only specifies `lyricsReference`.
+45,04_songs_music,05_segments.md,Whether analogous Segment mapping across Release Extensions needs first-class relation (`equivalentSegmentId`) or stays manual metadata.
+46,04_songs_music,06_audio-assets.md,Units/semantics for foreground/background levels need concrete UX/schema definition; MASTER names fields but not scale.
+47,04_songs_music,07_song-identity-context.md,Exact precedence ordering among Identity → Era → Song override → Content-specific IdentityDeviation should be centralized and frozen in Context/Guard spec.
+48,04_songs_music,07_song-identity-context.md,Final entity boundary for song-specific Interpretation Policy remains unresolved from Identity pass.
+49,04_songs_music,08_performances.md,Whether a dedicated `Performance` entity is required for live-show/setlist/DSP workflows or whether projection + LiveSession/ShootSession suffices. Defer to schema audit.
+50,04_songs_music,09_content-history.md,Precise rule for song attribution on Content Units that use a Song only as secondary/background audio should be centralized with Content/AudioUsage schema.
+51,04_songs_music,10_song-experiments-learnings.md,"Cross-domain confidence computation and minimum-observation policy remain owned by Intelligence/Analytics specs, not Song domain."
+52,04_songs_music,11_release-extensions.md,Formal `Release` entity schema is not defined in MASTER core model excerpt; Campaign/Release detailed pass must freeze it.
+53,04_songs_music,11_release-extensions.md,Semantics of `VIDEO` extension with required `releaseId` need clarification in Release/DSP schema.
+54,05_campaigns_releases,01_campaigns.md,Final Campaign persistence schema and status enum.
+55,05_campaigns_releases,01_campaigns.md,Whether Campaign allows multiple Songs/Releases in MVP or one primary release plus related references.
+56,05_campaigns_releases,01_campaigns.md,Canonical strategy-change event entity vs AuditEvent subtype.
+57,05_campaigns_releases,02_campaign-goals.md,Whether Goal Definition deserves a dedicated entity or remains Campaign fields + history/event records.
+58,05_campaigns_releases,03_release-lifecycle.md,Formal Release schema; multi-track release scope; semantics of `VIDEO` ReleaseExtension vs DSPVideo/Content asset.
+59,05_campaigns_releases,04_launch-activation.md,Generic orchestration action entity vs typed join tables; future owner/assignee model deferred.
+60,05_campaigns_releases,05_release-readiness.md,"Whether readiness checks are persisted snapshots, fully computed projections, or hybrid; likely hybrid with audit history."
+61,05_campaigns_releases,06_momentum-windows.md,Canonical day-boundary/timezone policy for release date calculations requires engineering decision.
+62,06_content_factory,01_factory-home.md,Whether Factory Home should include a deterministic “capacity warning” projection from Pipeline before generation; behavior is recommended but exact threshold model is not frozen.
+63,06_content_factory,02_angle-generation.md,"Exact default candidate count is configuration/product tuning, not architectural constant."
+64,06_content_factory,03_angle-review.md,Whether reject taxonomy is global enum or configurable product taxonomy can be decided in data-model pass.
+65,06_content_factory,04_creative-exploration.md,Exact exploration session batch size and clustering UX are implementation/product tuning details.
+66,06_content_factory,05_execution-package.md,Whether ExecutionPackage is first-class persisted entity or versioned structured fields attached to ContentUnit needs schema audit.
+67,06_content_factory,06_hooks.md,"Exact minimum observation threshold comes from Experiment design/config, not Hook entity."
+68,06_content_factory,07_content-units.md,Canonical ID format for non-song ContentUnits remains to be defined.
+69,06_content_factory,08_identity-check.md,Precedence among Identity/Era/Song/Content deviations remains a Context/Guard cross-domain schema question already tracked.
+70,06_content_factory,09_novelty.md,Exact similarity algorithms/thresholds deferred to implementation/eval tuning.
+71,06_content_factory,10_fatigue.md,Exact fatigue classifier thresholds are intentionally not frozen in product spec; require eval/analytics calibration.
+72,06_content_factory,11_platform-adaptation.md,"Boundary for “adaptation change large enough to require new ContentUnit” needs heuristics/evals, not a single hard threshold."
+73,07_pipeline_planning_calendar,01_pipeline.md,"Whether `priority`, `nextAction` and `blocker` belong directly on ContentUnit or in separate operational projection requires schema audit. Exact grouping of canonical states into default Kanban columns is UX-configurable."
+74,07_pipeline_planning_calendar,02_content-rhythm.md,MASTER does not define ContentRhythmTemplate field-level schema/status/versioning. Decide in schema pass whether rhythm targets are normalized child rows or JSONB configuration.
+75,07_pipeline_planning_calendar,03_evergreen-pool.md,Whether a dedicated EvergreenItem entity is necessary or Pool should remain a query/projection over existing entities.
+76,07_pipeline_planning_calendar,04_recurring-series.md,RecurringSeries `status` enum and whether major concept evolution requires formal version entity need schema/product freeze.
+77,07_pipeline_planning_calendar,05_content-slots.md,MASTER omits ContentSlot identity/status/assignment fields. Schema pass must define ownership and relationship to ContentUnit/Publications.
+78,07_pipeline_planning_calendar,06_monthly-objective.md,"Critical architecture question: MASTER v1.3 references “Monthly Objective” as planning input but defines no first-class entity. Decide whether to introduce `PlanningObjective`/`PeriodObjective`, its scope (monthly only vs arbitrary period), schema/versioning and relationship to CampaignGoal."
+79,07_pipeline_planning_calendar,07_calendar.md,Canonical workspace timezone/day-boundary policy and whether external calendar integration enters future scope. Exact representation of flexible dateWindow on Month view needs UX prototyping.
+80,07_pipeline_planning_calendar,08_seasonal-opportunities.md,Formal status enum and whether opportunity discovery belongs primarily to Growth/Research with Calendar only consuming a projection.
+81,08_production,01_capability-profile.md,Formal status/availability model and whether locations/crew require dedicated entities vs embedded profile objects.
+82,08_production,02_equipment.md,Equipment `type` and `qualityTier` enums are not frozen in MASTER.
+83,08_production,03_production-agent.md,Whether approved ProductionPlan needs dedicated versioned entity distinct from ExecutionPackage/ShootSession.
+84,08_production,04_shoot-sessions.md,ShootSession status enum and normalized representation of setup/wardrobe/lighting/camera fields.
+85,08_production,05_shot-list.md,Whether `GOOD`/`SELECTED` should be Shot statuses or Take-level statuses once a formal Take entity is introduced; MASTER currently assigns statuses to Shot while On-Set includes take counter.
+86,08_production,06_on-set.md,"Formal Take data model, whether app tracks explicit END TAKE, and offline/PWA persistence technology are engineering/schema decisions."
+87,08_production,07_takes.md,Critical: introduce formal `Take` entity vs derive from On-Set events + Smart Ingest groups. Also reconcile Shot statuses GOOD/SELECTED with take-level outcomes in MASTER.
+88,08_production,08_voice-notes.md,"Default retention/privacy policy and whether voice capture lives under Production, Assets or global quick-capture navigation; behavior remains cross-domain regardless."
+89,08_production,09_production-economics.md,"Whether production cost estimates live on ShootSession, a dedicated scenario entity, Decision evidence, or Business cost model."
+90,09_assets_media_rights,01_asset-library.md,Canonical tagging taxonomy and whether user-facing folders/collections are needed beyond metadata/search in MVP.
+91,09_assets_media_rights,02_smart-ingest.md,"Default confidence thresholds and persistence shape of mapping suggestions must be calibrated in implementation/evals, not hardcoded in product spec."
+92,09_assets_media_rights,03_take-grouping.md,Relationship between confirmed group and future formal `Take` entity remains tied to Production schema audit.
+93,09_assets_media_rights,04_transcription.md,Canonical Transcript persistence as derived Asset vs structured transcript entity plus optional exported Asset.
+94,09_assets_media_rights,05_rights.md,Exact blocking matrix by surface/use type should be centralized in Rights policy implementation rather than scattered per UI.
+95,09_assets_media_rights,06_external-assets.md,Whether ExternalAssetSource is user-configurable registry UI in MVP or seed/config-backed only.
+96,09_assets_media_rights,07_lineage.md,Whether lineage is implemented purely through domain foreign keys + query service or supplemented by generalized edge table for flexible cross-surface usages.
+97,09_assets_media_rights,08_derived-assets.md,MASTER singular `parentAssetId` conflicts with true multi-source MIXED/REMIX. Schema must add generalized parent-source relation or constrain semantics explicitly.
+98,09_assets_media_rights,09_atomization.md,Whether derivative plan items are own entity or embedded structured rows inside RepurposingPlan.
+99,09_assets_media_rights,10_repurposing.md,Exact schema for `derivatives[]` and canonical product rule for when adaptation becomes new ContentUnit remain tied to Content Factory unresolved item #26.
+100,10_distribution_owned_media,01_profile-readiness.md,Should readiness persistence be a computed projection only or also store campaign-time snapshots?
+101,10_distribution_owned_media,01_profile-readiness.md,Define exact REQUIRED-vs-OPTIONAL dimension policy per objective without hardcoding platform-specific UI rules.
+102,10_distribution_owned_media,02_starter-pack.md,Should StarterContentPack be persisted as a plan entity or computed from role assignments/profile context?
+103,10_distribution_owned_media,03_profile-audit.md,Need canonical external-action/task representation shared with Distribution/DSP/Platform adapters.
+104,10_distribution_owned_media,04_publications.md,Canonical Publication status enum is not defined by MASTER and needs schema freeze.
+105,10_distribution_owned_media,04_publications.md,Clarify persisted boundary between adaptation version and Publication execution snapshot.
+106,10_distribution_owned_media,05_publishing.md,"Need shared ExternalAction/Execution schema across publishing, DSP tasks and profile audit."
+107,10_distribution_owned_media,06_link-routing.md,Formal LinkDestination schema/status/versioning is not specified in MASTER.
+108,10_distribution_owned_media,06_link-routing.md,Whether timed switches use JobService scheduler vs computed effective configuration requires engineering decision.
+109,10_distribution_owned_media,07_owned-media.md,WebSection content schema and WebExperience status/version lifecycle need schema design.
+110,10_distribution_owned_media,07_owned-media.md,Hosting/deployment provider abstraction is not specified by MASTER and should remain infrastructure-level.
+111,10_distribution_owned_media,08_web-story.md,Choose first-class WebStory entity vs embedded/versioned WebExperience section during schema design.
+112,10_distribution_owned_media,09_audience-capture.md,Exact aggregate event schema and provider abstraction belong to Integrations pass; preserve strict PII boundary.
+113,10_distribution_owned_media,10_web-analytics.md,Canonical web-event storage vs generic Metric/Event infrastructure should be resolved in Analytics/Engineering pass.
+114,11_dsp,01_dsp-home.md,Need canonical DSP task/external-action model shared with Release Readiness and Platform integrations.
+115,11_dsp,02_profiles.md,Status enums for individual DSPProfile fields and readiness need schema definition.
+116,11_dsp,03_dsp-release-plan.md,"Need shared task status/entity contract across DSPReleasePlan, LaunchActivationPlan and distribution external actions."
+117,11_dsp,04_opportunities.md,"Define eligibility/status enums and whether opportunity instances are imported, computed or hybrid."
+118,11_dsp,05_editorial-pitch.md,Pitch status/outcome enums and version entity need schema definition.
+119,11_dsp,06_source-of-streams.md,Canonical DiscoveryChannelPerformance persistence shape and snapshot granularity need Analytics/schema alignment.
+120,11_dsp,07_playlist-research.md,"Future Publicity/Outreach domain may own curator relationship management; v1.3 should keep playlist research operational, not CRM."
+121,11_dsp,08_dsp-video.md,Define DSPVideo references/status enums and ownership relative to Publication entity in schema pass.
+122,11_dsp,09_revenue-imports.md,Need source-row granularity decision: snapshot-only vs normalized royalty line items feeding snapshots.
+123,11_dsp,10_artist-playlists.md,ArtistPlaylist status enum and whether contents are modeled or only external reference need schema decision.
+124,12_growth_market,01_growth-home.md,Growth recommendation prioritization may later need a transparent multi-objective decision model; do not freeze a score now.
+125,12_growth_market,02_warm-network.md,"If future Publicity/Outreach Engine adds Contact entities, ownership boundary must be reconciled rather than duplicated."
+126,12_growth_market,03_audience-sources.md,Need canonical location for attribution-confidence metadata when AudienceSource is attached to aggregates.
+127,12_growth_market,04_search-intent.md,Formal SearchOpportunity entity schema/status is not specified in MASTER.
+128,12_growth_market,05_market-opportunities.md,MarketOpportunity operational status and confidence calculation framework need later Analytics/schema calibration.
+129,12_growth_market,06_geo-experiments.md,No new entity required unless shared Experiment cannot represent market arms cleanly; verify in schema pass.
+130,12_growth_market,07_live.md,LiveSession status enum and guest/collaborator modeling are not defined.
+131,12_growth_market,08_creator-collaboration.md,Creator identity/contact representation should align with future Publicity Contact/Organization architecture rather than duplicate it.
+132,13_business_fan_value,01_business-home.md,Canonical business base currency and currency-conversion policy need engineering/product freeze.
+133,13_business_fan_value,02_revenue-goals.md,First-class RevenueScenario entity/versioning not defined in MASTER.
+134,13_business_fan_value,03_revenue-portfolio.md,Mapping RevenueEvent.source to RevenuePortfolio enum needs canonical schema mapping.
+135,13_business_fan_value,04_fan-cohorts.md,Formal cohort-definition thresholds/rules should be configurable/evidence-based and not hardcoded prematurely.
+136,13_business_fan_value,05_offers.md,Offer currency missing in MASTER schema must be resolved.
+137,13_business_fan_value,05_offers.md,Offer status enum and versioning boundary need schema design.
+138,13_business_fan_value,06_merch.md,Inventory quantity representation and order-level integration are outside current MASTER scope.
+139,13_business_fan_value,07_unit-economics.md,Formal formula definitions and currency handling must be frozen with finance terminology during engineering spec.
+140,13_business_fan_value,08_membership.md,Tier/version lifecycle and benefit-change semantics for existing vs new members need provider-aware engineering design.
+141,13_business_fan_value,09_revenue-events.md,Correction/reversal data model and exact amount consistency rules need accounting-light schema design.
+142,13_business_fan_value,10_attribution.md,Whether attribution evidence becomes its own entity vs RevenueEvent metadata should be resolved in schema pass.
+143,14_analytics,01_analytics-home.md,Canonical baseline-window defaults and data-quality thresholds require calibration in engineering/eval pass.
+144,14_analytics,02_metric-normalization.md,Finalize canonical formula registry for derived metrics during engineering spec.
+145,14_analytics,03_snapshots.md,Age-bucket tolerance/default comparison policy needs analytical calibration.
+146,14_analytics,04_baselines.md,Minimum sample guidance should be calibrated per analysis type rather than globally hardcoded.
+147,14_analytics,05_outliers.md,Threshold/eval calibration required before implementation.
+148,14_analytics,06_hook-analytics.md,Audience scope definition depends on available aggregate data.
+149,14_analytics,07_segment-analytics.md,Segment-comparison minimum observations should be calibrated.
+150,14_analytics,08_market-analytics.md,Canonical retention definitions vary by source and need metric registry.
+151,14_analytics,09_fan-value-analytics.md,A unified aggregate depth index is intentionally not defined; keep dimensions explicit.
+152,15_intelligence_learning_decisions,01_insights.md,Insight status enum/confidence scale exact values need schema alignment; MASTER only defines fields.
+153,15_intelligence_learning_decisions,02_hypotheses.md,Hypothesis status enum should align with Experiment lifecycle.
+154,15_intelligence_learning_decisions,03_experiments.md,Experiment status enum and exact execution-arm relationship need schema freeze.
+155,15_intelligence_learning_decisions,04_learnings.md,Exact evidence threshold is intentionally not universal; needs per-scope calibration/evals.
+156,15_intelligence_learning_decisions,05_time-decay.md,Per-scope decay curves/thresholds require calibration.
+157,15_intelligence_learning_decisions,06_explore-exploit.md,Default denominator (Content Units vs Publications) should align with planning analytics.
+158,15_intelligence_learning_decisions,07_decision-memory.md,Decision scope enum is not defined by MASTER; align with domains without inventing brittle taxonomy.
+159,15_intelligence_learning_decisions,08_weekly-review.md,Persisted WeeklyReview entity/version schema is not defined.
+160,15_intelligence_learning_decisions,09_identity-review.md,Default cadence configurable; event-driven criteria should remain suggestions rather than hardcoded triggers.
+161,16_knowledge_research_context,01_artist-brain.md,Brain versioning entity vs generated snapshot needs schema decision.
+162,16_knowledge_research_context,02_song-brains.md,Knowledge indexing granularity/chunk schema to define during engineering.
+163,16_knowledge_research_context,03_tone-corpus.md,Exact verbatim-similarity guard threshold belongs to AI eval/guard implementation.
+164,16_knowledge_research_context,04_anti-ai-style.md,Rule representation and priority integration with IdentityConstraint need engineering alignment.
+165,16_knowledge_research_context,05_candidate-knowledge.md,Candidate status enum and merge semantics need schema freeze.
+166,16_knowledge_research_context,06_research-claims.md,Source entity schema/archival snapshot policy needs Research implementation design.
+167,16_knowledge_research_context,07_research-promotion.md,Exact authorization/reviewer roles future-ready but single artist MVP sufficient.
+168,16_knowledge_research_context,08_context-assembler.md,Retrieval ranking weights/chunking/index strategy belongs to engineering/eval calibration.
+169,16_knowledge_research_context,09_context-debug.md,Retention policy for AgentRun/debug payloads needs security/cost decision.
+170,17_ai_agents_jobs,01_orchestrator.md,Detailed structured output schemas and provider-specific retry parameters belong to engineering/eval implementation.
+171,17_ai_agents_jobs,02_research-agent.md,Detailed structured output schemas and provider-specific retry parameters belong to engineering/eval implementation.
+172,17_ai_agents_jobs,03_strategy-agent.md,Detailed structured output schemas and provider-specific retry parameters belong to engineering/eval implementation.
+173,17_ai_agents_jobs,04_production-agent.md,Detailed structured output schemas and provider-specific retry parameters belong to engineering/eval implementation.
+174,17_ai_agents_jobs,05_analytics-agent.md,Detailed structured output schemas and provider-specific retry parameters belong to engineering/eval implementation.
+175,17_ai_agents_jobs,06_brand-guard.md,Detailed structured output schemas and provider-specific retry parameters belong to engineering/eval implementation.
+176,17_ai_agents_jobs,07_agent-config.md,Detailed structured output schemas and provider-specific retry parameters belong to engineering/eval implementation.
+177,17_ai_agents_jobs,08_agent-runs.md,Detailed structured output schemas and provider-specific retry parameters belong to engineering/eval implementation.
+178,17_ai_agents_jobs,09_prompt-registry.md,Detailed structured output schemas and provider-specific retry parameters belong to engineering/eval implementation.
+179,17_ai_agents_jobs,10_evals.md,Detailed structured output schemas and provider-specific retry parameters belong to engineering/eval implementation.
+180,17_ai_agents_jobs,11_model-routing.md,Detailed structured output schemas and provider-specific retry parameters belong to engineering/eval implementation.
+181,17_ai_agents_jobs,12_job-service.md,Detailed structured output schemas and provider-specific retry parameters belong to engineering/eval implementation.
+182,17_ai_agents_jobs,13_job-progress.md,Detailed structured output schemas and provider-specific retry parameters belong to engineering/eval implementation.
+183,18_platforms_integrations,01_capability-registry.md,Provider-specific implementation details belong to adapters; shared normalized contracts finalized in Engineering Spec.
+184,18_platforms_integrations,02_platform-accounts.md,Provider-specific implementation details belong to adapters; shared normalized contracts finalized in Engineering Spec.
+185,18_platforms_integrations,03_asset-requirements.md,Provider-specific implementation details belong to adapters; shared normalized contracts finalized in Engineering Spec.
+186,18_platforms_integrations,04_csv-wizard.md,Provider-specific implementation details belong to adapters; shared normalized contracts finalized in Engineering Spec.
+187,18_platforms_integrations,05_mapping-templates.md,Provider-specific implementation details belong to adapters; shared normalized contracts finalized in Engineering Spec.
+188,18_platforms_integrations,06_duplicate-detection.md,Provider-specific implementation details belong to adapters; shared normalized contracts finalized in Engineering Spec.
+189,18_platforms_integrations,07_platform-adapters.md,Provider-specific implementation details belong to adapters; shared normalized contracts finalized in Engineering Spec.
+190,18_platforms_integrations,08_presence-registry.md,Provider-specific implementation details belong to adapters; shared normalized contracts finalized in Engineering Spec.
+191,18_platforms_integrations,09_verification.md,Provider-specific implementation details belong to adapters; shared normalized contracts finalized in Engineering Spec.
+192,19_settings_security_portability,01_settings.md,Retention/encryption-key/backup policies require Engineering/Security implementation specification.
+193,19_settings_security_portability,02_secrets-oauth.md,Retention/encryption-key/backup policies require Engineering/Security implementation specification.
+194,19_settings_security_portability,03_privacy.md,Retention/encryption-key/backup policies require Engineering/Security implementation specification.
+195,19_settings_security_portability,04_audit-events.md,Retention/encryption-key/backup policies require Engineering/Security implementation specification.
+196,19_settings_security_portability,05_exports.md,Retention/encryption-key/backup policies require Engineering/Security implementation specification.
+197,19_settings_security_portability,06_logs.md,Retention/encryption-key/backup policies require Engineering/Security implementation specification.
+198,20_product_quality_telemetry,01_product-telemetry.md,Exact telemetry event schema/retention and CI implementation belong to Engineering Spec.
+199,20_product_quality_telemetry,02_ai-telemetry.md,Exact telemetry event schema/retention and CI implementation belong to Engineering Spec.
+200,20_product_quality_telemetry,03_smart-ingest-kpi.md,Exact telemetry event schema/retention and CI implementation belong to Engineering Spec.
+201,20_product_quality_telemetry,04_identity-telemetry.md,Exact telemetry event schema/retention and CI implementation belong to Engineering Spec.
+202,20_product_quality_telemetry,05_testing.md,Exact telemetry event schema/retention and CI implementation belong to Engineering Spec.
+203,20_product_quality_telemetry,06_definition-of-done.md,Exact telemetry event schema/retention and CI implementation belong to Engineering Spec.

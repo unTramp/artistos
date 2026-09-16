@@ -1,0 +1,8 @@
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Artist OS generated documentation
+docs/artist-os/COMPILED_FULL_PRODUCT_SPEC.md
+docs/artist-os/engineering/COMPILED_ENGINEERING_SPEC_PASS1.md
