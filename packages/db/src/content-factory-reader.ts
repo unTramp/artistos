@@ -19,6 +19,8 @@ export interface ContentFactoryAngleReadModel {
   why: string;
   identityFitRationale: string;
   productionEffort: string;
+  sourceType: string;
+  sourceProvenance: Record<string, unknown>;
   status: string;
   version: number;
   identityVersionId: string | null;
@@ -45,38 +47,41 @@ export interface ContentFactoryUnitReadModel {
   updatedAt: Date;
 }
 
+const angleSelection = {
+  id: contentAngles.id,
+  songId: contentAngles.songId,
+  songTitle: songs.title,
+  title: contentAngles.title,
+  idea: contentAngles.idea,
+  pillar: contentAngles.pillar,
+  mode: contentAngles.mode,
+  goal: contentAngles.goal,
+  audience: contentAngles.audience,
+  platformTargets: contentAngles.platformTargets,
+  requiredAssets: contentAngles.requiredAssets,
+  learningValue: contentAngles.learningValue,
+  why: contentAngles.why,
+  identityFitRationale: contentAngles.identityFitRationale,
+  productionEffort: contentAngles.productionEffort,
+  sourceType: contentAngles.sourceType,
+  sourceProvenance: contentAngles.sourceProvenance,
+  status: contentAngles.status,
+  version: contentAngles.version,
+  identityVersionId: contentAngles.identityVersionId,
+  eraIdentityId: contentAngles.eraIdentityId,
+  rejectionReason: contentAngles.rejectionReason,
+  decisionNote: contentAngles.decisionNote,
+  updatedAt: contentAngles.updatedAt
+};
+
 export class PgContentFactoryReader {
   constructor(private readonly db: Stage0Database) {}
 
   async listAngles(artistId: string): Promise<ContentFactoryAngleReadModel[]> {
-    const rows = await this.db.select({
-      id: contentAngles.id,
-      songId: contentAngles.songId,
-      songTitle: songs.title,
-      title: contentAngles.title,
-      idea: contentAngles.idea,
-      pillar: contentAngles.pillar,
-      mode: contentAngles.mode,
-      goal: contentAngles.goal,
-      audience: contentAngles.audience,
-      platformTargets: contentAngles.platformTargets,
-      requiredAssets: contentAngles.requiredAssets,
-      learningValue: contentAngles.learningValue,
-      why: contentAngles.why,
-      identityFitRationale: contentAngles.identityFitRationale,
-      productionEffort: contentAngles.productionEffort,
-      status: contentAngles.status,
-      version: contentAngles.version,
-      identityVersionId: contentAngles.identityVersionId,
-      eraIdentityId: contentAngles.eraIdentityId,
-      rejectionReason: contentAngles.rejectionReason,
-      decisionNote: contentAngles.decisionNote,
-      updatedAt: contentAngles.updatedAt
-    }).from(contentAngles)
+    return this.db.select(angleSelection).from(contentAngles)
       .leftJoin(songs, and(eq(songs.id, contentAngles.songId), eq(songs.artistId, artistId)))
       .where(eq(contentAngles.artistId, artistId))
       .orderBy(desc(contentAngles.updatedAt));
-    return rows;
   }
 
   async listUnits(artistId: string): Promise<ContentFactoryUnitReadModel[]> {
@@ -102,30 +107,7 @@ export class PgContentFactoryReader {
   }
 
   async getAngle(artistId: string, angleId: string): Promise<ContentFactoryAngleReadModel | null> {
-    const rows = await this.db.select({
-      id: contentAngles.id,
-      songId: contentAngles.songId,
-      songTitle: songs.title,
-      title: contentAngles.title,
-      idea: contentAngles.idea,
-      pillar: contentAngles.pillar,
-      mode: contentAngles.mode,
-      goal: contentAngles.goal,
-      audience: contentAngles.audience,
-      platformTargets: contentAngles.platformTargets,
-      requiredAssets: contentAngles.requiredAssets,
-      learningValue: contentAngles.learningValue,
-      why: contentAngles.why,
-      identityFitRationale: contentAngles.identityFitRationale,
-      productionEffort: contentAngles.productionEffort,
-      status: contentAngles.status,
-      version: contentAngles.version,
-      identityVersionId: contentAngles.identityVersionId,
-      eraIdentityId: contentAngles.eraIdentityId,
-      rejectionReason: contentAngles.rejectionReason,
-      decisionNote: contentAngles.decisionNote,
-      updatedAt: contentAngles.updatedAt
-    }).from(contentAngles)
+    const rows = await this.db.select(angleSelection).from(contentAngles)
       .leftJoin(songs, and(eq(songs.id, contentAngles.songId), eq(songs.artistId, artistId)))
       .where(and(eq(contentAngles.artistId, artistId), eq(contentAngles.id, angleId)))
       .limit(1);
