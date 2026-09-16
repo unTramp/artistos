@@ -4,6 +4,7 @@ import "./commands.css";
 import "./execution.css";
 import "./factory-ai.css";
 import "./daily-os.css";
+import "./attention-explainability.css";
 
 export const metadata: Metadata = {
   title: "Artist OS",

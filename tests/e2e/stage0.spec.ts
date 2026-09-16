@@ -15,7 +15,7 @@ test("exposes liveness with a trace id", async ({ request }) => {
   expect(body.meta.traceId).toEqual(expect.any(String));
 });
 
-test("signs up, completes onboarding, opens Today and signs out", async ({ page }) => {
+test("signs up, completes onboarding, explains Today attention and signs out", async ({ page }) => {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const email = `daily-os-${suffix}@example.test`;
 
@@ -39,6 +39,18 @@ test("signs up, completes onboarding, opens Today and signs out", async ({ page 
   await expect(page.getByText("Activate your artist identity", { exact: true })).toBeVisible();
   await expect(page.getByText(email, { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Today", exact: true })).toHaveClass(/active/);
+
+  await page.getByRole("button", { name: "Why this recommendation: Activate your artist identity" }).click();
+  const drawer = page.getByRole("dialog", { name: "Activate your artist identity" });
+  await expect(drawer).toBeVisible();
+  await expect(drawer.getByText("WHY THIS", { exact: true }).first()).toBeVisible();
+  await expect(drawer.getByText("BASED ON", { exact: true })).toBeVisible();
+  await expect(drawer.getByText("UNCERTAINTY", { exact: true })).toBeVisible();
+  await expect(drawer.getByText("EXPECTED EFFECT", { exact: true })).toBeVisible();
+  await expect(drawer.getByText("WHAT WE MAY LEARN", { exact: true })).toBeVisible();
+  await expect(drawer.getByText("Low — this recommendation comes from deterministic current state.")).toBeVisible();
+  await drawer.getByRole("button", { name: "Close explanation" }).click();
+  await expect(drawer).toBeHidden();
 
   await page.goto("/auth");
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();

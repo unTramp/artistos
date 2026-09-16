@@ -8,6 +8,7 @@ import {
   PgOperationalActionReader
 } from "@artist-os/db";
 import { AppShell } from "./components/app-shell";
+import { AttentionExplainability } from "./components/attention-explainability";
 import { resolveAuthenticatedActorContext } from "@/lib/actor-context";
 import { getDatabaseRuntime } from "@/lib/runtime";
 
@@ -177,7 +178,10 @@ export default async function HomePage() {
               <p>{primary.whyThis[0]}</p>
               {primary.objectiveAligned && <small className="today-objective-note">Aligned with current objective</small>}
             </div>
-            <a className="primary-action" href={primary.action.href}>{primary.action.label} →</a>
+            <div className="today-hero-actions">
+              <AttentionExplainability item={primary} />
+              <a className="primary-action" href={primary.action.href}>{primary.action.label} →</a>
+            </div>
           </section>
         ) : (
           <section className="today-hero-card tone-emerald">
@@ -201,11 +205,14 @@ export default async function HomePage() {
           <section className="attention-panel">
             <div className="panel-heading"><div><span className="signal-label">NEXT</span><h2>Attention queue</h2></div><small>{projection.items.length} current signal{projection.items.length === 1 ? "" : "s"}</small></div>
             {secondary.length === 0 ? <div className="quiet-state">No secondary attention items right now.</div> : secondary.map((item) => (
-              <a className="attention-row" href={item.action.href} key={item.id}>
+              <article className="attention-row" key={item.id}>
                 <i className={`attention-dot ${toneFor(item)}`} />
-                <div><span>{labelFor(item)}</span><strong>{item.title}</strong><p>{item.whyThis[0]}</p></div>
-                <b>→</b>
-              </a>
+                <div className="attention-row-copy"><span>{labelFor(item)}</span><strong>{item.title}</strong><p>{item.whyThis[0]}</p></div>
+                <div className="attention-row-actions">
+                  <AttentionExplainability item={item} compact />
+                  <a href={item.action.href} aria-label={item.action.label}>→</a>
+                </div>
+              </article>
             ))}
           </section>
 
