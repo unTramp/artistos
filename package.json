@@ -11,6 +11,7 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
+    "arch:check": "node scripts/check-architecture.mjs",
     "db:generate": "pnpm --filter @artist-os/db db:generate",
     "db:migrate": "pnpm --filter @artist-os/db db:migrate"
   },
