@@ -159,4 +159,35 @@ describe("Artist Foundation vertical", () => {
     `);
     expect(evidence.rows[0]).toMatchObject({ identityActivated: 2, eraActivated: 2, songCreated: 1 });
   });
+
+  it("replays Artist Foundation mutations idempotently within command + artist + actor scope", async () => {
+    const writer = new PgArtistFoundationWriter(db);
+    const createSong = new CreateSongService(writer);
+    const idempotencyKey = `foundation-idem-${crypto.randomUUID()}`;
+
+    const first = await createSong.execute(
+      { title: "Idempotent Song", isOriginal: true },
+      context({ idempotencyKey, traceId: "trace-idem-first" })
+    );
+    const replay = await createSong.execute(
+      { title: "Changed title must not create a second mutation", isOriginal: true },
+      context({ idempotencyKey, traceId: "trace-idem-retry" })
+    );
+
+    expect(first.status).toBe("SUCCESS");
+    expect(replay.status).toBe("SUCCESS");
+    if (first.status !== "SUCCESS" || replay.status !== "SUCCESS") throw new Error("idempotent song result missing");
+    expect(replay.data).toEqual(first.data);
+
+    const counts = await db.execute(sql`
+      select
+        count(*) filter (where title = 'Idempotent Song')::int as "songs",
+        count(*) filter (where event_type = 'SongCreated' and aggregate_id = ${first.data.songId}::uuid)::int as "events",
+        (select count(*)::int from idempotency_records where command_name = 'CreateSong' and artist_id = ${artistId}::uuid and key = ${idempotencyKey}) as "records"
+      from songs s
+      left join outbox_events o on o.artist_id = s.artist_id
+      where s.artist_id = ${artistId}::uuid
+    `);
+    expect(counts.rows[0]).toMatchObject({ songs: 1, events: 1, records: 1 });
+  });
 });

@@ -10,6 +10,7 @@ export interface FoundationEvidence {
   commandId: string;
   traceId: string;
   occurredAt: Date;
+  idempotencyKey?: string | undefined;
 }
 
 export type ArtistFoundationPersistenceCode =
@@ -19,7 +20,8 @@ export type ArtistFoundationPersistenceCode =
   | "ERA_NOT_ACTIVATABLE"
   | "ERA_ACTIVE_EXISTS"
   | "ERA_IDENTITY_VERSION_NOT_ACTIVE"
-  | "SONG_DUPLICATE_ISRC";
+  | "SONG_DUPLICATE_ISRC"
+  | "IDEMPOTENCY_IN_PROGRESS";
 
 export class ArtistFoundationPersistenceError extends Error {
   constructor(public readonly code: ArtistFoundationPersistenceCode) {
@@ -33,7 +35,8 @@ const evidenceFrom = (context: CommandContext): FoundationEvidence => ({
   ...(context.actor.id ? { actorId: context.actor.id } : {}),
   commandId: context.commandId,
   traceId: context.traceId,
-  occurredAt: context.requestedAt
+  occurredAt: context.requestedAt,
+  ...(context.idempotencyKey ? { idempotencyKey: context.idempotencyKey } : {})
 });
 
 const requireUser = <T>(context: CommandContext): CommandResult<T> | null => {
@@ -47,6 +50,14 @@ const requireUser = <T>(context: CommandContext): CommandResult<T> | null => {
 
 const mapPersistenceError = <T>(error: unknown): CommandResult<T> => {
   if (error instanceof ArtistFoundationPersistenceError) {
+    if (error.code === "IDEMPOTENCY_IN_PROGRESS") {
+      return {
+        status: "RETRYABLE_FAILURE",
+        code: error.code,
+        message: "An identical artist command is still in progress.",
+        retryable: true
+      };
+    }
     if (error.code.endsWith("_NOT_FOUND")) {
       return { status: "NOT_FOUND", code: error.code, message: "The requested artist resource was not found." };
     }

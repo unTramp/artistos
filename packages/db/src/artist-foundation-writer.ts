@@ -9,12 +9,54 @@ import {
   type SongResult
 } from "@artist-os/core";
 import type { Stage0Database } from "./runtime";
-import { artistIdentities, artistIdentityVersions, auditEvents, eraIdentities, outboxEvents, songs } from "./schema";
+import { artistIdentities, artistIdentityVersions, auditEvents, eraIdentities, idempotencyRecords, outboxEvents, songs } from "./schema";
+
+type FoundationTx = Parameters<Parameters<Stage0Database["transaction"]>[0]>[0];
 
 const actorFields = (evidence: FoundationEvidence) => evidence.actorId ? { actorId: evidence.actorId } : {};
 
+const runIdempotent = async <T>(
+  tx: FoundationTx,
+  artistId: string,
+  evidence: FoundationEvidence,
+  commandName: string,
+  work: () => Promise<T>
+): Promise<T> => {
+  if (!evidence.idempotencyKey) return work();
+
+  const actorScope = evidence.actorId ?? evidence.actorType;
+  const scope = `ArtistFoundation:${commandName}:${artistId}:${actorScope}`;
+  const [claim] = await tx.insert(idempotencyRecords).values({
+    scope,
+    key: evidence.idempotencyKey,
+    commandName,
+    artistId,
+    status: "IN_PROGRESS",
+    createdAt: evidence.occurredAt,
+    updatedAt: evidence.occurredAt
+  }).onConflictDoNothing().returning({ id: idempotencyRecords.id });
+
+  if (!claim) {
+    const [existing] = await tx.select({ status: idempotencyRecords.status, result: idempotencyRecords.result })
+      .from(idempotencyRecords)
+      .where(and(eq(idempotencyRecords.scope, scope), eq(idempotencyRecords.key, evidence.idempotencyKey)))
+      .limit(1);
+
+    if (existing?.status === "SUCCESS" && existing.result) return existing.result as T;
+    throw new ArtistFoundationPersistenceError("IDEMPOTENCY_IN_PROGRESS");
+  }
+
+  const result = await work();
+  await tx.update(idempotencyRecords).set({
+    status: "SUCCESS",
+    result: result as Record<string, unknown>,
+    updatedAt: evidence.occurredAt
+  }).where(eq(idempotencyRecords.id, claim.id));
+  return result;
+};
+
 const writeEvidence = async (
-  tx: Parameters<Parameters<Stage0Database["transaction"]>[0]>[0],
+  tx: FoundationTx,
   input: {
     artistId: string;
     aggregateType: string;
@@ -69,7 +111,7 @@ export class PgArtistFoundationWriter implements ArtistFoundationWritePort {
     label?: string;
     evidence: FoundationEvidence;
   }): Promise<CreateIdentityDraftResult> {
-    return this.db.transaction(async (tx) => {
+    return this.db.transaction(async (tx) => runIdempotent(tx, request.artistId, request.evidence, "CreateIdentityDraft", async () => {
       let [identity] = await tx.select({ id: artistIdentities.id })
         .from(artistIdentities)
         .where(eq(artistIdentities.artistId, request.artistId))
@@ -117,7 +159,7 @@ export class PgArtistFoundationWriter implements ArtistFoundationWritePort {
       });
 
       return { identityId: identity.id, versionId: request.versionId, versionNumber, status: "DRAFT" };
-    });
+    }));
   }
 
   async activateIdentityVersion(request: {
@@ -125,7 +167,7 @@ export class PgArtistFoundationWriter implements ArtistFoundationWritePort {
     versionId: string;
     evidence: FoundationEvidence;
   }): Promise<ActivateIdentityVersionResult> {
-    return this.db.transaction(async (tx) => {
+    return this.db.transaction(async (tx) => runIdempotent(tx, request.artistId, request.evidence, "ActivateIdentityVersion", async () => {
       const [target] = await tx.select({
         id: artistIdentityVersions.id,
         identityId: artistIdentityVersions.identityId,
@@ -173,7 +215,7 @@ export class PgArtistFoundationWriter implements ArtistFoundationWritePort {
       });
 
       return { identityId: target.identityId, versionId: target.id, versionNumber: target.versionNumber, status: "ACTIVE" };
-    });
+    }));
   }
 
   async createEra(request: {
@@ -188,7 +230,7 @@ export class PgArtistFoundationWriter implements ArtistFoundationWritePort {
     };
     evidence: FoundationEvidence;
   }): Promise<EraResult> {
-    return this.db.transaction(async (tx) => {
+    return this.db.transaction(async (tx) => runIdempotent(tx, request.artistId, request.evidence, "CreateEra", async () => {
       const [version] = await tx.select({ id: artistIdentityVersions.id })
         .from(artistIdentityVersions)
         .where(and(eq(artistIdentityVersions.id, request.command.identityVersionId), eq(artistIdentityVersions.artistId, request.artistId)))
@@ -222,11 +264,11 @@ export class PgArtistFoundationWriter implements ArtistFoundationWritePort {
       });
 
       return { eraId: request.eraId, identityVersionId: request.command.identityVersionId, name: request.command.name, status: "DRAFT" };
-    });
+    }));
   }
 
   async activateEra(request: { artistId: string; eraId: string; evidence: FoundationEvidence }): Promise<EraResult> {
-    return this.db.transaction(async (tx) => {
+    return this.db.transaction(async (tx) => runIdempotent(tx, request.artistId, request.evidence, "ActivateEra", async () => {
       const [era] = await tx.select({
         id: eraIdentities.id,
         identityVersionId: eraIdentities.identityVersionId,
@@ -265,11 +307,11 @@ export class PgArtistFoundationWriter implements ArtistFoundationWritePort {
         evidence: request.evidence
       });
       return { eraId: era.id, identityVersionId: era.identityVersionId, name: era.name, status: "ACTIVE" };
-    });
+    }));
   }
 
   async endEra(request: { artistId: string; eraId: string; evidence: FoundationEvidence }): Promise<EraResult> {
-    return this.db.transaction(async (tx) => {
+    return this.db.transaction(async (tx) => runIdempotent(tx, request.artistId, request.evidence, "EndEra", async () => {
       const [era] = await tx.select({
         id: eraIdentities.id,
         identityVersionId: eraIdentities.identityVersionId,
@@ -299,7 +341,7 @@ export class PgArtistFoundationWriter implements ArtistFoundationWritePort {
         evidence: request.evidence
       });
       return { eraId: era.id, identityVersionId: era.identityVersionId, name: era.name, status: "ENDED" };
-    });
+    }));
   }
 
   async createSong(request: {
@@ -321,7 +363,7 @@ export class PgArtistFoundationWriter implements ArtistFoundationWritePort {
     };
     evidence: FoundationEvidence;
   }): Promise<SongResult> {
-    return this.db.transaction(async (tx) => {
+    return this.db.transaction(async (tx) => runIdempotent(tx, request.artistId, request.evidence, "CreateSong", async () => {
       if (request.command.isrc) {
         const [conflict] = await tx.select({ id: songs.id }).from(songs)
           .where(and(eq(songs.artistId, request.artistId), eq(songs.isrc, request.command.isrc), isNull(songs.archivedAt)))
@@ -361,6 +403,6 @@ export class PgArtistFoundationWriter implements ArtistFoundationWritePort {
         evidence: request.evidence
       });
       return { songId: request.songId, title: request.command.title, isOriginal: request.command.isOriginal };
-    });
+    }));
   }
 }
