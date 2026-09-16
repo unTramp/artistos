@@ -24,12 +24,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat .docbundle/artist-os-docs.tar.gz.b64.part-* > /tmp/artist-os-docs.tar.gz.b64
-          base64 --decode /tmp/artist-os-docs.tar.gz.b64 > /tmp/artist-os-docs.tar.gz
+          cat .docbundle/artist-os-docs.tar.xz.b64.part-* > /tmp/artist-os-docs.tar.xz.b64
+          base64 --decode /tmp/artist-os-docs.tar.xz.b64 > /tmp/artist-os-docs.tar.xz
           rm -rf /tmp/artist-os-docs docs/artist-os
           mkdir -p /tmp/artist-os-docs docs
-          tar -xzf /tmp/artist-os-docs.tar.gz -C /tmp
+          tar -xJf /tmp/artist-os-docs.tar.xz -C /tmp
           mv /tmp/artist-os-docs docs/artist-os
+
+      - name: Remove one-time bootstrap files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .docbundle
+          rm -f .github/workflows/bootstrap-artist-os-docs.yml
 
       - name: Commit expanded documentation
         shell: bash
@@ -37,7 +44,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/artist-os
+          git add -A
           if git diff --cached --quiet; then
             echo "No documentation changes to commit."
             exit 0
