@@ -9,6 +9,7 @@ const outbox = new PgOutboxConsumer(runtime.db);
 const workerId = `worker-${process.pid}-${crypto.randomUUID()}`;
 const outboxConsumerName = "stage0-worker";
 let stopping = false;
+let shutdownSignal: string | undefined;
 
 const handlers: Record<string, (job: ClaimedJob) => Promise<void>> = {
   STAGE0_NOOP: async (job) => {
@@ -54,24 +55,33 @@ async function runLoop() {
   logger.info({ operation: "worker.boot", workerId }, "Artist OS worker started");
   while (!stopping) {
     const consumedEvent = await processOutboxOnce();
+    if (stopping) break;
+
     const processedJob = await processJobOnce();
-    if (!consumedEvent && !processedJob) {
+    if (!consumedEvent && !processedJob && !stopping) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
 }
 
-async function shutdown(signal: string) {
+function requestShutdown(signal: string) {
+  if (stopping) return;
   stopping = true;
-  logger.info({ operation: "worker.shutdown", signal, workerId }, "Artist OS worker stopping");
-  await runtime.close();
-  process.exit(0);
+  shutdownSignal = signal;
+  logger.info({ operation: "worker.shutdown_requested", signal, workerId }, "Artist OS worker will stop after in-flight work completes");
 }
 
-process.on("SIGINT", () => void shutdown("SIGINT"));
-process.on("SIGTERM", () => void shutdown("SIGTERM"));
-void runLoop().catch(async (error) => {
-  logger.fatal({ operation: "worker.crash", error: error instanceof Error ? error.message : "Unknown error" }, "Worker crashed");
-  await runtime.close();
-  process.exit(1);
-});
+process.on("SIGINT", () => requestShutdown("SIGINT"));
+process.on("SIGTERM", () => requestShutdown("SIGTERM"));
+
+void (async () => {
+  try {
+    await runLoop();
+    logger.info({ operation: "worker.shutdown", signal: shutdownSignal, workerId }, "Artist OS worker stopped claiming work");
+  } catch (error) {
+    logger.fatal({ operation: "worker.crash", error: error instanceof Error ? error.message : "Unknown error" }, "Worker crashed");
+    process.exitCode = 1;
+  } finally {
+    await runtime.close();
+  }
+})();
