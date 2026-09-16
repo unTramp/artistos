@@ -211,8 +211,13 @@ describe("Content Factory manual-first vertical", () => {
     await expect(changeStatus.execute({ contentUnitId: unit.data.contentUnitId, status: "PUBLISHED" }, context()))
       .resolves.toMatchObject({ status: "CONFLICT", code: "CONTENT_UNIT_INVALID_TRANSITION" });
 
-    await expect(db.execute(sql`update content_units set status = 'SCRIPT_READY' where id = ${unit.data.contentUnitId}::uuid`))
-      .rejects.toThrow(/CONTENT_UNIT_EXECUTION_REQUIRED/);
+    try {
+      await db.execute(sql`update content_units set status = 'SCRIPT_READY' where id = ${unit.data.contentUnitId}::uuid`);
+      throw new Error("expected execution readiness trigger to reject SCRIPT_READY");
+    } catch (error) {
+      const cause = (error as { cause?: unknown }).cause;
+      expect(String(cause)).toContain("CONTENT_UNIT_EXECUTION_REQUIRED");
+    }
 
     await db.insert(contentExecutionRevisions).values({
       id: crypto.randomUUID(),
