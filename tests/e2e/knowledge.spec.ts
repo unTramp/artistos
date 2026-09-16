@@ -30,7 +30,7 @@ test("reviews Candidate Knowledge and rebuilds Artist Brain from approved source
   await page.getByRole("textbox", { name: "Voice example", exact: true }).fill("Warm, direct language without launch hype.");
   await page.getByLabel("Tone label").selectOption("AUTHENTIC");
   await page.getByRole("button", { name: "Add to Tone Corpus" }).click();
-  await expect(page.getByText("AUTHENTIC", { exact: true }).first()).toBeVisible();
+  await expect(page.locator(".tone-label-authentic", { hasText: "AUTHENTIC" })).toBeVisible();
   await expect(page.locator("article").filter({ hasText: "Warm, direct language without launch hype." })).toBeVisible();
 
   await page.getByRole("textbox", { name: "Candidate knowledge", exact: true }).fill("My artist voice should feel kind, open and emotionally direct.");
