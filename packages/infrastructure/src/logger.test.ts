@@ -5,8 +5,9 @@ import { createLogger } from "./index";
 describe("createLogger", () => {
   it("emits structured service context and redacts credential fields", async () => {
     const stream = new PassThrough();
-    let output = "";
-    stream.on("data", (chunk) => { output += chunk.toString(); });
+    const outputPromise = new Promise<string>((resolve) => {
+      stream.once("data", (chunk) => resolve(chunk.toString()));
+    });
 
     const logger = createLogger({ service: "stage0-test", destination: stream });
     logger.info({
@@ -17,8 +18,7 @@ describe("createLogger", () => {
       req: { headers: { authorization: "Bearer private-token" } }
     }, "safe message");
 
-    await new Promise((resolve) => setImmediate(resolve));
-
+    const output = await outputPromise;
     const record = JSON.parse(output.trim()) as Record<string, unknown>;
     expect(record).toMatchObject({
       service: "stage0-test",
