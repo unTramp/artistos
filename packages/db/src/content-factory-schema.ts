@@ -82,8 +82,8 @@ export const contentUnits = pgTable("content_units", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
 }, (table) => [
   uniqueIndex("content_units_artist_code_uidx").on(table.artistId, table.unitCode),
-  index("content_units_artist_status_idx").on(table.artistId, table.status),
-  index("content_units_angle_idx").on(table.angleId)
+  uniqueIndex("content_units_angle_uidx").on(table.angleId),
+  index("content_units_artist_status_idx").on(table.artistId, table.status)
 ]);
 
 export const contentUnitStatusHistory = pgTable("content_unit_status_history", {
