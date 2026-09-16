@@ -24,7 +24,7 @@ This is the loop the artist should feel in daily use.
 
 ### Intelligence loop
 
-`Hypothesis → Experiment → Evidence → Learning → Decision → Reuse`
+`Evidence → Insight / Hypothesis → Experiment → Learning → Decision → Reuse`
 
 This is the loop through which Artist OS accumulates durable artist-specific intelligence.
 
@@ -43,6 +43,18 @@ The product connects the loops by using validated memory, current objectives and
 9. **Daily usefulness before feature breadth.** Before adding another major domain, prove that the existing system helps the artist act today.
 10. **Deep domains, shallow attention.** The attention layer must stay simple. Navigation may grow deeper over time, but users must never need to patrol the sidebar to understand what matters now.
 
+## Human-controlled conflict handling
+
+Prior Decision memory is advisory context, not a rule engine.
+
+When a new proposal conflicts with an active prior Decision, Artist OS must follow:
+
+`Detect conflict → explain prior context → ask for override rationale → allow human decision`
+
+The system must never silently block a user from consciously repeating or revisiting a strategy. Reconsideration may be valid when market, song, audience, creative, timing, platform or other conditions have materially changed.
+
+The product should preserve the override rationale so later reviews can distinguish accidental repetition from an intentional re-test under changed conditions.
+
 ## Daily OS acceptance test
 
 An authenticated artist opening Artist OS should be able to answer within 30–60 seconds:
@@ -55,6 +67,17 @@ An authenticated artist opening Artist OS should be able to answer within 30–6
 - What objective is this action serving?
 
 The primary surface must work with AI disabled.
+
+## Official demo acceptance test
+
+Every representative product demo should demonstrate all four moments:
+
+1. **TODAY** — Artist OS knows what I should do now.
+2. **WHY** — Artist OS can explain why.
+3. **MEMORY** — Artist OS remembers what we tried, decided and learned.
+4. **LEARN** — when I lack context, Artist OS can offer relevant guidance before I act and return me to execution.
+
+A release that cannot demonstrate these four moments should be considered incomplete as a Daily OS experience, even if individual domain screens are functional.
 
 ## Attention vs navigation
 
@@ -97,9 +120,12 @@ Every system recommendation should support progressive disclosure of:
 - **BASED ON** — objective, domain state, evidence and relevant memory refs;
 - **UNCERTAINTY** — what is known vs inferred;
 - **EXPECTED EFFECT** — what completing the action unlocks or changes;
-- **WHAT WE MAY LEARN** — only when meaningful; operational housekeeping may legitimately have no learning value.
+- **WHAT WE MAY LEARN** — only when meaningful; operational housekeeping may legitimately have no learning value;
+- **OPTIONAL GUIDANCE** — a contextual learning/help reference when the user may need knowledge before executing the action.
 
 Deterministic recommendations need deterministic explanations. AI is not required to explain a workflow blocker.
+
+Guidance is optional metadata on an Action/Recommendation projection, not a requirement to create a Lesson or LMS domain.
 
 ## Bottleneck and readiness rules
 
@@ -130,7 +156,22 @@ After sustained use, Artist OS should be able to explain a recommendation using 
 
 A larger database without better future decisions does not count as compounding value.
 
-The system should also prevent accidental repetition of known bad strategies. If a proposal materially conflicts with an active prior Decision, the product should surface that conflict and require evidence of changed context before treating the strategy as fresh generic advice.
+The system should also detect accidental repetition of known bad strategies. If a proposal materially conflicts with an active prior Decision, the product should surface that conflict and require an explicit override rationale before recommitting — but must still allow the human to proceed.
+
+## Decision model forward compatibility
+
+Decision may exist without Learning, Insight or Experiment — for example, a purely operational or strategic decision.
+
+However, the initial Decision contract and schema/API design must be forward-compatible with later lineage to:
+
+- Evidence;
+- Insight;
+- Hypothesis;
+- Experiment;
+- Learning;
+- OperationalAction.
+
+PRs implementing Learning/Insight/Experiment must not require redesigning the fundamental Decision identity, subject model or provenance shape.
 
 ## Decision lineage
 
@@ -139,6 +180,8 @@ Decision Memory is not administrative metadata. Where possible, users should be 
 `Experiment → Insight → Learning → Decision → OperationalAction`
 
 This lineage is a key trust mechanism: Artist OS should be able to show where a recommendation or decision came from.
+
+Missing upstream nodes are allowed. Do not fabricate lineage to satisfy a visual pattern.
 
 ## System Learning vs Artist Learning
 
@@ -209,15 +252,6 @@ Deterministic facts come first. Optional AI may summarize or draft decision cand
 - Use contextual drill-down for provenance and evidence.
 - Content Factory answers **What can we create?**; Today answers **What should we do now?**
 - AI should appear inside workflows; a chatbot may exist, but it must never be required to operate Artist OS.
-
-## Four early WOW moments
-
-Every meaningful demo / MVP pass should try to demonstrate:
-
-1. **TODAY** — Artist OS knows what I should do now.
-2. **WHY** — Artist OS can explain why.
-3. **MEMORY** — Artist OS remembers what we tried, decided and learned.
-4. **LEARN** — when I lack knowledge, Artist OS can teach me in the context of a real task and return me to execution.
 
 ## Product metrics for MVP validation
 
