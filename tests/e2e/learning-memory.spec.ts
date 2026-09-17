@@ -25,12 +25,12 @@ test("validates a Learning, surfaces it on Today and uses it in Decision lineage
 
   await page.getByRole("button", { name: "Record learning" }).click();
   await page.getByLabel("What did we learn?").fill(statement);
-  await page.getByLabel("Scope").selectOption("FORMAT");
-  await page.getByLabel("Confidence").selectOption("MEDIUM");
-  await page.getByLabel("Why this confidence?").fill("Two completed publications show the same downstream behavior.");
-  await page.getByLabel("Source type").fill("Publication");
-  await page.getByLabel("Source ID").fill(`publication-${suffix}`);
-  await page.getByLabel("Evidence note").fill("Both publications produced stronger profile-to-stream intent.");
+  await page.getByLabel("Scope", { exact: true }).selectOption("FORMAT");
+  await page.getByLabel("Confidence", { exact: true }).selectOption("MEDIUM");
+  await page.getByLabel("Why this confidence?", { exact: true }).fill("Two completed publications show the same downstream behavior.");
+  await page.getByLabel("Source type", { exact: true }).fill("Publication");
+  await page.getByLabel("Source ID", { exact: true }).fill(`publication-${suffix}`);
+  await page.getByLabel("Evidence note", { exact: true }).fill("Both publications produced stronger profile-to-stream intent.");
   await page.getByRole("button", { name: "Record candidate" }).click();
 
   const card = page.locator(".decision-card").filter({ hasText: statement });
