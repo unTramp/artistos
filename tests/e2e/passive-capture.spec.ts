@@ -42,7 +42,7 @@ test("creates a lightweight Factory draft and turns rejection evidence into expl
   });
   await reviewRow.getByRole("button", { name: "Reject" }).click();
 
-  const passiveSection = page.getByRole("region", { name: "Memory candidates from normal work" });
+  const passiveSection = page.locator('[aria-label="Memory candidates from normal work"]');
   await expect(passiveSection).toBeVisible();
   const passiveRow = passiveSection.locator(".factory-review-row").filter({ hasText: angleTitle });
   await expect(passiveRow).toContainText("NOT ME");
@@ -56,7 +56,7 @@ test("creates a lightweight Factory draft and turns rejection evidence into expl
   await expect(learningCard).toContainText("LOW");
 
   await page.goto("/factory");
-  const decisionRow = page.getByRole("region", { name: "Memory candidates from normal work" }).locator(".factory-review-row").filter({ hasText: angleTitle });
+  const decisionRow = page.locator('[aria-label="Memory candidates from normal work"]').locator(".factory-review-row").filter({ hasText: angleTitle });
   let promptIndex = 0;
   const handlePrompt = async (dialog: import("@playwright/test").Dialog) => {
     if (promptIndex === 0) {
