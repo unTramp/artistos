@@ -6,7 +6,10 @@ CREATE TABLE IF NOT EXISTS "decisions" (
   "reason" text NOT NULL,
   "evidence_ids" jsonb NOT NULL DEFAULT '[]'::jsonb,
   "experiment_ids" jsonb NOT NULL DEFAULT '[]'::jsonb,
+  "references" jsonb NOT NULL DEFAULT '[]'::jsonb,
   "scope" text NOT NULL,
+  "decision_key" text,
+  "supersedes_decision_id" uuid,
   "review_at" timestamptz,
   "status" text NOT NULL DEFAULT 'ACTIVE',
   "version" integer NOT NULL DEFAULT 1,
@@ -23,6 +26,14 @@ CREATE INDEX IF NOT EXISTS "decisions_artist_status_idx"
 CREATE INDEX IF NOT EXISTS "decisions_artist_review_idx"
   ON "decisions" ("artist_id", "review_at")
   WHERE "status" IN ('ACTIVE','UNDER_REVIEW') AND "review_at" IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "decisions_artist_key_scope_idx"
+  ON "decisions" ("artist_id", "decision_key", "scope", "status")
+  WHERE "decision_key" IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS "decisions_supersedes_idx"
+  ON "decisions" ("supersedes_decision_id")
+  WHERE "supersedes_decision_id" IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS "decision_state_history" (
   "id" uuid PRIMARY KEY,
