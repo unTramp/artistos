@@ -17,7 +17,8 @@
 }
 
 .decision-primary-button,
-.decision-secondary-button {
+.decision-secondary-button,
+.decision-danger-button {
   border-radius: 10px;
   padding: 10px 14px;
   font: inherit;
@@ -30,15 +31,23 @@
   color: white;
 }
 
-.decision-primary-button:disabled {
-  cursor: not-allowed;
-  opacity: .5;
-}
-
 .decision-secondary-button {
   border: 1px solid #30333d;
   background: #15171d;
   color: #d6d8df;
+}
+
+.decision-danger-button {
+  border: 1px solid rgba(244, 63, 94, .42);
+  background: rgba(244, 63, 94, .09);
+  color: #fda4af;
+}
+
+.decision-primary-button:disabled,
+.decision-secondary-button:disabled,
+.decision-danger-button:disabled {
+  cursor: not-allowed;
+  opacity: .5;
 }
 
 .decision-error {
@@ -66,7 +75,8 @@
 }
 
 .decision-create-card label,
-.decision-conflict-dialog label {
+.decision-conflict-dialog label,
+.decision-rationale-field {
   display: grid;
   gap: 7px;
   color: #c6c8cf;
@@ -76,7 +86,8 @@
 
 .decision-create-card input,
 .decision-create-card textarea,
-.decision-conflict-dialog textarea {
+.decision-conflict-dialog textarea,
+.decision-rationale-field textarea {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid #2a2d36;
@@ -90,7 +101,8 @@
 
 .decision-create-card input:focus,
 .decision-create-card textarea:focus,
-.decision-conflict-dialog textarea:focus {
+.decision-conflict-dialog textarea:focus,
+.decision-rationale-field textarea:focus {
   outline: 2px solid rgba(109, 93, 252, .35);
   border-color: #6d5dfc;
 }
@@ -119,10 +131,20 @@
   line-height: 1.55;
 }
 
-.decision-form-actions {
+.decision-form-actions,
+.decision-lifecycle-row {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.decision-lifecycle-row {
+  justify-content: flex-start;
+  margin: 16px 0;
+}
+
+.decision-rationale-field {
+  margin: 16px 0;
 }
 
 .decision-section {
