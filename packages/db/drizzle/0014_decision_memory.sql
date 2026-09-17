@@ -27,9 +27,9 @@ CREATE INDEX IF NOT EXISTS "decisions_artist_review_idx"
   ON "decisions" ("artist_id", "review_at")
   WHERE "status" IN ('ACTIVE','UNDER_REVIEW') AND "review_at" IS NOT NULL;
 
-CREATE INDEX IF NOT EXISTS "decisions_artist_key_scope_idx"
-  ON "decisions" ("artist_id", "decision_key", "scope", "status")
-  WHERE "decision_key" IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS "decisions_live_key_scope_uidx"
+  ON "decisions" ("artist_id", "decision_key", "scope")
+  WHERE "decision_key" IS NOT NULL AND "status" IN ('ACTIVE','UNDER_REVIEW');
 
 CREATE INDEX IF NOT EXISTS "decisions_supersedes_idx"
   ON "decisions" ("supersedes_decision_id")
