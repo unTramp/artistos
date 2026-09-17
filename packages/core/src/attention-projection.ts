@@ -97,6 +97,13 @@ const dueStateScore = (action: AttentionOperationalActionInput, now: Date) => {
   return 0;
 };
 
+const guidanceForOperationalAction = (action: AttentionOperationalActionInput): AttentionGuidanceRef | undefined => {
+  if (action.sourceEntityType.toLowerCase() === "editorialpitch") {
+    return { key: "music.editorial-pitch", label: "How editorial pitching works", estimatedMinutes: 6 };
+  }
+  return undefined;
+};
+
 const sortProjection = (items: Array<{ item: AttentionItem; score: number }>) => items
   .sort((a, b) => b.score - a.score || a.item.title.localeCompare(b.item.title))
   .map(({ item }) => item);
@@ -116,6 +123,7 @@ export class AttentionProjectionService {
         whyThis: ["Future recommendations need one canonical active Identity Version."],
         basedOn: [], uncertainty: [], blockedBy: [],
         expectedEffect: "Gives future content and strategy work a canonical identity context.",
+        guidanceRef: { key: "identity.active-context", label: "What an active Identity changes", estimatedMinutes: 4 },
         action: { label: "Open Identity", href: "/identity" }, objectiveAligned: objective?.scope === "ARTIST"
       }, objective?.scope === "ARTIST" ? 25 : 0);
     }
@@ -127,6 +135,7 @@ export class AttentionProjectionService {
         whyThis: ["This Content Unit exists but has no approved execution revision."],
         basedOn: [{ type: "ContentUnit", id: unit.id, ...(unit.version ? { version: unit.version } : {}) }],
         uncertainty: [], blockedBy: [], expectedEffect: "Unlocks the unit's path toward execution readiness.",
+        guidanceRef: { key: "content.execution-revision", label: "Turn a concept into shoot-ready execution", estimatedMinutes: 5 },
         action: { label: "Continue execution", href: `/factory/units/${unit.id}` }, objectiveAligned: false
       }, 20);
     }
@@ -137,6 +146,7 @@ export class AttentionProjectionService {
         title: `${input.approvedAnglesWithoutUnit.count} approved angle${input.approvedAnglesWithoutUnit.count === 1 ? "" : "s"} waiting for commitment`,
         whyThis: ["Approval does not create a Content Unit automatically."], basedOn: input.approvedAnglesWithoutUnit.refs ?? [],
         uncertainty: [], blockedBy: [], expectedEffect: "Lets you choose which approved idea should enter production.",
+        guidanceRef: { key: "content.production-commitment", label: "From approved idea to production commitment", estimatedMinutes: 3 },
         action: { label: "Review approved angles", href: "/factory" }, objectiveAligned: false
       });
     }
@@ -146,7 +156,9 @@ export class AttentionProjectionService {
         id: "content:angle-review", kind: "REVIEW", priority: "NORMAL",
         title: `${input.reviewAngles.count} content angle${input.reviewAngles.count === 1 ? "" : "s"} need judgment`,
         whyThis: ["Draft and deferred ideas remain proposals until you explicitly review them."], basedOn: input.reviewAngles.refs ?? [],
-        uncertainty: [], blockedBy: [], action: { label: "Review angles", href: "/factory" }, objectiveAligned: false
+        uncertainty: [], blockedBy: [],
+        guidanceRef: { key: "content.angle-review", label: "How to judge a content angle", estimatedMinutes: 4 },
+        action: { label: "Review angles", href: "/factory" }, objectiveAligned: false
       });
     }
 
@@ -156,6 +168,7 @@ export class AttentionProjectionService {
         title: `${input.pendingKnowledge.count} knowledge candidate${input.pendingKnowledge.count === 1 ? "" : "s"} waiting`,
         whyThis: ["Candidate knowledge stays outside permanent Artist Brain context until you review it."], basedOn: input.pendingKnowledge.refs ?? [],
         uncertainty: [], blockedBy: [], expectedEffect: "Keeps durable memory human-controlled.",
+        guidanceRef: { key: "brain.candidate-review", label: "How to review a Brain candidate", estimatedMinutes: 3 },
         action: { label: "Review Brain inbox", href: "/knowledge" }, objectiveAligned: false
       });
     }
@@ -164,6 +177,7 @@ export class AttentionProjectionService {
       push({
         id: "music:first-song", kind: "MUSIC", priority: "NORMAL", title: "Add your first song",
         whyThis: ["Song Brain gives future content and strategy decisions track-specific context."], basedOn: [], uncertainty: [], blockedBy: [],
+        guidanceRef: { key: "music.song-brain", label: "Build a useful Song Brain", estimatedMinutes: 5 },
         action: { label: "Add song", href: "/songs" }, objectiveAligned: false
       });
     }
@@ -178,6 +192,7 @@ export class AttentionProjectionService {
         ? [action.description ?? "This operational action is blocked and cannot progress without attention."]
         : [action.description ?? "This operational action is active and still requires completion."];
       if (aligned && objective) why.push(`It directly supports the current ${objective.priority.toLowerCase()} objective: ${objective.title}.`);
+      const guidanceRef = guidanceForOperationalAction(action);
       push({
         id: `operational-action:${action.id}`,
         kind: isBlocked ? "BLOCKER" : "NEXT_ACTION",
@@ -187,6 +202,7 @@ export class AttentionProjectionService {
         basedOn: [{ type: "OperationalAction", id: action.id, version: action.version }, { type: action.sourceEntityType, id: action.sourceEntityId }],
         uncertainty: [], blockedBy: isBlocked ? [{ type: action.sourceEntityType, id: action.sourceEntityId }] : [],
         expectedEffect: "Advances the linked workflow without changing source-domain truth by itself.",
+        ...(guidanceRef ? { guidanceRef } : {}),
         action: { label: action.externalUrl ? "Open action" : "View action", href: action.externalUrl ?? action.targetHref ?? "/" },
         objectiveAligned: aligned
       }, operationalPriorityScore[action.priority] + dueStateScore(action, input.computedAt) + (aligned ? 25 : 0) + (isBlocked ? 20 : 0));

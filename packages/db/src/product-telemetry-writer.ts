@@ -7,7 +7,9 @@ export type ProductTelemetryEventName =
   | "DECISION_CREATED"
   | "MEMORY_REUSED"
   | "PASSIVE_LEARNING_CANDIDATE_CAPTURED"
-  | "PASSIVE_DECISION_CANDIDATE_CAPTURED";
+  | "PASSIVE_DECISION_CANDIDATE_CAPTURED"
+  | "CONTEXTUAL_GUIDANCE_OPENED"
+  | "CONTEXTUAL_GUIDANCE_APPLIED";
 
 export async function writeProductTelemetryEvent(db: Stage0Database, input: {
   artistId: string;
