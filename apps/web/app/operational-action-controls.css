@@ -1,0 +1,71 @@
+.operational-action-controls {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.operational-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.operational-action-buttons button,
+.operational-action-reason button {
+  min-height: 30px;
+  border: 1px solid #30333d;
+  border-radius: 9px;
+  padding: 6px 10px;
+  background: #15171d;
+  color: #c9cbd3;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.operational-action-buttons button:hover:not(:disabled),
+.operational-action-reason button:hover:not(:disabled) {
+  border-color: #565b6a;
+  color: #f4f4f5;
+}
+
+.operational-action-buttons .action-done-button {
+  border-color: rgba(16, 185, 129, .38);
+  background: rgba(16, 185, 129, .09);
+  color: #6ee7b7;
+}
+
+.operational-action-buttons button:disabled,
+.operational-action-reason button:disabled {
+  cursor: wait;
+  opacity: .5;
+}
+
+.operational-action-reason {
+  display: flex;
+  gap: 7px;
+  max-width: 520px;
+}
+
+.operational-action-reason input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #2a2d36;
+  border-radius: 9px;
+  background: #0a0b0f;
+  color: #f4f4f5;
+  padding: 7px 9px;
+  font: inherit;
+  font-size: 12px;
+}
+
+.operational-action-error {
+  margin: 0;
+  color: #fda4af;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@media (max-width: 700px) {
+  .operational-action-reason { flex-direction: column; }
+}
