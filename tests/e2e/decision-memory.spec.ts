@@ -32,7 +32,7 @@ test("records Decision Memory and explicitly overrides a conflicting prior Decis
   await page.getByLabel("Topic key").fill("song.next-release");
   await page.getByRole("button", { name: "Record decision", exact: true }).last().click();
 
-  await expect(page.getByText("Use Trastevere as next release", { exact: true })).toBeVisible();
+  await expect(page.locator(".decision-card").filter({ hasText: "Use Trastevere as next release" })).toBeVisible();
   await page.goto("/");
   await expect(page.getByText("Use Trastevere as next release", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Open Decision Memory →" }).click();
@@ -53,11 +53,11 @@ test("records Decision Memory and explicitly overrides a conflicting prior Decis
   await conflict.getByLabel("What changed?").fill("The schedule changed and Always on My Mind can ship earlier.");
   await conflict.getByRole("button", { name: "Use new decision" }).click();
 
-  await expect(page.getByText("Use Always on My Mind as next release", { exact: true })).toBeVisible();
-  await expect(page.getByText("Use Trastevere as next release", { exact: true })).toBeVisible();
   const oldCard = page.locator(".decision-card").filter({ hasText: "Use Trastevere as next release" });
-  await expect(oldCard.getByText("REVERSED", { exact: true })).toBeVisible();
   const newCard = page.locator(".decision-card").filter({ hasText: "Use Always on My Mind as next release" });
+  await expect(oldCard).toBeVisible();
+  await expect(newCard).toBeVisible();
+  await expect(oldCard.getByText("REVERSED", { exact: true })).toBeVisible();
   await expect(newCard.getByText("ACTIVE", { exact: true })).toBeVisible();
   await expect(newCard.getByText("Replaces prior Decision", { exact: true })).toBeVisible();
 
