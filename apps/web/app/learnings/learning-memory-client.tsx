@@ -138,8 +138,9 @@ function LearningCard({ item, busy, onTransition, onDecision }: { item: Learning
       {item.references.some((ref) => ref.relation === "CONTRADICTS") && <small>⚠ Contradictory evidence preserved</small>}
       <div className="decision-form-actions">
         {item.status === "CANDIDATE" && <button className="decision-secondary-button" disabled={busy} onClick={() => void onTransition(item, "test")} type="button">Start testing</button>}
-        {(item.status === "TESTING" || item.status === "STALE") && <button className="decision-primary-button" disabled={busy} onClick={() => { const rationale = ask("Why is this evidence strong enough to validate?"); if (rationale) void onTransition(item, "validate", rationale); }} type="button">Validate</button>}
+        {item.status === "TESTING" && <button className="decision-primary-button" disabled={busy} onClick={() => { const rationale = ask("Why is this evidence strong enough to validate?"); if (rationale) void onTransition(item, "validate", rationale); }} type="button">Validate</button>}
         {item.status === "VALIDATED" && <button className="decision-secondary-button" disabled={busy} onClick={() => { const rationale = ask("Why does this need revalidation?"); if (rationale) void onTransition(item, "stale", rationale); }} type="button">Mark stale</button>}
+        {item.status === "STALE" && <button className="decision-primary-button" disabled={busy} onClick={() => void onTransition(item, "test")} type="button">Retest</button>}
         {item.status !== "DEPRECATED" && <button className="decision-secondary-button" disabled={busy} onClick={() => { const rationale = ask("Why is this Learning deprecated?"); if (rationale) void onTransition(item, "deprecate", rationale); }} type="button">Deprecate</button>}
         {item.status === "VALIDATED" && <button className="decision-primary-button" disabled={busy} onClick={() => void onDecision(item)} type="button">Use in decision →</button>}
       </div>
