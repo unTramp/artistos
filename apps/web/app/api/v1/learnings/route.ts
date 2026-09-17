@@ -38,6 +38,7 @@ export async function POST(request: Request) {
   const result = await new CreateLearningService(new PgLearningWriter(runtime.db)).execute(body, resolution.commandContext);
 
   if (result.status === "SUCCESS" && (body.references ?? []).some((reference) => reference.refType.toLowerCase() === "contentangle")) {
+    const actorTelemetry = resolution.commandContext.actor.id ? { actorId: resolution.commandContext.actor.id } : {};
     await writeProductTelemetryEvent(runtime.db, {
       artistId: resolution.commandContext.artistId,
       eventName: "PASSIVE_LEARNING_CANDIDATE_CAPTURED",
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
       entityType: "Learning",
       entityId: result.data.learningId,
       metadata: { scope: body.scope, confidence: body.confidence },
-      actorId: resolution.commandContext.actor.id
+      ...actorTelemetry
     });
   }
 
