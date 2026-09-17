@@ -10,6 +10,7 @@ import "./command-palette.css";
 import "./planning-objective.css";
 import "./current-focus.css";
 import "./decision-memory.css";
+import "./operational-action-controls.css";
 
 export const metadata: Metadata = {
   title: "Artist OS",
