@@ -15,7 +15,7 @@ test("exposes liveness with a trace id", async ({ request }) => {
   expect(body.meta.traceId).toEqual(expect.any(String));
 });
 
-test("signs up, manages current focus, explains Today attention and signs out", async ({ page }) => {
+test("signs up, manages current focus, explains Today attention, learns in context and signs out", async ({ page }) => {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const email = `daily-os-${suffix}@example.test`;
 
@@ -64,8 +64,18 @@ test("signs up, manages current focus, explains Today attention and signs out", 
   await expect(drawer.getByText("EXPECTED EFFECT", { exact: true })).toBeVisible();
   await expect(drawer.getByText("WHAT WE MAY LEARN", { exact: true })).toBeVisible();
   await expect(drawer.getByText("Low — this recommendation comes from deterministic current state.")).toBeVisible();
-  await drawer.getByRole("button", { name: "Close explanation" }).click();
-  await expect(drawer).toBeHidden();
+  await expect(drawer.getByText("What an active Identity changes", { exact: true })).toBeVisible();
+  await drawer.getByRole("button", { name: "Learn →" }).click();
+
+  const guide = page.getByRole("dialog", { name: "What an active Identity changes" });
+  await expect(guide).toBeVisible();
+  await expect(guide.getByText("CONTEXTUAL GUIDANCE", { exact: true })).toBeVisible();
+  await expect(guide.getByText("WHAT IS THIS?", { exact: true })).toBeVisible();
+  await expect(guide.getByText("WHY IT MATTERS", { exact: true })).toBeVisible();
+  await expect(guide.getByText("HOW TO USE IT", { exact: true })).toBeVisible();
+  await expect(guide.getByText("Apply to · Activate your artist identity", { exact: true })).toBeVisible();
+  await guide.getByRole("link", { name: "Apply now →" }).click();
+  await page.waitForURL("**/identity");
 
   await page.goto("/auth");
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
