@@ -204,7 +204,7 @@ export class CreateDecisionService {
 
 abstract class TransitionDecisionService {
   protected abstract readonly targetStatus: DecisionStatus;
-  protected readonly rationaleRequired = false;
+  protected readonly rationaleRequired: boolean = false;
 
   constructor(protected readonly writer: DecisionWritePort) {}
 
