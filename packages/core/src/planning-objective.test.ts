@@ -15,24 +15,43 @@ const context = (): CommandContext => ({
 });
 
 const writer: PlanningObjectiveWritePort = {
-  async createObjective(request) { return { objectiveId: request.objectiveId, version: 1, completedAt: null }; },
-  async completeObjective(request) { return { objectiveId: request.objectiveId, version: 2, completedAt: request.evidence.occurredAt }; }
+  async createObjective(request) {
+    return { objectiveId: request.objectiveId, status: request.command.status, version: 1, completedAt: null };
+  },
+  async transitionObjective(request) {
+    return {
+      objectiveId: request.objectiveId,
+      status: request.toStatus,
+      version: 2,
+      completedAt: request.toStatus === "COMPLETED" ? request.evidence.occurredAt : null
+    };
+  }
 };
 
 describe("PlanningObjective services", () => {
-  it("creates a period-scoped primary objective", async () => {
-    const result = await new CreatePlanningObjectiveService(writer, () => "11111111-1111-4111-8111-111111111111").execute({
+  it("creates an ACTIVE primary objective by default and preserves success criteria", async () => {
+    let captured: Parameters<PlanningObjectiveWritePort["createObjective"]>[0] | undefined;
+    const capturingWriter: PlanningObjectiveWritePort = {
+      ...writer,
+      async createObjective(request) {
+        captured = request;
+        return writer.createObjective(request);
+      }
+    };
+    const result = await new CreatePlanningObjectiveService(capturingWriter, () => "11111111-1111-4111-8111-111111111111").execute({
       title: "Prepare Trastevere release",
       statement: "Finish launch-critical work and establish the first audience discovery loop.",
       periodStart: "2026-09-17",
       periodEnd: "2026-10-01",
       scope: "ARTIST",
-      priority: "PRIMARY"
+      priority: "PRIMARY",
+      successCriteria: ["Execution package approved"]
     }, context());
-    expect(result).toMatchObject({ status: "SUCCESS", data: { objectiveId: "11111111-1111-4111-8111-111111111111", version: 1 } });
+    expect(result).toMatchObject({ status: "SUCCESS", data: { objectiveId: "11111111-1111-4111-8111-111111111111", status: "ACTIVE", version: 1 } });
+    expect(captured?.command).toMatchObject({ status: "ACTIVE", successCriteria: ["Execution package approved"] });
   });
 
-  it("rejects invalid dates and scope references", async () => {
+  it("rejects invalid dates and missing scope references", async () => {
     const result = await new CreatePlanningObjectiveService(writer).execute({
       title: "Bad objective",
       statement: "Invalid scope test",
@@ -44,7 +63,20 @@ describe("PlanningObjective services", () => {
     expect(result).toMatchObject({ status: "VALIDATION_ERROR", code: "PLANNING_OBJECTIVE_INVALID" });
   });
 
-  it("requires a human user to commit or complete an objective", async () => {
+  it("fails closed when a target domain cannot verify the supplied reference", async () => {
+    const result = await new CreatePlanningObjectiveService(writer).execute({
+      title: "Release objective",
+      statement: "Must not persist a dangling release reference.",
+      periodStart: "2026-09-17",
+      periodEnd: "2026-10-01",
+      scope: "RELEASE",
+      releaseId: crypto.randomUUID(),
+      priority: "PRIMARY"
+    }, context());
+    expect(result).toMatchObject({ status: "BLOCKED", code: "PLANNING_OBJECTIVE_TARGET_UNAVAILABLE" });
+  });
+
+  it("requires a human user to commit or transition an objective", async () => {
     const systemContext = { ...context(), actor: { type: "SYSTEM" as const } };
     const create = await new CreatePlanningObjectiveService(writer).execute({
       title: "System objective",
