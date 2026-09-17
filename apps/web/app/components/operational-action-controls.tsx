@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 type ActionStatus = "OPEN" | "IN_PROGRESS" | "BLOCKED";
-type ExecutionMode = "MANUAL_NATIVE" | "EXTERNAL" | "API_ASSISTED" | "SYSTEM_CHECK";
 type ReasonMode = "block" | "reopen" | null;
 
 export function OperationalActionControls({
@@ -16,7 +15,7 @@ export function OperationalActionControls({
   actionId: string;
   status: ActionStatus;
   version: number;
-  executionMode: ExecutionMode;
+  executionMode: string;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -24,7 +23,7 @@ export function OperationalActionControls({
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  if (executionMode === "API_ASSISTED" || executionMode === "SYSTEM_CHECK") return null;
+  if (executionMode !== "MANUAL_NATIVE" && executionMode !== "EXTERNAL") return null;
 
   async function mutate(path: "start" | "complete" | "block" | "reopen", body?: Record<string, string>) {
     setBusy(true);
