@@ -49,7 +49,7 @@ test("records Decision Memory and explicitly overrides a conflicting prior Decis
   const conflict = page.getByRole("dialog", { name: "This changes a previous choice" });
   await expect(conflict).toBeVisible();
   await expect(conflict.getByText("Use Trastevere as next release", { exact: true })).toBeVisible();
-  await expect(conflict.getByText("It is the most release-ready song in the current context.", { exact: true })).toBeVisible();
+  await expect(conflict.getByText("WHY · It is the most release-ready song in the current context.", { exact: true })).toBeVisible();
   await conflict.getByLabel("What changed?").fill("The schedule changed and Always on My Mind can ship earlier.");
   await conflict.getByRole("button", { name: "Use new decision" }).click();
 
