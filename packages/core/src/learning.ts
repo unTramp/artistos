@@ -130,7 +130,12 @@ export class CreateLearningService {
       scope: parsed.data.scope,
       confidence: parsed.data.confidence,
       confidenceRationale: parsed.data.confidenceRationale,
-      references: parsed.data.references,
+      references: parsed.data.references.map((reference) => ({
+        refType: reference.refType,
+        refId: reference.refId,
+        relation: reference.relation,
+        ...(reference.note ? { note: reference.note } : {})
+      })),
       ...(parsed.data.freshUntil ? { freshUntil: parsed.data.freshUntil } : {})
     };
     try {
