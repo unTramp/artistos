@@ -51,6 +51,7 @@ const decisionEligible = (angle: AngleAction) => ["NOT_ME", "WRONG_TONE", "WRONG
 export function FactoryActions({ songs, angles, unitAngleIds }: { songs: SongOption[]; angles: AngleAction[]; unitAngleIds: string[] }) {
   const router = useRouter();
   const keys = useRef(new Map<string, string>());
+  const [localAngles, setLocalAngles] = useState(angles);
   const [pending, setPending] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -119,6 +120,14 @@ export function FactoryActions({ songs, angles, unitAngleIds }: { songs: SongOpt
     }
   };
 
+  async function rejectAngle(angle: AngleAction, reason: AngleRejectionReason, note?: string) {
+    const ok = await run(`reject:${angle.id}`, `/api/v1/content-factory/angles/${angle.id}/reject`, { reason, ...(note ? { note } : {}) });
+    if (!ok) return;
+    setLocalAngles((current) => current.map((item) => item.id === angle.id
+      ? { ...item, status: "REJECTED", rejectionReason: reason, decisionNote: note ?? null }
+      : item));
+  }
+
   async function captureLearningCandidate(angle: AngleAction) {
     const scope: LearningScope = angle.songId ? "SONG" : "ARTIST_GLOBAL";
     const references = [{
@@ -155,9 +164,9 @@ export function FactoryActions({ songs, angles, unitAngleIds }: { songs: SongOpt
     });
   }
 
-  const reviewable = angles.filter((angle) => angle.status === "DRAFT" || angle.status === "DEFERRED");
-  const convertible = angles.filter((angle) => angle.status === "APPROVED" && !unitAngleIds.includes(angle.id));
-  const passiveCandidates = angles.filter((angle) => angle.status === "REJECTED" && angle.rejectionReason);
+  const reviewable = localAngles.filter((angle) => angle.status === "DRAFT" || angle.status === "DEFERRED");
+  const convertible = localAngles.filter((angle) => angle.status === "APPROVED" && !unitAngleIds.includes(angle.id));
+  const passiveCandidates = localAngles.filter((angle) => angle.status === "REJECTED" && angle.rejectionReason);
 
   return (
     <section className="factory-actions" aria-label="Content Factory commands">
@@ -204,7 +213,7 @@ export function FactoryActions({ songs, angles, unitAngleIds }: { songs: SongOpt
                   <button className="command-button" disabled={pending !== null} onClick={() => void run(`approve:${angle.id}`, `/api/v1/content-factory/angles/${angle.id}/approve`)} type="button">Approve</button>
                   <button className="command-button command-button-secondary" disabled={pending !== null || angle.status !== "DRAFT"} onClick={() => { const note = window.prompt("Why defer this angle?", "Needs more context before commitment")?.trim(); if (note) void run(`defer:${angle.id}`, `/api/v1/content-factory/angles/${angle.id}/defer`, { note }); }} type="button">Defer</button>
                   <select aria-label={`Rejection reason for ${angle.title}`} value={reason} onChange={(event) => setReasons((current) => ({ ...current, [angle.id]: event.target.value as AngleRejectionReason }))}>{rejectionReasons.map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}</select>
-                  <button className="command-button command-button-secondary" disabled={pending !== null} onClick={() => { const note = window.prompt("Optional context for this rejection")?.trim(); void run(`reject:${angle.id}`, `/api/v1/content-factory/angles/${angle.id}/reject`, { reason, ...(note ? { note } : {}) }); }} type="button">Reject</button>
+                  <button className="command-button command-button-secondary" disabled={pending !== null} onClick={() => { const note = window.prompt("Optional context for this rejection")?.trim(); void rejectAngle(angle, reason, note); }} type="button">Reject</button>
                 </div>
               </div>
             );
