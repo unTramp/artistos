@@ -48,6 +48,7 @@ export default async function DecisionsPage() {
         <p className="eyebrow">MEMORY · DECISIONS</p>
         <h1>Remember the choice, not just the outcome</h1>
         <p>Decision Memory preserves what you chose, why you chose it, when it should be reconsidered and what later replaced it. Prior choices advise future strategy without becoming a hard policy.</p>
+        <p><a className="inline-link" href="/learnings">Learnings →</a></p>
       </header>
       <DecisionMemoryClient initialDecisions={serialized} />
     </AppShell>
