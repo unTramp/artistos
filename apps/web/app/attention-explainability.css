@@ -130,6 +130,21 @@
   letter-spacing: -.025em;
 }
 
+.drawer-back {
+  display: block;
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #7c8290;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.drawer-back:hover {
+  color: #c4b5fd;
+}
+
 .drawer-close {
   width: 32px;
   height: 32px;
@@ -166,7 +181,9 @@
 }
 
 .drawer-section > span,
-.drawer-guidance span {
+.drawer-guidance span,
+.guidance-intro > span,
+.guidance-outcome > span {
   display: block;
   margin-bottom: 10px;
   color: #656b77;
@@ -255,11 +272,73 @@
 .drawer-guidance button {
   min-height: 30px;
   padding: 0 10px;
-  border: 1px solid #252834;
+  border: 1px solid rgba(6, 182, 212, .26);
   border-radius: 8px;
+  background: rgba(6, 182, 212, .06);
+  color: #8bdbea;
+  font-size: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.drawer-guidance button:hover:not(:disabled) {
+  border-color: rgba(6, 182, 212, .48);
+  background: rgba(6, 182, 212, .11);
+  color: #d8f8ff;
+}
+
+.drawer-guidance button:disabled {
+  border-color: #252834;
   background: #11141a;
   color: #5f6570;
+  cursor: not-allowed;
+}
+
+.guidance-body {
+  min-height: calc(100% - 104px);
+}
+
+.guidance-intro {
+  margin: 0 22px;
+  padding: 22px 0 20px;
+  border-bottom: 1px solid #1e2028;
+}
+
+.guidance-intro p {
+  margin: 0;
+  color: #c9cbd2;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.guidance-context-chip {
+  margin-top: 14px;
+  padding: 9px 10px;
+  border: 1px solid rgba(139, 92, 246, .22);
+  border-radius: 9px;
+  background: rgba(139, 92, 246, .055);
+  color: #b8a8eb;
   font-size: 8px;
+  line-height: 1.4;
+}
+
+.guidance-section p + ul {
+  margin-top: 12px;
+}
+
+.guidance-outcome {
+  margin: 18px 22px 0;
+  padding: 14px;
+  border: 1px solid rgba(16, 185, 129, .2);
+  border-radius: 12px;
+  background: rgba(16, 185, 129, .045);
+}
+
+.guidance-outcome strong {
+  display: block;
+  color: #b7dfd2;
+  font-size: 10px;
+  line-height: 1.55;
 }
 
 .attention-drawer-footer {
@@ -268,6 +347,26 @@
 
 .attention-drawer-footer .primary-action {
   width: 100%;
+}
+
+.guidance-footer {
+  display: grid;
+  gap: 9px;
+}
+
+.secondary-drawer-action {
+  min-height: 36px;
+  border: 1px solid #242631;
+  border-radius: 9px;
+  background: #101216;
+  color: #7f8490;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.secondary-drawer-action:hover {
+  color: #d7d9df;
+  border-color: #353846;
 }
 
 @media (max-width: 720px) {
