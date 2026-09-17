@@ -12,6 +12,8 @@ export type WeeklyReviewSectionKind =
   | "RECOMMENDED_NEXT_FOCUS"
   | "NEXT_ACTIONS";
 
+export type WeeklyReviewEpistemicLabel = "FACT" | "OBSERVATION" | "HYPOTHESIS" | "RECOMMENDATION";
+
 export interface WeeklyReviewReferenceInput {
   refType: string;
   refId: string;
@@ -19,6 +21,7 @@ export interface WeeklyReviewReferenceInput {
 
 export interface WeeklyReviewItemInput {
   text: string;
+  epistemicLabel: WeeklyReviewEpistemicLabel;
   references?: WeeklyReviewReferenceInput[];
 }
 
@@ -71,6 +74,7 @@ const referenceSchema = z.object({
 
 const itemSchema = z.object({
   text: z.string().trim().min(1).max(4000),
+  epistemicLabel: z.enum(["FACT", "OBSERVATION", "HYPOTHESIS", "RECOMMENDATION"]),
   references: z.array(referenceSchema).max(100).optional()
 });
 
@@ -182,6 +186,7 @@ export class CreateWeeklyReviewService {
         label: section.label,
         items: section.items.map((item) => ({
           text: item.text,
+          epistemicLabel: item.epistemicLabel,
           ...(item.references?.length ? { references: item.references } : {})
         }))
       })),
