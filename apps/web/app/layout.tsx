@@ -5,6 +5,7 @@ import "./execution.css";
 import "./factory-ai.css";
 import "./daily-os.css";
 import "./attention-explainability.css";
+import "./recommendation-maturity.css";
 import "./command-palette.css";
 import "./planning-objective.css";
 import "./current-focus.css";
