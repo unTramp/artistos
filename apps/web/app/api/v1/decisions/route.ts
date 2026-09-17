@@ -48,6 +48,7 @@ export async function POST(request: Request) {
   if (result.status === "SUCCESS") {
     const references = body.references ?? [];
     const reused = references.filter((reference) => memoryRefTypes.has(reference.refType.toLowerCase()));
+    const fromContentReview = references.some((reference) => reference.refType.toLowerCase() === "contentangle");
     await writeProductTelemetryEvent(runtime.db, {
       artistId: resolution.commandContext.artistId,
       eventName: "DECISION_CREATED",
@@ -57,6 +58,17 @@ export async function POST(request: Request) {
       metadata: { scope: body.scope, referenceCount: references.length },
       actorId: resolution.commandContext.actor.id
     });
+    if (fromContentReview) {
+      await writeProductTelemetryEvent(runtime.db, {
+        artistId: resolution.commandContext.artistId,
+        eventName: "PASSIVE_DECISION_CANDIDATE_CAPTURED",
+        surface: "ContentFactory",
+        entityType: "Decision",
+        entityId: result.data.decisionId,
+        metadata: { scope: body.scope },
+        actorId: resolution.commandContext.actor.id
+      });
+    }
     if (reused.length > 0) {
       await writeProductTelemetryEvent(runtime.db, {
         artistId: resolution.commandContext.artistId,
