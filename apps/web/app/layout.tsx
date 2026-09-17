@@ -7,6 +7,7 @@ import "./daily-os.css";
 import "./attention-explainability.css";
 import "./planning-objective.css";
 import "./current-focus.css";
+import "./decision-memory.css";
 
 export const metadata: Metadata = {
   title: "Artist OS",
