@@ -31,10 +31,18 @@ describe("AttentionProjectionService", () => {
       id: "content-unit:unit-1:execution",
       kind: "BLOCKER",
       priority: "HIGH",
+      guidanceRef: {
+        key: "content.execution-revision",
+        label: "Turn a concept into shoot-ready execution",
+        estimatedMinutes: 5
+      },
       action: { href: "/factory/units/unit-1" }
     });
     expect(result.items[0]?.whyThis[0]).toContain("no approved execution revision");
-    expect(result.items[1]?.kind).toBe("REVIEW");
+    expect(result.items[1]).toMatchObject({
+      kind: "REVIEW",
+      guidanceRef: { key: "content.angle-review" }
+    });
   });
 
   it("uses the active PlanningObjective as a ranking boost, not as a hard rule", () => {
@@ -116,11 +124,17 @@ describe("AttentionProjectionService", () => {
       ]
     });
 
-    expect(result.items[0]?.id).toBe("operational-action:urgent");
+    expect(result.items[0]).toMatchObject({
+      id: "operational-action:urgent",
+      guidanceRef: {
+        key: "music.editorial-pitch",
+        estimatedMinutes: 6
+      }
+    });
     expect(result.items[1]?.id).toBe("operational-action:aligned");
   });
 
-  it("preserves explainability and an optional guidance extension point", () => {
+  it("attaches optional guidance to knowledge review without changing canonical state", () => {
     const result = service.project({
       ...base,
       pendingKnowledge: { count: 1, refs: [{ type: "CandidateKnowledge", id: "candidate-1" }] }
@@ -131,8 +145,30 @@ describe("AttentionProjectionService", () => {
       kind: "MEMORY",
       basedOn: [{ type: "CandidateKnowledge", id: "candidate-1" }],
       uncertainty: [],
-      blockedBy: []
+      blockedBy: [],
+      guidanceRef: {
+        key: "brain.candidate-review",
+        label: "How to review a Brain candidate",
+        estimatedMinutes: 3
+      }
     });
-    expect("guidanceRef" in (item ?? {})).toBe(false);
+  });
+
+  it("offers guidance for foundational setup while keeping execution optional", () => {
+    const result = service.project({
+      ...base,
+      identity: { active: false },
+      songsCount: 0
+    });
+
+    expect(result.items[0]).toMatchObject({
+      id: "foundation:identity",
+      guidanceRef: { key: "identity.active-context" },
+      action: { href: "/identity" }
+    });
+    expect(result.items.find((item) => item.id === "music:first-song")).toMatchObject({
+      guidanceRef: { key: "music.song-brain" },
+      action: { href: "/songs" }
+    });
   });
 });
