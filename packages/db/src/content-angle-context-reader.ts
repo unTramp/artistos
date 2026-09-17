@@ -8,28 +8,38 @@ import { listLearnings } from "./learning-reader";
 
 const isFreshLearning = (freshUntil: Date | null, now: Date) => freshUntil === null || freshUntil > now;
 const normalizeTarget = (value: string) => value.trim().toLowerCase();
+const subjectMatches = (
+  learning: Awaited<ReturnType<typeof listLearnings>>[number],
+  predicate: (refId: string) => boolean
+) => learning.references.some((reference) => reference.relation === "SUBJECT" && predicate(reference.refId));
 
 const isRelevantLearning = (
   learning: Awaited<ReturnType<typeof listLearnings>>[number],
-  context: { songId?: string; platformTargets?: string[] }
+  context: { songId?: string; platformTargets?: string[]; identityVersionId?: string }
 ) => {
+  if (learning.scope === "ARTIST_GLOBAL") return true;
+
   if (learning.scope === "SONG") {
-    if (!context.songId) return false;
-    return learning.references.some((reference) => reference.relation === "SUBJECT" && reference.refId === context.songId);
+    return Boolean(context.songId) && subjectMatches(learning, (refId) => refId === context.songId);
   }
+
   if (learning.scope === "PLATFORM") {
     const targets = new Set((context.platformTargets ?? []).map(normalizeTarget));
-    if (targets.size === 0) return false;
-    return learning.references.some((reference) =>
-      reference.relation === "SUBJECT" && targets.has(normalizeTarget(reference.refId))
-    );
+    return targets.size > 0 && subjectMatches(learning, (refId) => targets.has(normalizeTarget(refId)));
   }
-  if (learning.scope === "CAMPAIGN") {
-    // Content-angle generation has no campaign identity in this slice. Keep a
-    // campaign-scoped conclusion out rather than treating it as universal.
+
+  if (learning.scope === "IDENTITY") {
+    return Boolean(context.identityVersionId) && subjectMatches(learning, (refId) => refId === context.identityVersionId);
+  }
+
+  // The current Content Angle request does not carry a canonical target for
+  // these dimensions. A scoped Learning must never be widened into global
+  // artist truth merely because the target is unavailable in this workflow.
+  if (["CAMPAIGN", "PILLAR", "FORMAT", "AUDIENCE", "AUDIO_SEGMENT", "NARRATIVE", "MARKET", "BUSINESS"].includes(learning.scope)) {
     return false;
   }
-  return true;
+
+  return false;
 };
 
 export class PgContentAngleContextReader {
@@ -65,7 +75,11 @@ export class PgContentAngleContextReader {
     const now = new Date();
     const relevantLearnings = validatedLearnings
       .filter((learning) => isFreshLearning(learning.freshUntil, now))
-      .filter((learning) => isRelevantLearning(learning, { ...(songId ? { songId } : {}), ...context }));
+      .filter((learning) => isRelevantLearning(learning, {
+        ...(songId ? { songId } : {}),
+        ...(activeIdentity?.activeVersionId ? { identityVersionId: activeIdentity.activeVersionId } : {}),
+        ...context
+      }));
 
     return {
       identity: activeIdentity,

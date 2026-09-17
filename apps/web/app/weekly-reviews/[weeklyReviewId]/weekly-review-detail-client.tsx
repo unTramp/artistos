@@ -3,7 +3,8 @@
 import { useState } from "react";
 
 type Reference = { refType: string; refId: string };
-type Item = { text: string; references?: Reference[] };
+type EpistemicLabel = "FACT" | "OBSERVATION" | "HYPOTHESIS" | "RECOMMENDATION";
+type Item = { text: string; epistemicLabel?: EpistemicLabel; references?: Reference[] };
 type Section = { kind: string; label: string; items: Item[] };
 type Review = { id: string; generatedAt: string; configurationVersion: string; sections: Section[] };
 
@@ -71,7 +72,7 @@ export function WeeklyReviewDetailClient({ review }: { review: Review }) {
   return (
     <>
       <section className="decision-toolbar">
-        <div><span className="status-chip">Deterministic facts first</span><span className="muted-note">{review.configurationVersion} · generated {new Date(review.generatedAt).toLocaleString()}</span></div>
+        <div><span className="status-chip">Epistemic labels enforced</span><span className="muted-note">{review.configurationVersion} · generated {new Date(review.generatedAt).toLocaleString()}</span></div>
         <a className="decision-secondary-button" href="/">Back to Today</a>
       </section>
       {error && <div className="decision-error" role="alert">{error}</div>}
@@ -81,6 +82,7 @@ export function WeeklyReviewDetailClient({ review }: { review: Review }) {
             <div className="section-heading"><p className="eyebrow">{section.kind.replaceAll("_", " ")}</p><h2>{section.label}</h2></div>
             {section.items.length === 0 ? <div className="quiet-state">No supported signal in this snapshot.</div> : section.items.map((item, itemIndex) => (
               <article className="decision-card" key={`${section.kind}-${itemIndex}`}>
+                <div className="status-row"><span className="status-chip">{item.epistemicLabel ?? "LEGACY · UNLABELLED"}</span></div>
                 <p>{item.text}</p>
                 {item.references?.length ? <small>{item.references.map((reference) => `${reference.refType}:${reference.refId}`).join(" · ")}</small> : null}
                 {(canCreateDecision(section.kind) || canCreateAction(section.kind)) && <div className="decision-form-actions">

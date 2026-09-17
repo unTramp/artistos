@@ -1,5 +1,5 @@
-import { and, asc, desc, eq, gte, isNull, lte } from "drizzle-orm";
-import type { PlanningObjectivePriority, PlanningObjectiveScope } from "@artist-os/core";
+import { and, asc, desc, eq, gte, inArray, lte } from "drizzle-orm";
+import type { PlanningObjectivePriority, PlanningObjectiveScope, PlanningObjectiveStatus } from "@artist-os/core";
 import type { Stage0Database } from "./runtime";
 import { planningObjectives } from "./planning-objective-schema";
 
@@ -14,6 +14,8 @@ export interface PlanningObjectiveView {
   campaignId: string | null;
   releaseId: string | null;
   priority: PlanningObjectivePriority;
+  status: PlanningObjectiveStatus;
+  successCriteria: string[];
   version: number;
   completedAt: Date | null;
   createdAt: Date;
@@ -31,6 +33,8 @@ const mapRow = (row: typeof planningObjectives.$inferSelect): PlanningObjectiveV
   campaignId: row.campaignId,
   releaseId: row.releaseId,
   priority: row.priority as PlanningObjectivePriority,
+  status: row.status as PlanningObjectiveStatus,
+  successCriteria: row.successCriteria,
   version: row.version,
   completedAt: row.completedAt,
   createdAt: row.createdAt,
@@ -44,7 +48,7 @@ export class PgPlanningObjectiveReader {
     const [row] = await this.db.select().from(planningObjectives).where(and(
       eq(planningObjectives.artistId, artistId),
       eq(planningObjectives.priority, "PRIMARY"),
-      isNull(planningObjectives.completedAt),
+      eq(planningObjectives.status, "ACTIVE"),
       lte(planningObjectives.periodStart, onDate),
       gte(planningObjectives.periodEnd, onDate)
     )).orderBy(desc(planningObjectives.updatedAt)).limit(1);
@@ -53,10 +57,10 @@ export class PgPlanningObjectiveReader {
 
   async listObjectives(artistId: string, options: { includeCompleted?: boolean; limit?: number } = {}): Promise<PlanningObjectiveView[]> {
     const filters = [eq(planningObjectives.artistId, artistId)];
-    if (!options.includeCompleted) filters.push(isNull(planningObjectives.completedAt));
+    if (!options.includeCompleted) filters.push(inArray(planningObjectives.status, ["DRAFT", "ACTIVE"]));
     const rows = await this.db.select().from(planningObjectives)
       .where(and(...filters))
-      .orderBy(asc(planningObjectives.completedAt), desc(planningObjectives.periodStart), desc(planningObjectives.createdAt))
+      .orderBy(asc(planningObjectives.status), desc(planningObjectives.periodStart), desc(planningObjectives.createdAt))
       .limit(Math.min(Math.max(options.limit ?? 50, 1), 100));
     return rows.map(mapRow);
   }
