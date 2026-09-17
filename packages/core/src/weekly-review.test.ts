@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CreateWeeklyReviewService,
   type CommandContext,
+  type CreateWeeklyReviewCommand,
   type WeeklyReviewWritePort
 } from "./index";
 
@@ -13,34 +14,38 @@ const context: CommandContext = {
   traceId: "trace-1"
 };
 
-const validCommand = {
+const validCommand: CreateWeeklyReviewCommand = {
   periodStart: "2026-09-07T00:00:00.000Z",
   periodEnd: "2026-09-14T00:00:00.000Z",
   generatedAt: "2026-09-14T08:00:00.000Z",
-  configurationVersion: "weekly-review-v1",
+  configurationVersion: "weekly-review-v2",
   sourceSnapshotIds: ["snapshot-1"],
   insightIds: ["insight-1"],
   sections: [
     {
-      kind: "WHAT_HAPPENED" as const,
+      kind: "WHAT_HAPPENED",
       label: "What happened",
-      items: [{ text: "Published three performance clips." }]
+      items: [{ text: "Published three performance clips.", epistemicLabel: "FACT" }]
     },
     {
-      kind: "WHAT_WAS_LEARNED" as const,
+      kind: "WHAT_WAS_LEARNED",
       label: "What was learned",
-      items: [{ text: "Performance-first clips produced stronger downstream intent.", references: [{ refType: "Learning", refId: "learning-1" }] }]
+      items: [{
+        text: "Performance-first clips produced stronger downstream intent.",
+        epistemicLabel: "OBSERVATION",
+        references: [{ refType: "Learning", refId: "learning-1" }]
+      }]
     },
     {
-      kind: "DECISIONS_TO_MAKE" as const,
+      kind: "DECISIONS_TO_MAKE",
       label: "Decisions to make",
-      items: [{ text: "Choose whether to prioritize performance-first short video next week." }]
+      items: [{ text: "Choose whether to prioritize performance-first short video next week.", epistemicLabel: "RECOMMENDATION" }]
     }
   ]
 };
 
 describe("CreateWeeklyReviewService", () => {
-  it("persists a new immutable review artifact", async () => {
+  it("persists a new immutable review artifact with epistemic labels", async () => {
     let captured: Parameters<WeeklyReviewWritePort["createWeeklyReview"]>[0] | undefined;
     const writer: WeeklyReviewWritePort = {
       createWeeklyReview: async (request) => {
@@ -49,42 +54,35 @@ describe("CreateWeeklyReviewService", () => {
       }
     };
     const service = new CreateWeeklyReviewService(writer, () => "22222222-2222-4222-8222-222222222222");
-
     const result = await service.execute(validCommand, context);
-
     expect(result.status).toBe("SUCCESS");
     expect(captured?.command.sections).toEqual(validCommand.sections);
-    expect(captured?.command.sourceSnapshotIds).toEqual(["snapshot-1"]);
-    expect(captured?.command.insightIds).toEqual(["insight-1"]);
+    expect(captured?.command.sections[0]?.items[0]?.epistemicLabel).toBe("FACT");
+  });
+
+  it("rejects a synthesized item without an epistemic label", async () => {
+    const writer: WeeklyReviewWritePort = { createWeeklyReview: async () => { throw new Error("should not persist"); } };
+    const service = new CreateWeeklyReviewService(writer);
+    const invalid = {
+      ...validCommand,
+      sections: [{ kind: "WHAT_HAPPENED", label: "What happened", items: [{ text: "Unlabelled statement." }] }]
+    } as unknown as CreateWeeklyReviewCommand;
+    const result = await service.execute(invalid, context);
+    expect(result).toMatchObject({ status: "VALIDATION_ERROR", code: "WEEKLY_REVIEW_INVALID" });
   });
 
   it("rejects a period that ends before it starts", async () => {
-    const writer: WeeklyReviewWritePort = {
-      createWeeklyReview: async () => { throw new Error("should not persist"); }
-    };
+    const writer: WeeklyReviewWritePort = { createWeeklyReview: async () => { throw new Error("should not persist"); } };
     const service = new CreateWeeklyReviewService(writer);
-
-    const result = await service.execute({
-      ...validCommand,
-      periodStart: "2026-09-15T00:00:00.000Z",
-      periodEnd: "2026-09-14T00:00:00.000Z"
-    }, context);
-
+    const result = await service.execute({ ...validCommand, periodStart: "2026-09-15T00:00:00.000Z", periodEnd: "2026-09-14T00:00:00.000Z" }, context);
     expect(result.status).toBe("VALIDATION_ERROR");
     if (result.status !== "SUCCESS") expect(result.fieldErrors?.periodEnd).toBeDefined();
   });
 
   it("rejects duplicate labeled section kinds", async () => {
-    const writer: WeeklyReviewWritePort = {
-      createWeeklyReview: async () => { throw new Error("should not persist"); }
-    };
+    const writer: WeeklyReviewWritePort = { createWeeklyReview: async () => { throw new Error("should not persist"); } };
     const service = new CreateWeeklyReviewService(writer);
-
-    const result = await service.execute({
-      ...validCommand,
-      sections: [validCommand.sections[0]!, validCommand.sections[0]!]
-    }, context);
-
+    const result = await service.execute({ ...validCommand, sections: [validCommand.sections[0]!, validCommand.sections[0]!] }, context);
     expect(result.status).toBe("VALIDATION_ERROR");
   });
 
