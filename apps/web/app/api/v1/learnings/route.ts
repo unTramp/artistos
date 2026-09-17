@@ -1,5 +1,5 @@
 import { CreateLearningService, type CreateLearningCommand, type LearningScope, type LearningStatus } from "@artist-os/core";
-import { PgLearningWriter, listLearnings } from "@artist-os/db";
+import { PgLearningWriter, listLearnings, writeProductTelemetryEvent } from "@artist-os/db";
 import { resolveAuthenticatedActorContext } from "@/lib/actor-context";
 import { commandResultResponse, readJson } from "@/lib/artist-foundation-command";
 import { resolveLearningMutationContext } from "@/lib/learning-command";
@@ -34,6 +34,21 @@ export async function POST(request: Request) {
   if (resolution instanceof Response) return resolution;
   const body = await readJson<CreateLearningCommand>(request, resolution.traceId);
   if (body instanceof Response) return body;
-  const result = await new CreateLearningService(new PgLearningWriter(getDatabaseRuntime().db)).execute(body, resolution.commandContext);
+  const runtime = getDatabaseRuntime();
+  const result = await new CreateLearningService(new PgLearningWriter(runtime.db)).execute(body, resolution.commandContext);
+
+  if (result.status === "SUCCESS" && (body.references ?? []).some((reference) => reference.refType.toLowerCase() === "contentangle")) {
+    const actorTelemetry = resolution.commandContext.actor.id ? { actorId: resolution.commandContext.actor.id } : {};
+    await writeProductTelemetryEvent(runtime.db, {
+      artistId: resolution.commandContext.artistId,
+      eventName: "PASSIVE_LEARNING_CANDIDATE_CAPTURED",
+      surface: "ContentFactory",
+      entityType: "Learning",
+      entityId: result.data.learningId,
+      metadata: { scope: body.scope, confidence: body.confidence },
+      ...actorTelemetry
+    });
+  }
+
   return commandResultResponse(result, resolution.traceId, 201);
 }

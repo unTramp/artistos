@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { AttentionItem } from "@artist-os/core";
+import { emitProductTelemetry } from "@/lib/product-telemetry-client";
 
 type Props = {
   item: AttentionItem;
@@ -27,12 +28,31 @@ export function AttentionExplainability({ item, compact = false }: Props) {
     };
   }, [open]);
 
+  const openExplanation = () => {
+    setOpen(true);
+    emitProductTelemetry({
+      eventName: "ATTENTION_EXPLANATION_OPENED",
+      surface: "Today",
+      entityType: "AttentionItem",
+      entityId: item.id,
+      metadata: { kind: item.kind, objectiveAligned: item.objectiveAligned }
+    });
+  };
+
+  const trackAction = () => emitProductTelemetry({
+    eventName: "ATTENTION_ACTION_OPENED",
+    surface: "Today",
+    entityType: "AttentionItem",
+    entityId: item.id,
+    metadata: { kind: item.kind, objectiveAligned: item.objectiveAligned }
+  });
+
   return (
     <>
       <button
         className={compact ? "why-action compact" : "why-action"}
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openExplanation}
         aria-label={`Why this recommendation: ${item.title}`}
       >
         Why this?
@@ -121,7 +141,7 @@ export function AttentionExplainability({ item, compact = false }: Props) {
             )}
 
             <footer className="attention-drawer-footer">
-              <a className="primary-action" href={item.action.href}>{item.action.label} →</a>
+              <a className="primary-action" href={item.action.href} onClick={trackAction}>{item.action.label} →</a>
             </footer>
           </aside>
         </div>
