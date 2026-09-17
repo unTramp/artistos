@@ -12,12 +12,58 @@ type Props = {
 
 type DrawerMode = "explanation" | "guidance";
 
+type BasisMaturity = {
+  label: "FOUNDATION CONTEXT" | "CONTEXTUAL STATE" | "WORKFLOW EVIDENCE" | "ARTIST-SPECIFIC MEMORY";
+  description: string;
+  counts: Array<{ type: string; count: number }>;
+};
+
+const memoryRefTypes = new Set(["Decision", "Learning", "Experiment", "Insight", "Hypothesis", "Evidence"]);
+const workflowRefTypes = new Set(["OperationalAction", "ContentUnit", "ContentAngle", "WeeklyReview"]);
+
 const shortId = (id: string) => id.length > 18 ? `${id.slice(0, 8)}…${id.slice(-5)}` : id;
+
+const basisMaturityFor = (item: AttentionItem): BasisMaturity => {
+  const countMap = new Map<string, number>();
+  for (const ref of item.basedOn) countMap.set(ref.type, (countMap.get(ref.type) ?? 0) + 1);
+  const counts = [...countMap.entries()]
+    .map(([type, count]) => ({ type, count }))
+    .sort((a, b) => b.count - a.count || a.type.localeCompare(b.type));
+  const types = new Set(item.basedOn.map((ref) => ref.type));
+
+  if ([...types].some((type) => memoryRefTypes.has(type))) {
+    return {
+      label: "ARTIST-SPECIFIC MEMORY",
+      description: "This recommendation directly cites artist-specific decision, learning or evidence lineage. The label reflects provenance, not a quality score.",
+      counts
+    };
+  }
+  if ([...types].some((type) => workflowRefTypes.has(type))) {
+    return {
+      label: "WORKFLOW EVIDENCE",
+      description: "This recommendation is grounded in durable state from work already happening inside Artist OS.",
+      counts
+    };
+  }
+  if (item.basedOn.length > 0) {
+    return {
+      label: "CONTEXTUAL STATE",
+      description: "This recommendation uses explicit current context, but does not claim artist-specific learned memory unless that provenance is present.",
+      counts
+    };
+  }
+  return {
+    label: "FOUNDATION CONTEXT",
+    description: "This deterministic setup recommendation does not require additional artist-specific evidence yet.",
+    counts: []
+  };
+};
 
 export function AttentionExplainability({ item, compact = false }: Props) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<DrawerMode>("explanation");
   const guide = item.guidanceRef ? getContextualGuide(item.guidanceRef.key) : null;
+  const maturity = basisMaturityFor(item);
 
   useEffect(() => {
     if (!open) return;
@@ -46,7 +92,7 @@ export function AttentionExplainability({ item, compact = false }: Props) {
       surface: "Today",
       entityType: "AttentionItem",
       entityId: item.id,
-      metadata: { kind: item.kind, objectiveAligned: item.objectiveAligned }
+      metadata: { kind: item.kind, objectiveAligned: item.objectiveAligned, basisMaturity: maturity.label }
     });
   };
 
@@ -72,7 +118,7 @@ export function AttentionExplainability({ item, compact = false }: Props) {
     surface: "Today",
     entityType: "AttentionItem",
     entityId: item.id,
-    metadata: { kind: item.kind, objectiveAligned: item.objectiveAligned }
+    metadata: { kind: item.kind, objectiveAligned: item.objectiveAligned, basisMaturity: maturity.label }
   });
 
   const trackGuidanceApply = () => {
@@ -173,6 +219,22 @@ export function AttentionExplainability({ item, compact = false }: Props) {
                   ) : (
                     <p className="drawer-empty">No additional entity reference is required for this deterministic state.</p>
                   )}
+                </section>
+
+                <section className="drawer-section maturity-section">
+                  <span>BASIS MATURITY</span>
+                  <div className="maturity-card">
+                    <div className="maturity-head">
+                      <strong>{maturity.label}</strong>
+                      <small>{item.basedOn.length} direct provenance ref{item.basedOn.length === 1 ? "" : "s"}</small>
+                    </div>
+                    <p>{maturity.description}</p>
+                    {maturity.counts.length > 0 && (
+                      <div className="maturity-counts">
+                        {maturity.counts.map(({ type, count }) => <span key={type}>{type} · {count}</span>)}
+                      </div>
+                    )}
+                  </div>
                 </section>
 
                 <section className="drawer-section">
