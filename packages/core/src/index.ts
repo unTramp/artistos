@@ -51,3 +51,4 @@ export * from "./attention-projection";
 export * from "./planning-objective";
 export * from "./decision-memory";
 export * from "./learning";
+export * from "./weekly-review";
