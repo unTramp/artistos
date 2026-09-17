@@ -6,6 +6,9 @@ import { getDatabaseRuntime } from "@/lib/runtime";
 import { FactoryActions } from "./factory-actions";
 import { FactoryAIProposals } from "./factory-ai-proposals";
 
+const UNKNOWN_DRAFT = "UNKNOWN — not specified in draft";
+const displayDraftValue = (value: string) => value === UNKNOWN_DRAFT ? "Not set yet" : value;
+
 export default async function FactoryPage() {
   const actorContext = await resolveAuthenticatedActorContext(await headers());
   if (!actorContext) {
@@ -50,11 +53,11 @@ export default async function FactoryPage() {
   const songOptions = songs.map((song) => ({ id: song.id, title: song.title }));
 
   return (
-    <AppShell activeId="factory" sessionEmail={actorContext.user.email} stage="Phase 2 · Content Factory">
+    <AppShell activeId="factory" sessionEmail={actorContext.user.email} stage="Phase 2.5 · Passive Capture">
       <header className="product-header factory-hero">
-        <p className="eyebrow">CONTENT FACTORY · DECISION LAYER</p>
-        <h1>Make fewer ideas matter more</h1>
-        <p>Angles are proposals, not production commitments. Review them against Identity, song context, effort and learning value first; only then create a canonical Content Unit.</p>
+        <p className="eyebrow">CONTENT FACTORY · CREATIVE DECISIONS</p>
+        <h1>Start with intent. Let context accumulate.</h1>
+        <p>Create a lightweight draft, make the real review decision, and let Artist OS preserve the reason as evidence instead of asking you to maintain memory in a separate CRM-like workflow.</p>
       </header>
 
       <div className="status-row">
@@ -64,23 +67,30 @@ export default async function FactoryPage() {
       </div>
 
       <section className="factory-context-strip" aria-label="Factory operating principles">
-        <article><span>1</span><div><strong>Context</strong><p>Identity, Era and optional Song references are captured from canonical state.</p></div></article>
-        <article><span>2</span><div><strong>Human review</strong><p>Approve, defer or reject before production commitment.</p></div></article>
-        <article><span>3</span><div><strong>Unit</strong><p>Approved Angle becomes one canonical Content Unit only through an explicit command.</p></div></article>
+        <article><span>1</span><div><strong>Intent</strong><p>Capture the idea and minimum context first. Strategic detail can stay unknown in a draft.</p></div></article>
+        <article><span>2</span><div><strong>Human judgment</strong><p>Approve, defer or reject. The reason becomes reusable evidence automatically.</p></div></article>
+        <article><span>3</span><div><strong>Memory</strong><p>Artist OS may suggest a Learning or Decision candidate, but only you commit it.</p></div></article>
       </section>
 
       <FactoryAIProposals songs={songOptions} />
 
       <FactoryActions
         songs={songOptions}
-        angles={angles.map((angle) => ({ id: angle.id, title: angle.title, status: angle.status }))}
+        angles={angles.map((angle) => ({
+          id: angle.id,
+          title: angle.title,
+          status: angle.status,
+          songId: angle.songId,
+          rejectionReason: angle.rejectionReason,
+          decisionNote: angle.decisionNote
+        }))}
         unitAngleIds={unitAngleIds}
       />
 
       <section className="collection-section">
-        <div className="section-heading"><p className="eyebrow">ANGLE LIBRARY</p><h2>Concepts with reasons</h2></div>
+        <div className="section-heading"><p className="eyebrow">ANGLE LIBRARY</p><h2>Concepts with preserved context</h2></div>
         {angles.length === 0 ? (
-          <div className="empty-state compact-empty"><h3>No angles yet</h3><p>Create a manual Angle first. Cold start stays explicit; Artist OS does not invent generic ideas to make the screen look full.</p></div>
+          <div className="empty-state compact-empty"><h3>No angles yet</h3><p>Capture one real idea. Artist OS does not fabricate generic creative work to make the screen look populated.</p></div>
         ) : (
           <div className="factory-angle-grid">
             {angles.map((angle) => (
@@ -93,12 +103,12 @@ export default async function FactoryPage() {
                 <p className="factory-idea">{angle.idea}</p>
                 <dl className="factory-reason-grid">
                   <div><dt>Song</dt><dd>{angle.songTitle ?? "Artist-level"}</dd></div>
-                  <div><dt>Goal</dt><dd>{angle.goal}</dd></div>
-                  <div><dt>Audience</dt><dd>{angle.audience}</dd></div>
-                  <div><dt>Effort</dt><dd>{angle.productionEffort}</dd></div>
-                  <div className="factory-reason-wide"><dt>Why</dt><dd>{angle.why}</dd></div>
-                  <div className="factory-reason-wide"><dt>Identity fit</dt><dd>{angle.identityFitRationale}</dd></div>
-                  <div className="factory-reason-wide"><dt>Learning value</dt><dd>{angle.learningValue}</dd></div>
+                  <div><dt>Goal</dt><dd>{displayDraftValue(angle.goal)}</dd></div>
+                  <div><dt>Audience</dt><dd>{displayDraftValue(angle.audience)}</dd></div>
+                  <div><dt>Effort</dt><dd>{displayDraftValue(angle.productionEffort)}</dd></div>
+                  <div className="factory-reason-wide"><dt>Why</dt><dd>{displayDraftValue(angle.why)}</dd></div>
+                  <div className="factory-reason-wide"><dt>Identity fit</dt><dd>{displayDraftValue(angle.identityFitRationale)}</dd></div>
+                  <div className="factory-reason-wide"><dt>Learning value</dt><dd>{displayDraftValue(angle.learningValue)}</dd></div>
                 </dl>
                 <div className="factory-tag-row">
                   {angle.platformTargets.map((target) => <span key={target}>{target.replaceAll("_", " ")}</span>)}
