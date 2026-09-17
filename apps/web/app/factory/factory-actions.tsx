@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { AngleRejectionReason, ContentMode, ContentPillar, LearningScope } from "@artist-os/core";
 
@@ -68,6 +68,10 @@ export function FactoryActions({ songs, angles, unitAngleIds }: { songs: SongOpt
   const [platforms, setPlatforms] = useState("");
   const [assets, setAssets] = useState("");
   const [reasons, setReasons] = useState<Record<string, AngleRejectionReason>>({});
+
+  useEffect(() => {
+    setLocalAngles(angles);
+  }, [angles]);
 
   const run = async (operation: string, url: string, body?: unknown, method = "POST") => {
     setPending(operation);
