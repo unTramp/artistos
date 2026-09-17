@@ -25,8 +25,8 @@ test("validates a Learning, surfaces it on Today and uses it in Decision lineage
 
   await page.getByRole("button", { name: "Record learning" }).click();
   await page.getByLabel("What did we learn?").fill(statement);
-  await page.getByLabel("Scope", { exact: true }).selectOption("FORMAT");
-  await page.getByLabel("Confidence", { exact: true }).selectOption("MEDIUM");
+  await page.locator('select[name="scope"]').selectOption("FORMAT");
+  await page.locator('select[name="confidence"]').selectOption("MEDIUM");
   await page.getByLabel("Why this confidence?", { exact: true }).fill("Two completed publications show the same downstream behavior.");
   await page.getByLabel("Source type", { exact: true }).fill("Publication");
   await page.getByLabel("Source ID", { exact: true }).fill(`publication-${suffix}`);
