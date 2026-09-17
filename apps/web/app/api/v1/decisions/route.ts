@@ -49,6 +49,7 @@ export async function POST(request: Request) {
     const references = body.references ?? [];
     const reused = references.filter((reference) => memoryRefTypes.has(reference.refType.toLowerCase()));
     const fromContentReview = references.some((reference) => reference.refType.toLowerCase() === "contentangle");
+    const actorTelemetry = resolution.commandContext.actor.id ? { actorId: resolution.commandContext.actor.id } : {};
     await writeProductTelemetryEvent(runtime.db, {
       artistId: resolution.commandContext.artistId,
       eventName: "DECISION_CREATED",
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
       entityType: "Decision",
       entityId: result.data.decisionId,
       metadata: { scope: body.scope, referenceCount: references.length },
-      actorId: resolution.commandContext.actor.id
+      ...actorTelemetry
     });
     if (fromContentReview) {
       await writeProductTelemetryEvent(runtime.db, {
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
         entityType: "Decision",
         entityId: result.data.decisionId,
         metadata: { scope: body.scope },
-        actorId: resolution.commandContext.actor.id
+        ...actorTelemetry
       });
     }
     if (reused.length > 0) {
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
         entityType: "Decision",
         entityId: result.data.decisionId,
         metadata: { sourceTypes: Array.from(new Set(reused.map((reference) => reference.refType))) },
-        actorId: resolution.commandContext.actor.id
+        ...actorTelemetry
       });
     }
   }
