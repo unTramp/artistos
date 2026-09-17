@@ -37,7 +37,7 @@ test("reviews an Angle, degrades AI safely, creates one Content Unit and version
   await expect(page.getByText("Factory Song", { exact: true })).toBeVisible();
 
   await page.goto("/factory");
-  await expect(page.getByRole("heading", { name: "Make fewer ideas matter more" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Start with intent. Let context accumulate." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Generate bounded Angle Cards" })).toBeVisible();
   await page.getByLabel("Song scope").selectOption({ label: "Factory Song" });
   await page.getByRole("button", { name: "Generate Angles" }).click();
@@ -49,6 +49,7 @@ test("reviews an Angle, degrades AI safely, creates one Content Unit and version
   await page.getByLabel("Big idea").fill("Tell the emotional turn in the song as one concrete moment instead of a generic promo clip.");
   await page.getByLabel("Content pillar").selectOption("STORY");
   await page.getByLabel("Content mode").selectOption("EVERGREEN");
+  await page.getByText("Advanced context · optional for draft", { exact: true }).click();
   await page.getByLabel("Angle goal").fill("Make the song story understandable before asking for a stream.");
   await page.getByLabel("Angle audience").fill("Listeners who respond to honest, story-led artist content.");
   await page.getByLabel("Why this angle").fill("The song already carries a narrative; the content should reveal rather than manufacture it.");
@@ -58,7 +59,7 @@ test("reviews an Angle, degrades AI safely, creates one Content Unit and version
   const manualFactory = page.getByRole("region", { name: "Content Factory commands" });
   await manualFactory.getByLabel("Platform targets").fill("INSTAGRAM_REELS, TIKTOK");
   await page.getByLabel("Required assets").fill("performance take, clean audio");
-  await page.getByRole("button", { name: "Save Angle draft" }).click();
+  await page.getByRole("button", { name: "Save draft" }).click();
 
   const reviewRow = page.locator(".factory-review-row").filter({ hasText: angleTitle }).first();
   await expect(reviewRow).toBeVisible();
