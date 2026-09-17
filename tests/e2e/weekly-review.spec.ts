@@ -64,6 +64,7 @@ test("Weekly Review closes into Decision lineage and OperationalAction provenanc
 
   const decisionSection = page.locator(".decision-section").filter({ hasText: "DECISIONS TO MAKE" });
   await expect(decisionSection.getByText(learningStatement, { exact: false })).toBeVisible();
+  await expect(decisionSection.getByText("RECOMMENDATION", { exact: true })).toBeVisible();
 
   const decisionPrompts = [
     "Apply performance-first learning",
@@ -89,6 +90,7 @@ test("Weekly Review closes into Decision lineage and OperationalAction provenanc
   const actionSection = page.locator(".decision-section").filter({ hasText: "NEXT ACTIONS" });
   const actionItem = actionSection.locator(".decision-card").filter({ hasText: seededActionTitle });
   await expect(actionItem).toBeVisible();
+  await expect(actionItem.getByText("RECOMMENDATION", { exact: true })).toBeVisible();
 
   let actionPromptIndex = 0;
   const handleActionPrompt = async (dialog: import("@playwright/test").Dialog) => {
