@@ -45,7 +45,7 @@ export default async function DecisionDetailPage({ params }: { params: Promise<{
               <div className="decision-reference-list">
                 {decision.evidenceIds.map((id) => <div className="decision-reference-item" key={`e-${id}`}><span>BASED ON · EVIDENCE</span><strong>{id}</strong></div>)}
                 {decision.experimentIds.map((id) => <div className="decision-reference-item" key={`x-${id}`}><span>BASED ON · EXPERIMENT</span><strong>{id}</strong></div>)}
-                {decision.references.map((reference, index) => <div className="decision-reference-item" key={`${reference.relation}-${reference.refType}-${reference.refId}-${index}`}><span>{reference.relation} · {reference.refType}</span><strong>{reference.refId}</strong></div>)}
+                {decision.references.map((reference, index) => <div className="decision-reference-item" key={`${reference.relation}-${reference.refType}-${reference.refId}-${index}`}><span>{reference.relation} · {reference.refType.toUpperCase()}</span><strong>{reference.refId}</strong></div>)}
               </div>
             )}
           </div>
