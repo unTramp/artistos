@@ -19,6 +19,7 @@ const userContext = (): CommandContext => ({
 });
 
 const agentContext = (): CommandContext => ({ ...userContext(), actor: { type: "AGENT", id: "agent-1" } });
+const support = [{ refType: "Publication", refId: "publication-1", relation: "SUPPORTS" as const }];
 
 const writer = (): LearningWritePort => ({
   createLearning: async ({ learningId }) => ({ learningId, status: "CANDIDATE", version: 1 }),
@@ -26,22 +27,24 @@ const writer = (): LearningWritePort => ({
 });
 
 describe("Learning domain", () => {
-  it("creates scoped confidence-rated candidate learning", async () => {
+  it("creates scoped confidence-rated candidate learning with provenance", async () => {
     const service = new CreateLearningService(writer(), () => "11111111-1111-4111-8111-111111111111");
     const result = await service.execute({
       statement: "Performance-first reels retain more qualified listeners for this artist.",
       scope: "FORMAT",
       confidence: "MEDIUM",
       confidenceRationale: "Repeated directional support, but still needs another controlled test.",
-      references: [{ refType: "Publication", refId: "publication-1", relation: "SUPPORTS" }]
+      references: support
     }, userContext());
     expect(result).toEqual({ status: "SUCCESS", data: { learningId: "11111111-1111-4111-8111-111111111111", status: "CANDIDATE", version: 1 } });
   });
 
-  it("requires confidence rationale", async () => {
+  it("requires confidence rationale and provenance", async () => {
     const service = new CreateLearningService(writer());
-    const result = await service.execute({ statement: "A useful claim", scope: "ARTIST_GLOBAL", confidence: "LOW", confidenceRationale: "" }, userContext());
-    expect(result.status).toBe("VALIDATION_ERROR");
+    const noRationale = await service.execute({ statement: "A useful claim", scope: "ARTIST_GLOBAL", confidence: "LOW", confidenceRationale: "", references: support }, userContext());
+    expect(noRationale.status).toBe("VALIDATION_ERROR");
+    const noProvenance = await service.execute({ statement: "A useful claim", scope: "ARTIST_GLOBAL", confidence: "LOW", confidenceRationale: "Tentative.", references: [] }, userContext());
+    expect(noProvenance.status).toBe("VALIDATION_ERROR");
   });
 
   it("allows candidate to enter testing without human-only promotion", async () => {
