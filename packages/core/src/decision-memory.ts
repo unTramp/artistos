@@ -3,6 +3,13 @@ import type { CommandContext, CommandResult } from "./index";
 import type { FoundationEvidence } from "./artist-foundation";
 
 export type DecisionStatus = "ACTIVE" | "UNDER_REVIEW" | "REVERSED" | "EXPIRED";
+export type DecisionReferenceRelation = "BASED_ON" | "SUBJECT" | "RESULTED_IN" | "SUPERSEDES" | "CONTEXT";
+
+export interface DecisionReferenceInput {
+  refType: string;
+  refId: string;
+  relation: DecisionReferenceRelation;
+}
 
 export interface CreateDecisionCommand {
   title: string;
@@ -12,6 +19,10 @@ export interface CreateDecisionCommand {
   experimentIds?: string[];
   scope: string;
   reviewAt?: string;
+  decisionKey?: string;
+  references?: DecisionReferenceInput[];
+  overrideDecisionId?: string;
+  overrideRationale?: string;
 }
 
 export interface DecisionTransitionCommand {
@@ -37,10 +48,15 @@ export type DecisionPersistenceCode =
   | "DECISION_NOT_FOUND"
   | "DECISION_VERSION_CONFLICT"
   | "DECISION_INVALID_TRANSITION"
+  | "DECISION_CONFLICT"
+  | "DECISION_OVERRIDE_MISMATCH"
   | "IDEMPOTENCY_IN_PROGRESS";
 
 export class DecisionPersistenceError extends Error {
-  constructor(public readonly code: DecisionPersistenceCode) {
+  constructor(
+    public readonly code: DecisionPersistenceCode,
+    public readonly details?: { conflictingDecisionId?: string }
+  ) {
     super(code);
     this.name = "DecisionPersistenceError";
   }
@@ -63,6 +79,12 @@ export interface DecisionWritePort {
   }): Promise<DecisionResult>;
 }
 
+const referenceSchema = z.object({
+  refType: z.string().trim().min(1).max(120),
+  refId: z.string().trim().min(1).max(240),
+  relation: z.enum(["BASED_ON", "SUBJECT", "RESULTED_IN", "SUPERSEDES", "CONTEXT"])
+});
+
 const createSchema = z.object({
   title: z.string().trim().min(1).max(200),
   decision: z.string().trim().min(1).max(4000),
@@ -70,7 +92,18 @@ const createSchema = z.object({
   evidenceIds: z.array(z.string().uuid()).max(50).optional(),
   experimentIds: z.array(z.string().uuid()).max(50).optional(),
   scope: z.string().trim().min(1).max(120),
-  reviewAt: z.string().datetime({ offset: true }).optional()
+  reviewAt: z.string().datetime({ offset: true }).optional(),
+  decisionKey: z.string().trim().min(1).max(160).optional(),
+  references: z.array(referenceSchema).max(100).optional(),
+  overrideDecisionId: z.string().uuid().optional(),
+  overrideRationale: z.string().trim().min(1).max(4000).optional()
+}).superRefine((value, ctx) => {
+  if (value.overrideDecisionId && !value.overrideRationale) {
+    ctx.addIssue({ code: "custom", path: ["overrideRationale"], message: "Override rationale is required when replacing a prior Decision." });
+  }
+  if (value.overrideRationale && !value.overrideDecisionId) {
+    ctx.addIssue({ code: "custom", path: ["overrideDecisionId"], message: "A prior Decision is required when providing an override rationale." });
+  }
 });
 
 const transitionSchema = z.object({
@@ -97,6 +130,17 @@ const requireUser = <T>(context: CommandContext): CommandResult<T> | null => {
 const mapPersistenceError = <T>(error: unknown): CommandResult<T> => {
   if (error instanceof DecisionPersistenceError) {
     if (error.code === "DECISION_NOT_FOUND") return { status: "NOT_FOUND", code: error.code, message: "Decision was not found." };
+    if (error.code === "DECISION_CONFLICT") {
+      return {
+        status: "CONFLICT",
+        code: error.code,
+        message: "This Decision conflicts with an active prior Decision. Review the prior context before overriding it.",
+        ...(error.details?.conflictingDecisionId ? { fieldErrors: { conflictingDecisionId: error.details.conflictingDecisionId } } : {})
+      };
+    }
+    if (error.code === "DECISION_OVERRIDE_MISMATCH") {
+      return { status: "CONFLICT", code: error.code, message: "The Decision selected for override is no longer the active conflicting Decision." };
+    }
     return { status: "CONFLICT", code: error.code, message: "Decision conflicts with current state." };
   }
   return { status: "EXTERNAL_FAILURE", code: "DECISION_PERSISTENCE_FAILED", message: "Decision could not be persisted.", retryable: true };
@@ -145,7 +189,11 @@ export class CreateDecisionService {
       scope: parsed.data.scope,
       ...(evidenceIds.length ? { evidenceIds } : {}),
       ...(experimentIds.length ? { experimentIds } : {}),
-      ...(parsed.data.reviewAt ? { reviewAt: parsed.data.reviewAt } : {})
+      ...(parsed.data.reviewAt ? { reviewAt: parsed.data.reviewAt } : {}),
+      ...(parsed.data.decisionKey ? { decisionKey: parsed.data.decisionKey } : {}),
+      ...(parsed.data.references?.length ? { references: parsed.data.references } : {}),
+      ...(parsed.data.overrideDecisionId ? { overrideDecisionId: parsed.data.overrideDecisionId } : {}),
+      ...(parsed.data.overrideRationale ? { overrideRationale: parsed.data.overrideRationale } : {})
     };
 
     try {
