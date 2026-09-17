@@ -1,5 +1,5 @@
 import { CreateDecisionService, type CreateDecisionCommand, type DecisionStatus } from "@artist-os/core";
-import { PgDecisionReader, PgDecisionWriter } from "@artist-os/db";
+import { PgDecisionReader, PgDecisionWriter, writeProductTelemetryEvent } from "@artist-os/db";
 import { resolveAuthenticatedActorContext } from "@/lib/actor-context";
 import { commandResultResponse, readJson } from "@/lib/artist-foundation-command";
 import { resolveDecisionMutationContext } from "@/lib/decision-command";
@@ -7,6 +7,7 @@ import { apiErrorResponse, getTraceId, successResponse } from "@/lib/http";
 import { getDatabaseRuntime } from "@/lib/runtime";
 
 const statuses: DecisionStatus[] = ["ACTIVE", "UNDER_REVIEW", "REVERSED", "EXPIRED"];
+const memoryRefTypes = new Set(["learning", "weeklyreview", "decision"]);
 
 export async function GET(request: Request) {
   const traceId = getTraceId(request.headers);
@@ -40,7 +41,34 @@ export async function POST(request: Request) {
   const body = await readJson<CreateDecisionCommand>(request, resolution.traceId);
   if (body instanceof Response) return body;
 
-  const result = await new CreateDecisionService(new PgDecisionWriter(getDatabaseRuntime().db))
+  const runtime = getDatabaseRuntime();
+  const result = await new CreateDecisionService(new PgDecisionWriter(runtime.db))
     .execute(body, resolution.commandContext);
+
+  if (result.status === "SUCCESS") {
+    const references = body.references ?? [];
+    const reused = references.filter((reference) => memoryRefTypes.has(reference.refType.toLowerCase()));
+    await writeProductTelemetryEvent(runtime.db, {
+      artistId: resolution.commandContext.artistId,
+      eventName: "DECISION_CREATED",
+      surface: "DecisionMemory",
+      entityType: "Decision",
+      entityId: result.data.decisionId,
+      metadata: { scope: body.scope, referenceCount: references.length },
+      actorId: resolution.commandContext.actor.id
+    });
+    if (reused.length > 0) {
+      await writeProductTelemetryEvent(runtime.db, {
+        artistId: resolution.commandContext.artistId,
+        eventName: "MEMORY_REUSED",
+        surface: "DecisionMemory",
+        entityType: "Decision",
+        entityId: result.data.decisionId,
+        metadata: { sourceTypes: Array.from(new Set(reused.map((reference) => reference.refType))) },
+        actorId: resolution.commandContext.actor.id
+      });
+    }
+  }
+
   return commandResultResponse(result, resolution.traceId, 201);
 }
