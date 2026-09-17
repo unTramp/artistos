@@ -4,19 +4,51 @@ import { PgArtistFoundationReader } from "./artist-foundation-reader";
 import { PgSongBrainReader } from "./song-brain-reader";
 import { PgKnowledgeReader } from "./knowledge-reader";
 import { PgContentFactoryReader } from "./content-factory-reader";
+import { listLearnings } from "./learning-reader";
+
+const isFreshLearning = (freshUntil: Date | null, now: Date) => freshUntil === null || freshUntil > now;
+const normalizeTarget = (value: string) => value.trim().toLowerCase();
+
+const isRelevantLearning = (
+  learning: Awaited<ReturnType<typeof listLearnings>>[number],
+  context: { songId?: string; platformTargets?: string[] }
+) => {
+  if (learning.scope === "SONG") {
+    if (!context.songId) return false;
+    return learning.references.some((reference) => reference.relation === "SUBJECT" && reference.refId === context.songId);
+  }
+  if (learning.scope === "PLATFORM") {
+    const targets = new Set((context.platformTargets ?? []).map(normalizeTarget));
+    if (targets.size === 0) return false;
+    return learning.references.some((reference) =>
+      reference.relation === "SUBJECT" && targets.has(normalizeTarget(reference.refId))
+    );
+  }
+  if (learning.scope === "CAMPAIGN") {
+    // Content-angle generation has no campaign identity in this slice. Keep a
+    // campaign-scoped conclusion out rather than treating it as universal.
+    return false;
+  }
+  return true;
+};
 
 export class PgContentAngleContextReader {
   constructor(private readonly db: Stage0Database) {}
 
-  async readSources(artistId: string, songId?: string): Promise<ContentAngleContextSourceData> {
+  async readSources(
+    artistId: string,
+    songId?: string,
+    context: { platformTargets?: string[] } = {}
+  ): Promise<ContentAngleContextSourceData> {
     const identityReader = new PgArtistFoundationReader(this.db);
     const knowledgeReader = new PgKnowledgeReader(this.db);
     const factoryReader = new PgContentFactoryReader(this.db);
-    const [identityHome, knowledgeHome, recentAngles, songBrain] = await Promise.all([
+    const [identityHome, knowledgeHome, recentAngles, songBrain, validatedLearnings] = await Promise.all([
       identityReader.getIdentityHome(artistId),
       knowledgeReader.getHome(artistId),
       factoryReader.listAngles(artistId),
-      songId ? new PgSongBrainReader(this.db).getSongBrain(artistId, songId) : Promise.resolve(null)
+      songId ? new PgSongBrainReader(this.db).getSongBrain(artistId, songId) : Promise.resolve(null),
+      listLearnings(this.db, artistId, { statuses: ["VALIDATED"], limit: 100 })
     ]);
 
     const activeIdentity = identityHome.activeVersion && identityHome.identityId
@@ -29,6 +61,11 @@ export class PgContentAngleContextReader {
           eraName: identityHome.activeEra?.name ?? null
         }
       : null;
+
+    const now = new Date();
+    const relevantLearnings = validatedLearnings
+      .filter((learning) => isFreshLearning(learning.freshUntil, now))
+      .filter((learning) => isRelevantLearning(learning, { ...(songId ? { songId } : {}), ...context }));
 
     return {
       identity: activeIdentity,
@@ -70,7 +107,11 @@ export class PgContentAngleContextReader {
         language: item.language,
         isPrivate: item.isPrivate
       })),
-      validatedLearnings: [],
+      validatedLearnings: relevantLearnings.map((learning) => ({
+        id: learning.id,
+        content: learning.statement,
+        version: learning.version
+      })),
       campaign: null,
       platformConstraints: [],
       productionCapability: null,

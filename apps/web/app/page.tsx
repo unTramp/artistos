@@ -7,17 +7,14 @@ import {
   PgDecisionReader,
   PgKnowledgeReader,
   PgOperationalActionReader,
-  PgPlanningObjectiveReader
+  PgPlanningObjectiveReader,
+  listLearnings
 } from "@artist-os/db";
 import { AppShell } from "./components/app-shell";
 import { AttentionExplainability } from "./components/attention-explainability";
 import { CurrentFocusEditor } from "./components/current-focus-editor";
 import { resolveAuthenticatedActorContext } from "@/lib/actor-context";
 import { getDatabaseRuntime } from "@/lib/runtime";
-
-type BrainPayload = {
-  validatedLearnings?: unknown[];
-};
 
 const toneFor = (item: AttentionItem): "violet" | "amber" | "cyan" | "emerald" => {
   if (item.kind === "BLOCKER") return "amber";
@@ -42,6 +39,7 @@ const hrefForOperationalSource = (sourceEntityType: string, sourceEntityId: stri
   if (sourceEntityType === "ArtistIdentity" || sourceEntityType === "IdentityVersion") return "/identity";
   if (sourceEntityType === "Song") return `/songs/${sourceEntityId}`;
   if (sourceEntityType === "Decision") return `/decisions/${sourceEntityId}`;
+  if (sourceEntityType === "Learning") return "/learnings";
   return "/";
 };
 
@@ -103,7 +101,7 @@ export default async function HomePage() {
   const computedAt = new Date();
   const currentDate = computedAt.toISOString().slice(0, 10);
 
-  const [identity, songs, knowledge, angles, units, operationalActions, currentObjective, recentDecisions] = await Promise.all([
+  const [identity, songs, knowledge, angles, units, operationalActions, currentObjective, recentDecisions, recentLearnings] = await Promise.all([
     artistReader.getIdentityHome(actorContext.artistId),
     artistReader.listSongs(actorContext.artistId),
     knowledgeReader.getHome(actorContext.artistId),
@@ -111,7 +109,8 @@ export default async function HomePage() {
     factoryReader.listUnits(actorContext.artistId),
     actionReader.listActions(actorContext.artistId, { statuses: ["OPEN", "IN_PROGRESS", "BLOCKED"], limit: 50 }),
     objectiveReader.getCurrentPrimary(actorContext.artistId, currentDate),
-    decisionReader.listDecisions(actorContext.artistId, { statuses: ["ACTIVE", "UNDER_REVIEW"], limit: 3 })
+    decisionReader.listDecisions(actorContext.artistId, { statuses: ["ACTIVE", "UNDER_REVIEW"], limit: 3 }),
+    listLearnings(runtime.db, actorContext.artistId, { statuses: ["VALIDATED"], limit: 3 })
   ]);
 
   const approvedExecution = await Promise.all(
@@ -123,9 +122,8 @@ export default async function HomePage() {
   const unitAngleIds = new Set(units.flatMap((unit) => unit.angleId ? [unit.angleId] : []));
   const approvedWithoutUnit = angles.filter((angle) => angle.status === "APPROVED" && !unitAngleIds.has(angle.id));
   const unitsWithoutExecution = approvedExecution.filter((entry) => !entry.approved);
-  const brainPayload = knowledge.latestSnapshot?.payload as BrainPayload | undefined;
-  const learningCount = brainPayload?.validatedLearnings?.length ?? 0;
   const recentDecision = recentDecisions[0] ?? null;
+  const recentLearning = recentLearnings[0] ?? null;
 
   const projection = new AttentionProjectionService().project({
     computedAt,
@@ -249,11 +247,12 @@ export default async function HomePage() {
           </section>
 
           <section className="memory-panel">
-            <div className="panel-heading"><div><span className="signal-label">MEMORY</span><h2>What compounds</h2></div><small>{recentDecisions.length} live decision{recentDecisions.length === 1 ? "" : "s"} shown</small></div>
+            <div className="panel-heading"><div><span className="signal-label">MEMORY</span><h2>What compounds</h2></div><small>{recentDecisions.length + recentLearnings.length} reusable memory signal{recentDecisions.length + recentLearnings.length === 1 ? "" : "s"}</small></div>
             <div className="memory-block"><span>RECENT DECISION</span><strong>{recentDecision?.title ?? "No decision memory yet"}</strong><p>{recentDecision ? recentDecision.reason : "Record material choices so future strategy can remember what you chose and why."}</p></div>
-            <div className="memory-block"><span>VALIDATED LEARNING</span><strong>{learningCount > 0 ? `${learningCount} available` : "Not enough evidence yet"}</strong><p>{learningCount > 0 ? "Validated learnings are available for future context assembly." : "Artist OS will surface reusable findings here only after their canonical intelligence workflow exists and evidence earns them."}</p></div>
+            <div className="memory-block"><span>VALIDATED LEARNING</span><strong>{recentLearning?.statement ?? "Not enough evidence yet"}</strong><p>{recentLearning ? `${recentLearning.scope} · ${recentLearning.confidence} confidence · ${recentLearning.confidenceRationale}` : "Artist OS will surface reusable findings here only after they move through the canonical Learning lifecycle and receive human validation."}</p></div>
             <div className="memory-block"><span>RECENT EXECUTION</span><strong>{latestUnit?.title ?? "No Content Unit yet"}</strong><p>{latestUnit ? `${latestUnit.status} · ${latestUnit.songTitle ?? "Artist-level"}` : "Create and approve content without losing the reason behind the concept."}</p></div>
             <a className="inline-link" href="/decisions">Open Decision Memory →</a>
+            <a className="inline-link" href="/learnings">Open Learning Memory →</a>
             <a className="inline-link" href="/knowledge">Open Brain →</a>
           </section>
         </div>
