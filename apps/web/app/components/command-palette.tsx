@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { emitProductTelemetry } from "@/lib/product-telemetry-client";
 
 type CommandGroup = "Navigate" | "Create" | "Operate";
@@ -49,7 +49,7 @@ export function CommandPalette() {
     ].join(" ")).includes(term));
   }, [query]);
 
-  const openPalette = (source: "button" | "shortcut") => {
+  const openPalette = useCallback((source: "button" | "shortcut") => {
     setOpen(true);
     emitProductTelemetry({
       eventName: "COMMAND_PALETTE_OPENED",
@@ -57,13 +57,13 @@ export function CommandPalette() {
       entityType: "CommandPalette",
       metadata: { source }
     });
-  };
+  }, []);
 
-  const closePalette = () => {
+  const closePalette = useCallback(() => {
     setOpen(false);
     setQuery("");
     setActiveIndex(0);
-  };
+  }, []);
 
   const execute = (command: PaletteCommand) => {
     emitProductTelemetry({
@@ -87,7 +87,7 @@ export function CommandPalette() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open]);
+  }, [closePalette, open, openPalette]);
 
   useEffect(() => {
     if (!open) return;
@@ -99,7 +99,7 @@ export function CommandPalette() {
     if (activeIndex >= filtered.length) setActiveIndex(0);
   }, [activeIndex, filtered.length]);
 
-  const onInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const onInputKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setActiveIndex((index) => filtered.length ? (index + 1) % filtered.length : 0);
