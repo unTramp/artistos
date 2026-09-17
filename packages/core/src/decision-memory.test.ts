@@ -6,6 +6,7 @@ import {
   ReactivateDecisionService,
   ReverseDecisionService,
   type CommandContext,
+  type CreateDecisionCommand,
   type DecisionResult,
   type DecisionWritePort
 } from "./index";
@@ -23,12 +24,14 @@ class MemoryWriter implements DecisionWritePort {
   status: DecisionResult["status"] = "ACTIVE";
   version = 0;
   createdReason: string | null = null;
+  createdCommand: CreateDecisionCommand | null = null;
   transitions: Array<{ toStatus: DecisionResult["status"]; rationale?: string }> = [];
 
   async createDecision(request: Parameters<DecisionWritePort["createDecision"]>[0]): Promise<DecisionResult> {
     this.status = "ACTIVE";
     this.version = 1;
     this.createdReason = request.command.reason;
+    this.createdCommand = request.command;
     return { decisionId: request.decisionId, status: this.status, version: this.version };
   }
 
@@ -69,6 +72,56 @@ describe("Decision Memory", () => {
       scope: "content",
       evidenceIds: [crypto.randomUUID()]
     }, context())).resolves.toMatchObject({ status: "BLOCKED", code: "DECISION_REFERENCE_VALIDATION_UNAVAILABLE" });
+  });
+
+  it("preserves forward-compatible subject and lineage references", async () => {
+    const writer = new MemoryWriter();
+    const service = new CreateDecisionService(writer, undefined, () => "0f3dd7ea-3ff2-44ca-a0f9-6e963b76b0ba");
+    const subjectId = crypto.randomUUID();
+
+    const result = await service.execute({
+      title: "Use Trastevere as next release",
+      decision: "Make Trastevere the next release focus.",
+      reason: "It is the most release-ready song in the current context.",
+      scope: "music.release",
+      decisionKey: "song.next-release",
+      references: [{ refType: "SONG", refId: subjectId, relation: "SUBJECT" }]
+    }, context());
+
+    expect(result.status).toBe("SUCCESS");
+    expect(writer.createdCommand).toMatchObject({
+      decisionKey: "song.next-release",
+      references: [{ refType: "SONG", refId: subjectId, relation: "SUBJECT" }]
+    });
+  });
+
+  it("requires explicit override rationale when replacing a prior Decision", async () => {
+    const writer = new MemoryWriter();
+    const service = new CreateDecisionService(writer);
+    const priorDecisionId = crypto.randomUUID();
+
+    await expect(service.execute({
+      title: "Change next release",
+      decision: "Use Always on My Mind instead.",
+      reason: "Context changed.",
+      scope: "music.release",
+      decisionKey: "song.next-release",
+      overrideDecisionId: priorDecisionId
+    }, context())).resolves.toMatchObject({
+      status: "VALIDATION_ERROR",
+      code: "DECISION_INVALID",
+      fieldErrors: { overrideRationale: expect.any(String) }
+    });
+
+    await expect(service.execute({
+      title: "Change next release",
+      decision: "Use Always on My Mind instead.",
+      reason: "Context changed.",
+      scope: "music.release",
+      decisionKey: "song.next-release",
+      overrideDecisionId: priorDecisionId,
+      overrideRationale: "The release schedule changed and the new song is ready first."
+    }, context())).resolves.toMatchObject({ status: "SUCCESS" });
   });
 
   it("supports ACTIVE ↔ UNDER_REVIEW and requires rationale for reversal/expiry", async () => {
