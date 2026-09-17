@@ -12,7 +12,11 @@ import {
 } from "@artist-os/ai";
 
 export interface ContentAngleSourceReader {
-  readSources(artistId: string, songId?: string): Promise<ContentAngleContextSourceData>;
+  readSources(
+    artistId: string,
+    songId?: string,
+    context?: { platformTargets?: string[] }
+  ): Promise<ContentAngleContextSourceData>;
 }
 
 export interface GenerateContentAnglesInput {
@@ -50,7 +54,9 @@ export class GenerateContentAnglesService {
   ) {}
 
   async execute(input: GenerateContentAnglesInput): Promise<GenerateContentAnglesOutput> {
-    const source = await this.sourceReader.readSources(input.artistId, input.songId);
+    const source = await this.sourceReader.readSources(input.artistId, input.songId, {
+      ...(input.platformTargets ? { platformTargets: input.platformTargets } : {})
+    });
     const pack = new ContentAngleContextAssembler().assemble({
       artistId: input.artistId,
       explicitRequest: input.explicitRequest,
