@@ -55,7 +55,7 @@ export type DecisionPersistenceCode =
 export class DecisionPersistenceError extends Error {
   constructor(
     public readonly code: DecisionPersistenceCode,
-    public readonly details?: { conflictingDecisionId?: string }
+    public readonly details?: { conflictingDecisionId?: string | undefined }
   ) {
     super(code);
     this.name = "DecisionPersistenceError";
