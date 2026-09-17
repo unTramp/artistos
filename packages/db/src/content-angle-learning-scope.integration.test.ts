@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { sql } from "drizzle-orm";
 import {
   CreateLearningService,
+  StartLearningTestService,
   ValidateLearningService,
   type CommandContext,
   type LearningScope
@@ -69,9 +70,14 @@ const createValidated = async (scope: LearningScope, statement: string, subject?
     references
   }, context());
   if (created.status !== "SUCCESS") throw new Error(`failed to create ${scope} learning`);
+  const testing = await new StartLearningTestService(writer).execute(
+    { learningId: created.data.learningId },
+    context({ expectedVersion: created.data.version })
+  );
+  if (testing.status !== "SUCCESS") throw new Error(`failed to test ${scope} learning`);
   const validated = await new ValidateLearningService(writer).execute(
     { learningId: created.data.learningId, rationale: "Explicit human validation for test." },
-    context({ expectedVersion: created.data.version })
+    context({ expectedVersion: testing.data.version })
   );
   if (validated.status !== "SUCCESS") throw new Error(`failed to validate ${scope} learning`);
   return created.data.learningId;
@@ -85,13 +91,16 @@ describe("Content Angle Learning scope applicability", () => {
     const formatId = await createValidated("FORMAT", "Acoustic-live format observation.", "acoustic-live");
 
     const spotifyContext = await new PgContentAngleContextReader(db).readSources(artistId, undefined, { platformTargets: ["Spotify"] });
-    expect(spotifyContext.validatedLearnings.map((learning) => learning.id)).toEqual(expect.arrayContaining([globalId, spotifyId]));
-    expect(spotifyContext.validatedLearnings.map((learning) => learning.id)).not.toEqual(expect.arrayContaining([marketId, formatId]));
+    const spotifyLearningIds = spotifyContext.validatedLearnings.map((learning) => learning.id);
+    expect(spotifyLearningIds).toEqual(expect.arrayContaining([globalId, spotifyId]));
+    expect(spotifyLearningIds).not.toContain(marketId);
+    expect(spotifyLearningIds).not.toContain(formatId);
 
     const youtubeContext = await new PgContentAngleContextReader(db).readSources(artistId, undefined, { platformTargets: ["YouTube"] });
-    expect(youtubeContext.validatedLearnings.map((learning) => learning.id)).toContain(globalId);
-    expect(youtubeContext.validatedLearnings.map((learning) => learning.id)).not.toContain(spotifyId);
-    expect(youtubeContext.validatedLearnings.map((learning) => learning.id)).not.toContain(marketId);
-    expect(youtubeContext.validatedLearnings.map((learning) => learning.id)).not.toContain(formatId);
+    const youtubeLearningIds = youtubeContext.validatedLearnings.map((learning) => learning.id);
+    expect(youtubeLearningIds).toContain(globalId);
+    expect(youtubeLearningIds).not.toContain(spotifyId);
+    expect(youtubeLearningIds).not.toContain(marketId);
+    expect(youtubeLearningIds).not.toContain(formatId);
   });
 });
