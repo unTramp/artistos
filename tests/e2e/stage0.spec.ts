@@ -15,7 +15,7 @@ test("exposes liveness with a trace id", async ({ request }) => {
   expect(body.meta.traceId).toEqual(expect.any(String));
 });
 
-test("signs up, manages current focus, explains Today attention, learns in context and signs out", async ({ page }) => {
+test("signs up, uses command palette, manages current focus, explains maturity, learns in context and signs out", async ({ page }) => {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const email = `daily-os-${suffix}@example.test`;
 
@@ -40,6 +40,21 @@ test("signs up, manages current focus, explains Today attention, learns in conte
   await expect(page.getByText(email, { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Today", exact: true })).toHaveClass(/active/);
 
+  await page.getByRole("button", { name: "Open command palette" }).click();
+  let palette = page.getByRole("dialog", { name: "Command palette" });
+  await expect(palette).toBeVisible();
+  await palette.getByLabel("Search commands").fill("weekly review");
+  await expect(palette.getByRole("button", { name: /Run Weekly Review/ })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(palette).toBeHidden();
+
+  await page.keyboard.press("Control+k");
+  palette = page.getByRole("dialog", { name: "Command palette" });
+  await expect(palette).toBeVisible();
+  await palette.getByLabel("Search commands").fill("what should i do next");
+  await palette.getByRole("button", { name: /What should I do next\?/ }).click();
+  await page.waitForURL("**/");
+
   await expect(page.getByText("No primary focus yet", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Set current focus" }).click();
   await page.getByLabel("Focus title").fill("Build release momentum");
@@ -60,6 +75,9 @@ test("signs up, manages current focus, explains Today attention, learns in conte
   await expect(drawer).toBeVisible();
   await expect(drawer.getByText("WHY THIS", { exact: true }).first()).toBeVisible();
   await expect(drawer.getByText("BASED ON", { exact: true })).toBeVisible();
+  await expect(drawer.getByText("BASIS MATURITY", { exact: true })).toBeVisible();
+  await expect(drawer.getByText("FOUNDATION CONTEXT", { exact: true })).toBeVisible();
+  await expect(drawer.getByText("0 direct provenance refs", { exact: true })).toBeVisible();
   await expect(drawer.getByText("UNCERTAINTY", { exact: true })).toBeVisible();
   await expect(drawer.getByText("EXPECTED EFFECT", { exact: true })).toBeVisible();
   await expect(drawer.getByText("WHAT WE MAY LEARN", { exact: true })).toBeVisible();

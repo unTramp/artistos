@@ -11,7 +11,9 @@ const allowedEvents: ProductTelemetryEventName[] = [
   "PASSIVE_LEARNING_CANDIDATE_CAPTURED",
   "PASSIVE_DECISION_CANDIDATE_CAPTURED",
   "CONTEXTUAL_GUIDANCE_OPENED",
-  "CONTEXTUAL_GUIDANCE_APPLIED"
+  "CONTEXTUAL_GUIDANCE_APPLIED",
+  "COMMAND_PALETTE_OPENED",
+  "COMMAND_PALETTE_EXECUTED"
 ];
 
 const compact = (value: unknown, max: number) => typeof value === "string" ? value.trim().slice(0, max) : "";
