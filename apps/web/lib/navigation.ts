@@ -12,5 +12,6 @@ export const navigation = [
   { id: "create", href: "/factory", label: "Create", stage: "content-factory" },
   { id: "music", href: "/songs", label: "Music", stage: "artist-foundation" },
   { id: "brain", href: "/knowledge", label: "Brain", stage: "artist-foundation" },
+  { id: "memory", href: "/decisions", label: "Memory", stage: "daily-os" },
   { id: "account", href: "/auth", label: "Account", stage: "daily-os" }
 ] satisfies NavigationItem[];
