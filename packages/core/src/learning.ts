@@ -31,7 +31,7 @@ export interface CreateLearningCommand {
   scope: LearningScope;
   confidence: LearningConfidence;
   confidenceRationale: string;
-  references?: LearningReferenceInput[];
+  references: LearningReferenceInput[];
   freshUntil?: string;
 }
 
@@ -88,8 +88,12 @@ const createSchema = z.object({
   scope: z.enum(["ARTIST_GLOBAL", "PLATFORM", "SONG", "PILLAR", "FORMAT", "AUDIENCE", "CAMPAIGN", "AUDIO_SEGMENT", "NARRATIVE", "MARKET", "BUSINESS", "IDENTITY"]),
   confidence: z.enum(["LOW", "MEDIUM", "HIGH"]),
   confidenceRationale: z.string().trim().min(1).max(4000),
-  references: z.array(referenceSchema).max(100).optional(),
+  references: z.array(referenceSchema).min(1, "At least one provenance reference is required.").max(100),
   freshUntil: z.string().datetime({ offset: true }).optional()
+}).superRefine((value, ctx) => {
+  if (!value.references.some((reference) => reference.relation === "SUPPORTS" || reference.relation === "DERIVED_FROM")) {
+    ctx.addIssue({ code: "custom", path: ["references"], message: "At least one supporting or derived-from reference is required." });
+  }
 });
 
 const transitionSchema = z.object({
@@ -126,7 +130,7 @@ export class CreateLearningService {
       scope: parsed.data.scope,
       confidence: parsed.data.confidence,
       confidenceRationale: parsed.data.confidenceRationale,
-      ...(parsed.data.references?.length ? { references: parsed.data.references } : {}),
+      references: parsed.data.references,
       ...(parsed.data.freshUntil ? { freshUntil: parsed.data.freshUntil } : {})
     };
     try {
