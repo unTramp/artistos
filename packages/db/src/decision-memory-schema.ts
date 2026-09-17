@@ -1,5 +1,6 @@
 import { index, integer, jsonb, text, timestamp, uuid, pgTable } from "drizzle-orm/pg-core";
 import { artists } from "./schema";
+import type { DecisionReferenceInput } from "@artist-os/core";
 
 export const decisions = pgTable("decisions", {
   id: uuid("id").primaryKey(),
@@ -9,7 +10,10 @@ export const decisions = pgTable("decisions", {
   reason: text("reason").notNull(),
   evidenceIds: jsonb("evidence_ids").$type<string[]>().notNull().default([]),
   experimentIds: jsonb("experiment_ids").$type<string[]>().notNull().default([]),
+  references: jsonb("references").$type<DecisionReferenceInput[]>().notNull().default([]),
   scope: text("scope").notNull(),
+  decisionKey: text("decision_key"),
+  supersedesDecisionId: uuid("supersedes_decision_id"),
   reviewAt: timestamp("review_at", { withTimezone: true }),
   status: text("status").notNull().default("ACTIVE"),
   version: integer("version").notNull().default(1),
@@ -19,7 +23,9 @@ export const decisions = pgTable("decisions", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
 }, (table) => [
   index("decisions_artist_status_idx").on(table.artistId, table.status, table.createdAt),
-  index("decisions_artist_review_idx").on(table.artistId, table.reviewAt)
+  index("decisions_artist_review_idx").on(table.artistId, table.reviewAt),
+  index("decisions_artist_key_scope_idx").on(table.artistId, table.decisionKey, table.scope, table.status),
+  index("decisions_supersedes_idx").on(table.supersedesDecisionId)
 ]);
 
 export const decisionStateHistory = pgTable("decision_state_history", {
