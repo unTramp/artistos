@@ -1,4 +1,5 @@
-import { index, integer, jsonb, text, timestamp, uuid, pgTable } from "drizzle-orm/pg-core";
+import { index, integer, jsonb, text, timestamp, uniqueIndex, uuid, pgTable } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { artists } from "./schema";
 import type { DecisionReferenceInput } from "@artist-os/core";
 
@@ -24,7 +25,9 @@ export const decisions = pgTable("decisions", {
 }, (table) => [
   index("decisions_artist_status_idx").on(table.artistId, table.status, table.createdAt),
   index("decisions_artist_review_idx").on(table.artistId, table.reviewAt),
-  index("decisions_artist_key_scope_idx").on(table.artistId, table.decisionKey, table.scope, table.status),
+  uniqueIndex("decisions_live_key_scope_uidx")
+    .on(table.artistId, table.decisionKey, table.scope)
+    .where(sql`${table.decisionKey} IS NOT NULL AND ${table.status} IN ('ACTIVE','UNDER_REVIEW')`),
   index("decisions_supersedes_idx").on(table.supersedesDecisionId)
 ]);
 
