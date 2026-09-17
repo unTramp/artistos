@@ -78,14 +78,14 @@ describe("Learning persistence", () => {
     expect(history.at(-1)).toMatchObject({ toStatus: "DEPRECATED", rationale: "Newer evidence supersedes this rule." });
   });
 
-  it("reuses only fresh VALIDATED Learnings in content generation context", async () => {
+  it("reuses only fresh globally applicable VALIDATED Learnings in an unscoped generation request", async () => {
     const writer = new PgLearningWriter(db);
-    const createValidated = async (statement: string, freshUntil: string) => {
+    const createValidatedGlobal = async (statement: string, freshUntil: string) => {
       const created = await new CreateLearningService(writer).execute({
         statement,
-        scope: "FORMAT",
+        scope: "ARTIST_GLOBAL",
         confidence: "HIGH",
-        confidenceRationale: "Repeated evidence supports this scoped conclusion.",
+        confidenceRationale: "Repeated evidence supports this artist-global conclusion.",
         references: [{ refType: "Publication", refId: `publication-${crypto.randomUUID()}`, relation: "SUPPORTS" }],
         freshUntil
       }, context({ idempotencyKey: `learning-${crypto.randomUUID()}` }));
@@ -100,8 +100,8 @@ describe("Learning persistence", () => {
       return created.data.learningId;
     };
 
-    const freshId = await createValidated("Fresh validated generation learning.", "2099-01-01T00:00:00.000Z");
-    const expiredId = await createValidated("Expired validated generation learning.", "2020-01-01T00:00:00.000Z");
+    const freshId = await createValidatedGlobal("Fresh validated generation learning.", "2099-01-01T00:00:00.000Z");
+    const expiredId = await createValidatedGlobal("Expired validated generation learning.", "2020-01-01T00:00:00.000Z");
     const candidate = await new CreateLearningService(writer).execute({
       statement: "Unvalidated candidate must not influence generation.",
       scope: "FORMAT",
