@@ -133,7 +133,7 @@ export function CurrentFocusEditor({ currentDate, current }: { currentDate: stri
           <div>
             <span className="signal-label">CURRENT FOCUS</span>
             <strong>No primary focus yet</strong>
-            <p>Define one operational focus for the current period. Today will use it as a ranking signal, not a hard rule.</p>
+            <p>Define one operational focus for the current period. When it is linked to concrete work, Today can use that evidence as a bounded ranking signal.</p>
           </div>
           <button className="focus-set-button" type="button" onClick={() => setOpen(true)}>Set current focus</button>
         </>
@@ -143,7 +143,7 @@ export function CurrentFocusEditor({ currentDate, current }: { currentDate: stri
             <div>
               <span className="signal-label">SET CURRENT FOCUS</span>
               <strong>What matters most right now?</strong>
-              <p>Keep this operational. Metrics may inform it later, but only you can complete it.</p>
+              <p>Keep this operational. A manual focus records your intent; linked evidence from workflows can later make its effect on Today explicit.</p>
             </div>
             <button type="button" className="focus-cancel-button" onClick={() => { reset(); setOpen(false); }} disabled={pending}>Cancel</button>
           </div>
