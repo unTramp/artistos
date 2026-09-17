@@ -15,6 +15,7 @@ import { AttentionExplainability } from "./components/attention-explainability";
 import { CurrentFocusEditor } from "./components/current-focus-editor";
 import { OperationalActionControls } from "./components/operational-action-controls";
 import { resolveAuthenticatedActorContext } from "@/lib/actor-context";
+import { hrefForOperationalSource } from "@/lib/entity-href";
 import { getDatabaseRuntime } from "@/lib/runtime";
 
 const toneFor = (item: AttentionItem): "violet" | "amber" | "cyan" | "emerald" => {
@@ -31,18 +32,6 @@ const labelFor = (item: AttentionItem) => {
   if (item.kind === "MEMORY") return "MEMORY";
   if (item.kind === "FOUNDATION") return "FOUNDATION";
   return "MUSIC";
-};
-
-const hrefForOperationalSource = (sourceEntityType: string, sourceEntityId: string) => {
-  if (sourceEntityType === "ContentUnit") return `/factory/units/${sourceEntityId}`;
-  if (sourceEntityType === "ContentAngle") return "/factory";
-  if (sourceEntityType === "CandidateKnowledge") return "/knowledge";
-  if (sourceEntityType === "ArtistIdentity" || sourceEntityType === "IdentityVersion") return "/identity";
-  if (sourceEntityType === "Song") return `/songs/${sourceEntityId}`;
-  if (sourceEntityType === "Decision") return `/decisions/${sourceEntityId}`;
-  if (sourceEntityType === "Learning") return "/learnings";
-  if (sourceEntityType === "WeeklyReview") return `/weekly-reviews/${sourceEntityId}`;
-  return "/";
 };
 
 export default async function HomePage() {
