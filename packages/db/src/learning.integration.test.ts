@@ -10,6 +10,7 @@ import {
 } from "@artist-os/core";
 import { createDatabase, type Stage0Database } from "./runtime";
 import { artists } from "./schema";
+import { PgContentAngleContextReader } from "./content-angle-context-reader";
 import { getLearning, listLearningHistory, listLearnings } from "./learning-reader";
 import { PgLearningWriter } from "./learning-writer";
 
@@ -75,5 +76,49 @@ describe("Learning persistence", () => {
     expect((await getLearning(db, artistId, learning.id))?.status).toBe("DEPRECATED");
     const history = await listLearningHistory(db, artistId, learning.id);
     expect(history.at(-1)).toMatchObject({ toStatus: "DEPRECATED", rationale: "Newer evidence supersedes this rule." });
+  });
+
+  it("reuses only fresh VALIDATED Learnings in content generation context", async () => {
+    const writer = new PgLearningWriter(db);
+    const createValidated = async (statement: string, freshUntil: string) => {
+      const created = await new CreateLearningService(writer).execute({
+        statement,
+        scope: "FORMAT",
+        confidence: "HIGH",
+        confidenceRationale: "Repeated evidence supports this scoped conclusion.",
+        references: [{ refType: "Publication", refId: `publication-${crypto.randomUUID()}`, relation: "SUPPORTS" }],
+        freshUntil
+      }, context({ idempotencyKey: `learning-${crypto.randomUUID()}` }));
+      expect(created.status).toBe("SUCCESS");
+      if (created.status !== "SUCCESS") throw new Error("validated fixture creation failed");
+      const candidate = await getLearning(db, artistId, created.data.learningId);
+      if (!candidate) throw new Error("candidate fixture missing");
+      expect((await new StartLearningTestService(writer).execute({ learningId: candidate.id }, context({ expectedVersion: candidate.version }))).status).toBe("SUCCESS");
+      const testing = await getLearning(db, artistId, candidate.id);
+      if (!testing) throw new Error("testing fixture missing");
+      expect((await new ValidateLearningService(writer).execute({ learningId: testing.id, rationale: "Human accepted the repeated evidence for reuse." }, context({ expectedVersion: testing.version }))).status).toBe("SUCCESS");
+      return created.data.learningId;
+    };
+
+    const freshId = await createValidated("Fresh validated generation learning.", "2099-01-01T00:00:00.000Z");
+    const expiredId = await createValidated("Expired validated generation learning.", "2020-01-01T00:00:00.000Z");
+    const candidate = await new CreateLearningService(writer).execute({
+      statement: "Unvalidated candidate must not influence generation.",
+      scope: "FORMAT",
+      confidence: "LOW",
+      confidenceRationale: "Only one observation exists.",
+      references: [{ refType: "Publication", refId: `publication-${crypto.randomUUID()}`, relation: "SUPPORTS" }]
+    }, context({ idempotencyKey: `learning-${crypto.randomUUID()}` }));
+    expect(candidate.status).toBe("SUCCESS");
+    if (candidate.status !== "SUCCESS") throw new Error("candidate fixture creation failed");
+
+    const sources = await new PgContentAngleContextReader(db).readSources(artistId);
+    const learningIds = sources.validatedLearnings.map((learning) => learning.id);
+    expect(learningIds).toContain(freshId);
+    expect(learningIds).not.toContain(expiredId);
+    expect(learningIds).not.toContain(candidate.data.learningId);
+    expect(sources.validatedLearnings.find((learning) => learning.id === freshId)).toMatchObject({
+      content: "Fresh validated generation learning."
+    });
   });
 });
