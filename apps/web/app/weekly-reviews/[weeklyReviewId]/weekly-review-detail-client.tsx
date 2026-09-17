@@ -131,17 +131,20 @@ export function WeeklyReviewDetailClient({ review }: { review: Review }) {
             <div className="section-heading"><p className="eyebrow">{section.kind.replaceAll("_", " ")}</p><h2>{section.label}</h2></div>
             {section.items.length === 0 ? <div className="quiet-state">No supported signal in this snapshot.</div> : section.items.map((item, itemIndex) => {
               const focusOpen = focusDraft?.section.kind === section.kind && focusDraft.itemIndex === itemIndex;
+              const existingFocusRef = item.references?.find((reference) => reference.refType === "PlanningObjective");
+              const showFocusConfirmation = canSetFocus(section.kind) && !existingFocusRef;
               return (
                 <article className="decision-card" key={`${section.kind}-${itemIndex}`}>
                   <div className="status-row"><span className="status-chip">{item.epistemicLabel ?? "LEGACY · UNLABELLED"}</span></div>
                   <p>{item.text}</p>
                   {item.references?.length ? <small>{item.references.map((reference) => `${reference.refType}:${reference.refId}`).join(" · ")}</small> : null}
-                  {(canSetFocus(section.kind) || canCreateDecision(section.kind) || canCreateAction(section.kind)) && <div className="decision-form-actions">
-                    {canSetFocus(section.kind) && <button className="decision-primary-button" type="button" disabled={busy} onClick={() => focusOpen ? setFocusDraft(null) : beginFocus(section, item, itemIndex)}>{focusOpen ? "Cancel focus" : "Set current focus →"}</button>}
+                  {(showFocusConfirmation || existingFocusRef || canCreateDecision(section.kind) || canCreateAction(section.kind)) && <div className="decision-form-actions">
+                    {showFocusConfirmation && <button className="decision-primary-button" type="button" disabled={busy} onClick={() => focusOpen ? setFocusDraft(null) : beginFocus(section, item, itemIndex)}>{focusOpen ? "Cancel focus" : "Set current focus →"}</button>}
+                    {existingFocusRef && <a className="decision-secondary-button" href="/">Open current focus →</a>}
                     {canCreateDecision(section.kind) && <button className="decision-secondary-button" type="button" disabled={busy} onClick={() => void createDecision(section, item, itemIndex)}>Turn into Decision →</button>}
                     {canCreateAction(section.kind) && <button className="decision-primary-button" type="button" disabled={busy} onClick={() => void createAction(section, item, itemIndex)}>Create Action →</button>}
                   </div>}
-                  {focusOpen && <div className="decision-create-card">
+                  {focusOpen && showFocusConfirmation && <div className="decision-create-card">
                     <label>Focus title<input value={focusTitle} onChange={(event) => setFocusTitle(event.target.value)} maxLength={200} /></label>
                     <label>What does success look like?<textarea value={focusStatement} onChange={(event) => setFocusStatement(event.target.value)} rows={3} maxLength={2000} /></label>
                     <div className="decision-form-grid">
