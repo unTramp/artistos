@@ -16,6 +16,7 @@
     { "idx": 11, "version": "7", "when": 1789580400000, "tag": "0011_agent_runs", "breakpoints": true },
     { "idx": 12, "version": "7", "when": 1789592400000, "tag": "0012_operational_actions", "breakpoints": true },
     { "idx": 13, "version": "7", "when": 1789596000000, "tag": "0013_planning_objectives", "breakpoints": true },
-    { "idx": 14, "version": "7", "when": 1789599600000, "tag": "0014_decision_memory", "breakpoints": true }
+    { "idx": 14, "version": "7", "when": 1789599600000, "tag": "0014_decision_memory", "breakpoints": true },
+    { "idx": 15, "version": "7", "when": 1789603200000, "tag": "0015_learning_foundation", "breakpoints": true }
   ]
 }
