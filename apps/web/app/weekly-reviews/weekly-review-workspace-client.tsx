@@ -12,7 +12,13 @@ type Review = {
 };
 
 const idempotencyKey = () => `weekly-review-ui-${crypto.randomUUID()}`;
-const isoForDateInput = (value: string, end = false) => new Date(`${value}T${end ? "23:59:59" : "00:00:00"}.000Z`).toISOString();
+const startIsoForDateInput = (value: string) => new Date(`${value}T00:00:00.000Z`).toISOString();
+const endIsoForDateInput = (value: string) => {
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  if (value === today) return now.toISOString();
+  return new Date(`${value}T23:59:59.999Z`).toISOString();
+};
 
 export function WeeklyReviewWorkspaceClient({ initialReviews }: { initialReviews: Review[] }) {
   const [reviews, setReviews] = useState(initialReviews);
@@ -34,7 +40,7 @@ export function WeeklyReviewWorkspaceClient({ initialReviews }: { initialReviews
       const response = await fetch("/api/v1/weekly-reviews/generate", {
         method: "POST",
         headers: { "content-type": "application/json", "idempotency-key": idempotencyKey() },
-        body: JSON.stringify({ periodStart: isoForDateInput(periodStart), periodEnd: isoForDateInput(periodEnd, true) })
+        body: JSON.stringify({ periodStart: startIsoForDateInput(periodStart), periodEnd: endIsoForDateInput(periodEnd) })
       });
       const body = await response.json() as { data?: { weeklyReviewId?: string }; error?: { message?: string } };
       if (!response.ok) throw new Error(body.error?.message ?? "Weekly Review could not be generated.");
