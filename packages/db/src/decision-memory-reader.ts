@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, inArray, lte } from "drizzle-orm";
-import type { DecisionStatus } from "@artist-os/core";
+import type { DecisionReferenceInput, DecisionStatus } from "@artist-os/core";
 import type { Stage0Database } from "./runtime";
 import { decisions, decisionStateHistory } from "./decision-memory-schema";
 
@@ -11,7 +11,10 @@ export interface DecisionView {
   reason: string;
   evidenceIds: string[];
   experimentIds: string[];
+  references: DecisionReferenceInput[];
   scope: string;
+  decisionKey: string | null;
+  supersedesDecisionId: string | null;
   reviewAt: Date | null;
   status: DecisionStatus;
   version: number;
@@ -38,7 +41,10 @@ const mapDecision = (row: typeof decisions.$inferSelect): DecisionView => ({
   reason: row.reason,
   evidenceIds: row.evidenceIds,
   experimentIds: row.experimentIds,
+  references: row.references,
   scope: row.scope,
+  decisionKey: row.decisionKey,
+  supersedesDecisionId: row.supersedesDecisionId,
   reviewAt: row.reviewAt,
   status: row.status as DecisionStatus,
   version: row.version,
