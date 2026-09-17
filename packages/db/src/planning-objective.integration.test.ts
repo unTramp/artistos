@@ -52,7 +52,7 @@ beforeAll(async () => {
 afterAll(async () => { await runtime.close(); });
 
 describe("PlanningObjective canonical contract", () => {
-  it("persists ACTIVE status and success criteria for the current primary objective", async () => {
+  it("persists ACTIVE status, success criteria and bounded related references for the current primary objective", async () => {
     const create = new CreatePlanningObjectiveService(new PgPlanningObjectiveWriter(db));
     const result = await create.execute({
       title: "Prepare Trastevere release",
@@ -61,7 +61,8 @@ describe("PlanningObjective canonical contract", () => {
       periodEnd: "2026-09-30",
       scope: "ARTIST",
       priority: "PRIMARY",
-      successCriteria: ["Execution package approved", "Release blockers resolved"]
+      successCriteria: ["Execution package approved", "Release blockers resolved"],
+      relatedRefs: [{ refType: "OperationalAction", refId: "launch-action-1" }]
     }, context({ idempotencyKey: `objective-${crypto.randomUUID()}` }));
     expect(result.status).toBe("SUCCESS");
     if (result.status !== "SUCCESS") throw new Error("objective missing");
@@ -74,6 +75,7 @@ describe("PlanningObjective canonical contract", () => {
       scope: "ARTIST",
       status: "ACTIVE",
       successCriteria: ["Execution package approved", "Release blockers resolved"],
+      relatedRefs: [{ refType: "OperationalAction", refId: "launch-action-1" }],
       completedAt: null
     });
 
