@@ -47,7 +47,13 @@ export function LearningMemoryClient({ initialLearnings }: { initialLearnings: L
           statement: String(formData.get("statement") ?? "").trim(),
           scope: String(formData.get("scope") ?? "ARTIST_GLOBAL"),
           confidence: String(formData.get("confidence") ?? "LOW"),
-          confidenceRationale: String(formData.get("confidenceRationale") ?? "").trim()
+          confidenceRationale: String(formData.get("confidenceRationale") ?? "").trim(),
+          references: [{
+            refType: String(formData.get("sourceType") ?? "").trim(),
+            refId: String(formData.get("sourceId") ?? "").trim(),
+            relation: "SUPPORTS",
+            note: String(formData.get("sourceNote") ?? "").trim() || undefined
+          }]
         })
       });
       const body = await response.json() as { error?: { message?: string } };
@@ -107,13 +113,21 @@ export function LearningMemoryClient({ initialLearnings }: { initialLearnings: L
       {error && <div className="decision-error" role="alert">{error}</div>}
       {showCreate && (
         <form className="decision-create-card" action={create}>
-          <div className="section-heading"><p className="eyebrow">CANDIDATE LEARNING</p><h2>Capture a scoped finding</h2><p>Candidate does not mean true. Record what the work suggests, where it applies and why your current confidence is justified.</p></div>
+          <div className="section-heading"><p className="eyebrow">CANDIDATE LEARNING</p><h2>Capture a scoped finding</h2><p>Candidate does not mean true. Record what the work suggests, where it applies and the source that supports the candidate.</p></div>
           <label>What did we learn?<textarea name="statement" required maxLength={6000} rows={4} /></label>
           <div className="decision-form-grid">
             <label>Scope<select name="scope" defaultValue="ARTIST_GLOBAL">{scopes.map((scope) => <option key={scope} value={scope}>{scope.replaceAll("_", " ")}</option>)}</select></label>
             <label>Confidence<select name="confidence" defaultValue="LOW"><option value="LOW">LOW</option><option value="MEDIUM">MEDIUM</option><option value="HIGH">HIGH</option></select></label>
           </div>
           <label>Why this confidence?<textarea name="confidenceRationale" required maxLength={4000} rows={3} /></label>
+          <details className="decision-advanced" open>
+            <summary>Evidence provenance</summary>
+            <div className="decision-form-grid">
+              <label>Source type<input name="sourceType" required maxLength={120} placeholder="Publication / Decision / OperationalAction" /></label>
+              <label>Source ID<input name="sourceId" required maxLength={240} placeholder="Canonical entity id" /></label>
+            </div>
+            <label>Evidence note<input name="sourceNote" maxLength={2000} placeholder="What in this source supports the candidate?" /></label>
+          </details>
           <div className="decision-form-actions"><button className="decision-secondary-button" type="button" onClick={() => setShowCreate(false)}>Cancel</button><button className="decision-primary-button" type="submit" disabled={busy}>{busy ? "Recording…" : "Record candidate"}</button></div>
         </form>
       )}
@@ -135,6 +149,7 @@ function LearningCard({ item, busy, onTransition, onDecision }: { item: Learning
       <div className="decision-card-head"><span className={`decision-status decision-status-${item.status.toLowerCase()}`}>{item.status}</span><span>{item.scope} · {item.confidence}</span></div>
       <h3>{item.statement}</h3>
       <p>{item.confidenceRationale}</p>
+      <small>{item.references.length} provenance ref{item.references.length === 1 ? "" : "s"}</small>
       {item.references.some((ref) => ref.relation === "CONTRADICTS") && <small>⚠ Contradictory evidence preserved</small>}
       <div className="decision-form-actions">
         {item.status === "CANDIDATE" && <button className="decision-secondary-button" disabled={busy} onClick={() => void onTransition(item, "test")} type="button">Start testing</button>}
