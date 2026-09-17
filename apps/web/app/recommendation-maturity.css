@@ -1,0 +1,8 @@
+.maturity-section { padding-top: 17px; padding-bottom: 17px; }
+.maturity-card { padding: 13px; border: 1px solid rgba(99,102,241,.19); border-radius: 11px; background: linear-gradient(135deg, rgba(99,102,241,.055), rgba(139,92,246,.025)); }
+.maturity-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.maturity-head strong { color: #bbb1e6; font-size: 9px; letter-spacing: .08em; }
+.maturity-head small { color: #626874; font: 8px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.maturity-card > p { margin-top: 9px; color: #858b96; font-size: 9px; line-height: 1.55; }
+.maturity-counts { margin-top: 11px; display: flex; flex-wrap: wrap; gap: 6px; }
+.maturity-counts span { padding: 5px 7px; border: 1px solid #252833; border-radius: 7px; background: #101217; color: #777e89; font: 8px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0; }
