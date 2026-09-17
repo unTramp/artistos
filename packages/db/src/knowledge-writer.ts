@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, or } from "drizzle-orm";
 import {
   KnowledgePersistenceError,
   type ArtistBrainSnapshotResult,
@@ -23,6 +23,7 @@ import {
   candidateKnowledge,
   toneCorpusItems
 } from "./knowledge-schema";
+import { learnings } from "./learning-schema";
 
 type KnowledgeTx = Parameters<Parameters<Stage0Database["transaction"]>[0]>[0];
 
@@ -375,6 +376,21 @@ export class PgKnowledgeWriter implements KnowledgeWritePort {
         isNull(artistBrainKnowledgeItems.archivedAt)
       ));
 
+      const validatedLearnings = await tx.select({
+        id: learnings.id,
+        statement: learnings.statement,
+        scope: learnings.scope,
+        confidence: learnings.confidence,
+        confidenceRationale: learnings.confidenceRationale,
+        references: learnings.references,
+        freshUntil: learnings.freshUntil,
+        version: learnings.version
+      }).from(learnings).where(and(
+        eq(learnings.artistId, request.artistId),
+        eq(learnings.status, "VALIDATED"),
+        or(isNull(learnings.freshUntil), gte(learnings.freshUntil, request.evidence.occurredAt))
+      ));
+
       const [latest] = await tx.select({ versionNumber: artistBrainSnapshots.versionNumber })
         .from(artistBrainSnapshots)
         .where(eq(artistBrainSnapshots.artistId, request.artistId))
@@ -388,13 +404,14 @@ export class PgKnowledgeWriter implements KnowledgeWritePort {
         approvedKnowledge,
         toneExamples: positiveTone,
         hardRules: [],
-        validatedLearnings: []
+        validatedLearnings
       };
       const sourceRefs = [
         ...(identity ? [{ type: "ArtistIdentityVersion", id: identity.identityVersionId }] : []),
         ...(activeEra ? [{ type: "EraIdentity", id: activeEra.id }] : []),
         ...approvedKnowledge.map((item) => ({ type: "ArtistBrainKnowledgeItem", id: item.id })),
-        ...positiveTone.map((item) => ({ type: "ToneCorpusItem", id: item.id }))
+        ...positiveTone.map((item) => ({ type: "ToneCorpusItem", id: item.id })),
+        ...validatedLearnings.map((item) => ({ type: "Learning", id: item.id }))
       ];
 
       await tx.insert(artistBrainSnapshots).values({
