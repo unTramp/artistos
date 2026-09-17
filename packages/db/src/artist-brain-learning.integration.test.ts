@@ -5,6 +5,7 @@ import {
   CreateIdentityDraftService,
   CreateLearningService,
   RebuildArtistBrainService,
+  StartLearningTestService,
   ValidateLearningService,
   type CommandContext
 } from "@artist-os/core";
@@ -76,6 +77,7 @@ describe("Artist Brain Learning projection", () => {
   it("includes fresh VALIDATED Learnings with scope/provenance and excludes expired ones", async () => {
     const learningWriter = new PgLearningWriter(db);
     const create = new CreateLearningService(learningWriter);
+    const startTest = new StartLearningTestService(learningWriter);
     const validate = new ValidateLearningService(learningWriter);
 
     const durable = await create.execute({
@@ -87,9 +89,14 @@ describe("Artist Brain Learning projection", () => {
       freshUntil: "2026-12-31T00:00:00.000Z"
     }, context(new Date("2026-09-17T09:00:00.000Z")));
     if (durable.status !== "SUCCESS") throw new Error("learning setup failed");
+    const durableTesting = await startTest.execute(
+      { learningId: durable.data.learningId },
+      context(new Date("2026-09-17T09:02:00.000Z"), { expectedVersion: durable.data.version })
+    );
+    if (durableTesting.status !== "SUCCESS") throw new Error("learning testing transition failed");
     const durableValidated = await validate.execute(
       { learningId: durable.data.learningId, rationale: "Reviewed by artist after repeated evidence." },
-      context(new Date("2026-09-17T09:05:00.000Z"), { expectedVersion: durable.data.version })
+      context(new Date("2026-09-17T09:05:00.000Z"), { expectedVersion: durableTesting.data.version })
     );
     expect(durableValidated.status).toBe("SUCCESS");
 
@@ -102,9 +109,14 @@ describe("Artist Brain Learning projection", () => {
       freshUntil: "2026-09-17T10:00:00.000Z"
     }, context(new Date("2026-09-17T09:10:00.000Z")));
     if (expired.status !== "SUCCESS") throw new Error("expired learning setup failed");
+    const expiredTesting = await startTest.execute(
+      { learningId: expired.data.learningId },
+      context(new Date("2026-09-17T09:12:00.000Z"), { expectedVersion: expired.data.version })
+    );
+    if (expiredTesting.status !== "SUCCESS") throw new Error("expired testing transition failed");
     const expiredValidated = await validate.execute(
       { learningId: expired.data.learningId, rationale: "Valid only inside the stated freshness window." },
-      context(new Date("2026-09-17T09:15:00.000Z"), { expectedVersion: expired.data.version })
+      context(new Date("2026-09-17T09:15:00.000Z"), { expectedVersion: expiredTesting.data.version })
     );
     expect(expiredValidated.status).toBe("SUCCESS");
 
