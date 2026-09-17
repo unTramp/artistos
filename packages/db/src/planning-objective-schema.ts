@@ -1,4 +1,5 @@
 import { date, integer, jsonb, text, timestamp, uuid, pgTable, index } from "drizzle-orm/pg-core";
+import type { PlanningObjectiveReference } from "@artist-os/core";
 import { artists } from "./schema";
 
 export const planningObjectives = pgTable("planning_objectives", {
@@ -14,6 +15,7 @@ export const planningObjectives = pgTable("planning_objectives", {
   priority: text("priority").notNull(),
   status: text("status").notNull().default("ACTIVE"),
   successCriteria: jsonb("success_criteria").$type<string[]>().notNull().default([]),
+  relatedRefs: jsonb("related_refs").$type<PlanningObjectiveReference[]>().notNull().default([]),
   version: integer("version").notNull().default(1),
   completedAt: timestamp("completed_at", { withTimezone: true }),
   createdByActorId: text("created_by_actor_id"),
