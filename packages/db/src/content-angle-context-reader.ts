@@ -7,18 +7,26 @@ import { PgContentFactoryReader } from "./content-factory-reader";
 import { listLearnings } from "./learning-reader";
 
 const isFreshLearning = (freshUntil: Date | null, now: Date) => freshUntil === null || freshUntil > now;
+const normalizeTarget = (value: string) => value.trim().toLowerCase();
 
 const isRelevantLearning = (
   learning: Awaited<ReturnType<typeof listLearnings>>[number],
-  songId?: string
+  context: { songId?: string; platformTargets?: string[] }
 ) => {
   if (learning.scope === "SONG") {
-    if (!songId) return false;
-    return learning.references.some((reference) => reference.relation === "SUBJECT" && reference.refId === songId);
+    if (!context.songId) return false;
+    return learning.references.some((reference) => reference.relation === "SUBJECT" && reference.refId === context.songId);
+  }
+  if (learning.scope === "PLATFORM") {
+    const targets = new Set((context.platformTargets ?? []).map(normalizeTarget));
+    if (targets.size === 0) return false;
+    return learning.references.some((reference) =>
+      reference.relation === "SUBJECT" && targets.has(normalizeTarget(reference.refId))
+    );
   }
   if (learning.scope === "CAMPAIGN") {
-    // This reader does not yet receive campaignId. Do not leak campaign-scoped
-    // conclusions into unrelated generation context.
+    // Content-angle generation has no campaign identity in this slice. Keep a
+    // campaign-scoped conclusion out rather than treating it as universal.
     return false;
   }
   return true;
@@ -27,7 +35,11 @@ const isRelevantLearning = (
 export class PgContentAngleContextReader {
   constructor(private readonly db: Stage0Database) {}
 
-  async readSources(artistId: string, songId?: string): Promise<ContentAngleContextSourceData> {
+  async readSources(
+    artistId: string,
+    songId?: string,
+    context: { platformTargets?: string[] } = {}
+  ): Promise<ContentAngleContextSourceData> {
     const identityReader = new PgArtistFoundationReader(this.db);
     const knowledgeReader = new PgKnowledgeReader(this.db);
     const factoryReader = new PgContentFactoryReader(this.db);
@@ -53,7 +65,7 @@ export class PgContentAngleContextReader {
     const now = new Date();
     const relevantLearnings = validatedLearnings
       .filter((learning) => isFreshLearning(learning.freshUntil, now))
-      .filter((learning) => isRelevantLearning(learning, songId));
+      .filter((learning) => isRelevantLearning(learning, { ...(songId ? { songId } : {}), ...context }));
 
     return {
       identity: activeIdentity,
