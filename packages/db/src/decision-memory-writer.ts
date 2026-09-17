@@ -48,51 +48,109 @@ const appendSupersedesReference = (
   return [...references, { refType: "DECISION", refId: supersedesDecisionId, relation: "SUPERSEDES" }];
 };
 
+const isLiveDecisionUniqueViolation = (error: unknown) => {
+  if (!error || typeof error !== "object") return false;
+  const value = error as { code?: string; constraint?: string };
+  return value.code === "23505" && value.constraint === "decisions_live_key_scope_uidx";
+};
+
 export class PgDecisionWriter implements DecisionWritePort {
   constructor(private readonly db: Stage0Database) {}
 
   async createDecision(request: Parameters<DecisionWritePort["createDecision"]>[0]): Promise<DecisionResult> {
-    return this.db.transaction(async (tx) => runDecisionIdempotent(tx, request.artistId, request.evidence, "CreateDecision", async () => {
-      let conflicting: typeof decisions.$inferSelect | undefined;
-      if (request.command.decisionKey) {
-        [conflicting] = await tx.select().from(decisions).where(and(
-          eq(decisions.artistId, request.artistId),
-          eq(decisions.decisionKey, request.command.decisionKey),
-          eq(decisions.scope, request.command.scope),
-          inArray(decisions.status, ["ACTIVE", "UNDER_REVIEW"])
-        )).limit(1);
-      }
+    try {
+      return await this.db.transaction(async (tx) => runDecisionIdempotent(tx, request.artistId, request.evidence, "CreateDecision", async () => {
+        let conflicting: typeof decisions.$inferSelect | undefined;
+        if (request.command.decisionKey) {
+          [conflicting] = await tx.select().from(decisions).where(and(
+            eq(decisions.artistId, request.artistId),
+            eq(decisions.decisionKey, request.command.decisionKey),
+            eq(decisions.scope, request.command.scope),
+            inArray(decisions.status, ["ACTIVE", "UNDER_REVIEW"])
+          )).limit(1);
+        }
 
-      if (conflicting && !request.command.overrideDecisionId) {
-        throw new DecisionPersistenceError("DECISION_CONFLICT", { conflictingDecisionId: conflicting.id });
-      }
-      if (request.command.overrideDecisionId && (!conflicting || conflicting.id !== request.command.overrideDecisionId)) {
-        throw new DecisionPersistenceError("DECISION_OVERRIDE_MISMATCH", { conflictingDecisionId: conflicting?.id });
-      }
+        if (conflicting && !request.command.overrideDecisionId) {
+          throw new DecisionPersistenceError("DECISION_CONFLICT", { conflictingDecisionId: conflicting.id });
+        }
+        if (request.command.overrideDecisionId && (!conflicting || conflicting.id !== request.command.overrideDecisionId)) {
+          throw new DecisionPersistenceError("DECISION_OVERRIDE_MISMATCH", { conflictingDecisionId: conflicting?.id });
+        }
 
-      if (conflicting) {
-        const priorStatus = conflicting.status as DecisionStatus;
-        const nextPriorVersion = conflicting.version + 1;
-        const [reversed] = await tx.update(decisions).set({
-          status: "REVERSED",
-          version: nextPriorVersion,
-          ...(request.evidence.actorId ? { updatedByActorId: request.evidence.actorId } : {}),
+        if (conflicting) {
+          const priorStatus = conflicting.status as DecisionStatus;
+          const nextPriorVersion = conflicting.version + 1;
+          const [reversed] = await tx.update(decisions).set({
+            status: "REVERSED",
+            version: nextPriorVersion,
+            ...(request.evidence.actorId ? { updatedByActorId: request.evidence.actorId } : {}),
+            updatedAt: request.evidence.occurredAt
+          }).where(and(
+            eq(decisions.id, conflicting.id),
+            eq(decisions.artistId, request.artistId),
+            eq(decisions.version, conflicting.version),
+            inArray(decisions.status, ["ACTIVE", "UNDER_REVIEW"])
+          )).returning();
+          if (!reversed) throw new DecisionPersistenceError("DECISION_VERSION_CONFLICT");
+
+          await tx.insert(decisionStateHistory).values({
+            id: crypto.randomUUID(),
+            artistId: request.artistId,
+            decisionId: conflicting.id,
+            fromStatus: priorStatus,
+            toStatus: "REVERSED",
+            rationale: request.command.overrideRationale!,
+            actorType: request.evidence.actorType,
+            ...(request.evidence.actorId ? { actorId: request.evidence.actorId } : {}),
+            traceId: request.evidence.traceId,
+            changedAt: request.evidence.occurredAt
+          });
+
+          await writeDecisionEvidence(tx, {
+            artistId: request.artistId,
+            decisionId: conflicting.id,
+            aggregateVersion: reversed.version,
+            eventType: "DecisionReversed",
+            payload: {
+              fromStatus: priorStatus,
+              toStatus: "REVERSED",
+              rationale: request.command.overrideRationale!,
+              supersededByDecisionId: request.decisionId
+            },
+            auditAction: "DECISION_REVERSED",
+            evidence: request.evidence
+          });
+        }
+
+        const references = appendSupersedesReference(request.command.references ?? [], conflicting?.id);
+        const [created] = await tx.insert(decisions).values({
+          id: request.decisionId,
+          artistId: request.artistId,
+          title: request.command.title,
+          decision: request.command.decision,
+          reason: request.command.reason,
+          evidenceIds: request.command.evidenceIds ?? [],
+          experimentIds: request.command.experimentIds ?? [],
+          references,
+          scope: request.command.scope,
+          ...(request.command.decisionKey ? { decisionKey: request.command.decisionKey } : {}),
+          ...(conflicting ? { supersedesDecisionId: conflicting.id } : {}),
+          ...(request.command.reviewAt ? { reviewAt: new Date(request.command.reviewAt) } : {}),
+          status: "ACTIVE",
+          version: 1,
+          ...(request.evidence.actorId ? { createdByActorId: request.evidence.actorId, updatedByActorId: request.evidence.actorId } : {}),
+          createdAt: request.evidence.occurredAt,
           updatedAt: request.evidence.occurredAt
-        }).where(and(
-          eq(decisions.id, conflicting.id),
-          eq(decisions.artistId, request.artistId),
-          eq(decisions.version, conflicting.version),
-          inArray(decisions.status, ["ACTIVE", "UNDER_REVIEW"])
-        )).returning();
-        if (!reversed) throw new DecisionPersistenceError("DECISION_VERSION_CONFLICT");
+        }).returning();
+        if (!created) throw new Error("DECISION_NOT_CREATED");
 
         await tx.insert(decisionStateHistory).values({
           id: crypto.randomUUID(),
           artistId: request.artistId,
-          decisionId: conflicting.id,
-          fromStatus: priorStatus,
-          toStatus: "REVERSED",
-          rationale: request.command.overrideRationale!,
+          decisionId: created.id,
+          fromStatus: null,
+          toStatus: "ACTIVE",
+          ...(request.command.overrideRationale ? { rationale: request.command.overrideRationale } : {}),
           actorType: request.evidence.actorType,
           ...(request.evidence.actorId ? { actorId: request.evidence.actorId } : {}),
           traceId: request.evidence.traceId,
@@ -101,75 +159,36 @@ export class PgDecisionWriter implements DecisionWritePort {
 
         await writeDecisionEvidence(tx, {
           artistId: request.artistId,
-          decisionId: conflicting.id,
-          aggregateVersion: reversed.version,
-          eventType: "DecisionReversed",
+          decisionId: created.id,
+          aggregateVersion: created.version,
+          eventType: "DecisionCreated",
           payload: {
-            fromStatus: priorStatus,
-            toStatus: "REVERSED",
-            rationale: request.command.overrideRationale!,
-            supersededByDecisionId: request.decisionId
+            scope: created.scope,
+            decisionKey: created.decisionKey,
+            reviewAt: created.reviewAt?.toISOString() ?? null,
+            evidenceIds: created.evidenceIds,
+            experimentIds: created.experimentIds,
+            references: created.references,
+            supersedesDecisionId: created.supersedesDecisionId,
+            overrideRationale: request.command.overrideRationale ?? null
           },
-          auditAction: "DECISION_REVERSED",
+          auditAction: "DECISION_CREATED",
           evidence: request.evidence
         });
+        return resultFrom(created);
+      }));
+    } catch (error) {
+      if (isLiveDecisionUniqueViolation(error) && request.command.decisionKey) {
+        const [conflicting] = await this.db.select({ id: decisions.id }).from(decisions).where(and(
+          eq(decisions.artistId, request.artistId),
+          eq(decisions.decisionKey, request.command.decisionKey),
+          eq(decisions.scope, request.command.scope),
+          inArray(decisions.status, ["ACTIVE", "UNDER_REVIEW"])
+        )).limit(1);
+        throw new DecisionPersistenceError("DECISION_CONFLICT", { conflictingDecisionId: conflicting?.id });
       }
-
-      const references = appendSupersedesReference(request.command.references ?? [], conflicting?.id);
-      const [created] = await tx.insert(decisions).values({
-        id: request.decisionId,
-        artistId: request.artistId,
-        title: request.command.title,
-        decision: request.command.decision,
-        reason: request.command.reason,
-        evidenceIds: request.command.evidenceIds ?? [],
-        experimentIds: request.command.experimentIds ?? [],
-        references,
-        scope: request.command.scope,
-        ...(request.command.decisionKey ? { decisionKey: request.command.decisionKey } : {}),
-        ...(conflicting ? { supersedesDecisionId: conflicting.id } : {}),
-        ...(request.command.reviewAt ? { reviewAt: new Date(request.command.reviewAt) } : {}),
-        status: "ACTIVE",
-        version: 1,
-        ...(request.evidence.actorId ? { createdByActorId: request.evidence.actorId, updatedByActorId: request.evidence.actorId } : {}),
-        createdAt: request.evidence.occurredAt,
-        updatedAt: request.evidence.occurredAt
-      }).returning();
-      if (!created) throw new Error("DECISION_NOT_CREATED");
-
-      await tx.insert(decisionStateHistory).values({
-        id: crypto.randomUUID(),
-        artistId: request.artistId,
-        decisionId: created.id,
-        fromStatus: null,
-        toStatus: "ACTIVE",
-        ...(request.command.overrideRationale ? { rationale: request.command.overrideRationale } : {}),
-        actorType: request.evidence.actorType,
-        ...(request.evidence.actorId ? { actorId: request.evidence.actorId } : {}),
-        traceId: request.evidence.traceId,
-        changedAt: request.evidence.occurredAt
-      });
-
-      await writeDecisionEvidence(tx, {
-        artistId: request.artistId,
-        decisionId: created.id,
-        aggregateVersion: created.version,
-        eventType: "DecisionCreated",
-        payload: {
-          scope: created.scope,
-          decisionKey: created.decisionKey,
-          reviewAt: created.reviewAt?.toISOString() ?? null,
-          evidenceIds: created.evidenceIds,
-          experimentIds: created.experimentIds,
-          references: created.references,
-          supersedesDecisionId: created.supersedesDecisionId,
-          overrideRationale: request.command.overrideRationale ?? null
-        },
-        auditAction: "DECISION_CREATED",
-        evidence: request.evidence
-      });
-      return resultFrom(created);
-    }));
+      throw error;
+    }
   }
 
   async transitionDecision(request: Parameters<DecisionWritePort["transitionDecision"]>[0]): Promise<DecisionResult> {
