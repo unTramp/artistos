@@ -4,6 +4,7 @@ import type { FoundationEvidence } from "./artist-foundation";
 
 export type PlanningObjectiveScope = "ARTIST" | "CAMPAIGN" | "RELEASE" | "EVERGREEN" | "CUSTOM";
 export type PlanningObjectivePriority = "PRIMARY" | "SECONDARY";
+export type PlanningObjectiveStatus = "DRAFT" | "ACTIVE" | "COMPLETED" | "CANCELLED" | "ARCHIVED";
 
 export interface CreatePlanningObjectiveCommand {
   title: string;
@@ -14,14 +15,22 @@ export interface CreatePlanningObjectiveCommand {
   campaignId?: string;
   releaseId?: string;
   priority: PlanningObjectivePriority;
+  status?: "DRAFT" | "ACTIVE";
+  successCriteria?: string[];
 }
 
-export interface CompletePlanningObjectiveCommand {
+export interface TransitionPlanningObjectiveCommand {
   objectiveId: string;
 }
+
+export type CompletePlanningObjectiveCommand = TransitionPlanningObjectiveCommand;
+export type ActivatePlanningObjectiveCommand = TransitionPlanningObjectiveCommand;
+export type CancelPlanningObjectiveCommand = TransitionPlanningObjectiveCommand;
+export type ArchivePlanningObjectiveCommand = TransitionPlanningObjectiveCommand;
 
 export interface PlanningObjectiveResult {
   objectiveId: string;
+  status: PlanningObjectiveStatus;
   version: number;
   completedAt: Date | null;
 }
@@ -30,7 +39,7 @@ export type PlanningObjectivePersistenceCode =
   | "PLANNING_OBJECTIVE_NOT_FOUND"
   | "PLANNING_OBJECTIVE_VERSION_CONFLICT"
   | "PLANNING_OBJECTIVE_PRIMARY_OVERLAP"
-  | "PLANNING_OBJECTIVE_ALREADY_COMPLETED"
+  | "PLANNING_OBJECTIVE_INVALID_TRANSITION"
   | "IDEMPOTENCY_IN_PROGRESS";
 
 export class PlanningObjectivePersistenceError extends Error {
@@ -44,12 +53,13 @@ export interface PlanningObjectiveWritePort {
   createObjective(request: {
     artistId: string;
     objectiveId: string;
-    command: CreatePlanningObjectiveCommand;
+    command: CreatePlanningObjectiveCommand & { status: "DRAFT" | "ACTIVE"; successCriteria: string[] };
     evidence: FoundationEvidence;
   }): Promise<PlanningObjectiveResult>;
-  completeObjective(request: {
+  transitionObjective(request: {
     artistId: string;
     objectiveId: string;
+    toStatus: PlanningObjectiveStatus;
     evidence: FoundationEvidence;
     expectedVersion?: number;
   }): Promise<PlanningObjectiveResult>;
@@ -64,7 +74,9 @@ const createSchema = z.object({
   scope: z.enum(["ARTIST", "CAMPAIGN", "RELEASE", "EVERGREEN", "CUSTOM"]),
   campaignId: z.string().uuid().optional(),
   releaseId: z.string().uuid().optional(),
-  priority: z.enum(["PRIMARY", "SECONDARY"])
+  priority: z.enum(["PRIMARY", "SECONDARY"]),
+  status: z.enum(["DRAFT", "ACTIVE"]).default("ACTIVE"),
+  successCriteria: z.array(z.string().trim().min(1).max(500)).max(20).default([])
 }).superRefine((value, ctx) => {
   if (value.periodStart > value.periodEnd) ctx.addIssue({ code: "custom", path: ["periodEnd"], message: "periodEnd must be on or after periodStart" });
   if (value.scope === "CAMPAIGN" && !value.campaignId) ctx.addIssue({ code: "custom", path: ["campaignId"], message: "campaignId is required for CAMPAIGN scope" });
@@ -72,7 +84,7 @@ const createSchema = z.object({
   if (value.scope !== "CAMPAIGN" && value.campaignId) ctx.addIssue({ code: "custom", path: ["campaignId"], message: "campaignId is only valid for CAMPAIGN scope" });
   if (value.scope !== "RELEASE" && value.releaseId) ctx.addIssue({ code: "custom", path: ["releaseId"], message: "releaseId is only valid for RELEASE scope" });
 });
-const completeSchema = z.object({ objectiveId: z.string().uuid() });
+const transitionSchema = z.object({ objectiveId: z.string().uuid() });
 const fieldErrors = (issues: z.ZodIssue[]) => Object.fromEntries(issues.map((issue) => [issue.path.join(".") || "form", issue.message]));
 const evidenceFrom = (context: CommandContext): FoundationEvidence => ({
   actorType: context.actor.type,
@@ -103,13 +115,24 @@ export class CreatePlanningObjectiveService {
     const denied = requireUser<PlanningObjectiveResult>(context); if (denied) return denied;
     const parsed = createSchema.safeParse(command);
     if (!parsed.success) return { status: "VALIDATION_ERROR", code: "PLANNING_OBJECTIVE_INVALID", message: "Planning Objective is invalid.", fieldErrors: fieldErrors(parsed.error.issues) };
-    const normalized: CreatePlanningObjectiveCommand = {
+
+    if (parsed.data.scope === "CAMPAIGN" || parsed.data.scope === "RELEASE") {
+      return {
+        status: "BLOCKED",
+        code: "PLANNING_OBJECTIVE_TARGET_UNAVAILABLE",
+        message: `${parsed.data.scope === "CAMPAIGN" ? "Campaign" : "Release"}-scoped objectives are blocked until the canonical target domain can verify ownership.`
+      };
+    }
+
+    const normalized: CreatePlanningObjectiveCommand & { status: "DRAFT" | "ACTIVE"; successCriteria: string[] } = {
       title: parsed.data.title,
       statement: parsed.data.statement,
       periodStart: parsed.data.periodStart,
       periodEnd: parsed.data.periodEnd,
       scope: parsed.data.scope,
       priority: parsed.data.priority,
+      status: parsed.data.status,
+      successCriteria: parsed.data.successCriteria,
       ...(parsed.data.campaignId ? { campaignId: parsed.data.campaignId } : {}),
       ...(parsed.data.releaseId ? { releaseId: parsed.data.releaseId } : {})
     };
@@ -119,15 +142,41 @@ export class CreatePlanningObjectiveService {
   }
 }
 
-export class CompletePlanningObjectiveService {
-  constructor(private readonly writer: PlanningObjectiveWritePort) {}
+abstract class TransitionPlanningObjectiveService {
+  protected abstract readonly targetStatus: PlanningObjectiveStatus;
+  constructor(protected readonly writer: PlanningObjectiveWritePort) {}
 
-  async execute(command: CompletePlanningObjectiveCommand, context: CommandContext): Promise<CommandResult<PlanningObjectiveResult>> {
+  async execute(command: TransitionPlanningObjectiveCommand, context: CommandContext): Promise<CommandResult<PlanningObjectiveResult>> {
     const denied = requireUser<PlanningObjectiveResult>(context); if (denied) return denied;
-    const parsed = completeSchema.safeParse(command);
-    if (!parsed.success) return { status: "VALIDATION_ERROR", code: "PLANNING_OBJECTIVE_COMPLETE_INVALID", message: "Completion request is invalid.", fieldErrors: fieldErrors(parsed.error.issues) };
+    const parsed = transitionSchema.safeParse(command);
+    if (!parsed.success) return { status: "VALIDATION_ERROR", code: "PLANNING_OBJECTIVE_TRANSITION_INVALID", message: "Planning Objective transition request is invalid.", fieldErrors: fieldErrors(parsed.error.issues) };
     try {
-      return { status: "SUCCESS", data: await this.writer.completeObjective({ artistId: context.artistId, objectiveId: parsed.data.objectiveId, evidence: evidenceFrom(context), ...(context.expectedVersion !== undefined ? { expectedVersion: context.expectedVersion } : {}) }) };
+      return {
+        status: "SUCCESS",
+        data: await this.writer.transitionObjective({
+          artistId: context.artistId,
+          objectiveId: parsed.data.objectiveId,
+          toStatus: this.targetStatus,
+          evidence: evidenceFrom(context),
+          ...(context.expectedVersion !== undefined ? { expectedVersion: context.expectedVersion } : {})
+        })
+      };
     } catch (error) { return mapPersistenceError(error); }
   }
+}
+
+export class ActivatePlanningObjectiveService extends TransitionPlanningObjectiveService {
+  protected readonly targetStatus = "ACTIVE" as const;
+}
+
+export class CompletePlanningObjectiveService extends TransitionPlanningObjectiveService {
+  protected readonly targetStatus = "COMPLETED" as const;
+}
+
+export class CancelPlanningObjectiveService extends TransitionPlanningObjectiveService {
+  protected readonly targetStatus = "CANCELLED" as const;
+}
+
+export class ArchivePlanningObjectiveService extends TransitionPlanningObjectiveService {
+  protected readonly targetStatus = "ARCHIVED" as const;
 }
