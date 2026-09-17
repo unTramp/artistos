@@ -1,6 +1,7 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import {
   DecisionPersistenceError,
+  type DecisionReferenceInput,
   type DecisionResult,
   type DecisionStatus,
   type DecisionWritePort
@@ -36,11 +37,40 @@ const eventForStatus: Record<DecisionStatus, string> = {
   EXPIRED: "DecisionExpired"
 };
 
+const appendSupersedesReference = (
+  references: DecisionReferenceInput[],
+  supersedesDecisionId?: string
+): DecisionReferenceInput[] => {
+  if (!supersedesDecisionId) return references;
+  if (references.some((reference) => reference.refType === "DECISION" && reference.refId === supersedesDecisionId && reference.relation === "SUPERSEDES")) {
+    return references;
+  }
+  return [...references, { refType: "DECISION", refId: supersedesDecisionId, relation: "SUPERSEDES" }];
+};
+
 export class PgDecisionWriter implements DecisionWritePort {
   constructor(private readonly db: Stage0Database) {}
 
   async createDecision(request: Parameters<DecisionWritePort["createDecision"]>[0]): Promise<DecisionResult> {
     return this.db.transaction(async (tx) => runDecisionIdempotent(tx, request.artistId, request.evidence, "CreateDecision", async () => {
+      let conflicting: typeof decisions.$inferSelect | undefined;
+      if (request.command.decisionKey) {
+        [conflicting] = await tx.select().from(decisions).where(and(
+          eq(decisions.artistId, request.artistId),
+          eq(decisions.decisionKey, request.command.decisionKey),
+          eq(decisions.scope, request.command.scope),
+          inArray(decisions.status, ["ACTIVE", "UNDER_REVIEW"])
+        )).limit(1);
+      }
+
+      if (conflicting && !request.command.overrideDecisionId) {
+        throw new DecisionPersistenceError("DECISION_CONFLICT", { conflictingDecisionId: conflicting.id });
+      }
+      if (request.command.overrideDecisionId && (!conflicting || conflicting.id !== request.command.overrideDecisionId)) {
+        throw new DecisionPersistenceError("DECISION_OVERRIDE_MISMATCH", { conflictingDecisionId: conflicting?.id });
+      }
+
+      const references = appendSupersedesReference(request.command.references ?? [], conflicting?.id);
       const [created] = await tx.insert(decisions).values({
         id: request.decisionId,
         artistId: request.artistId,
@@ -49,7 +79,10 @@ export class PgDecisionWriter implements DecisionWritePort {
         reason: request.command.reason,
         evidenceIds: request.command.evidenceIds ?? [],
         experimentIds: request.command.experimentIds ?? [],
+        references,
         scope: request.command.scope,
+        ...(request.command.decisionKey ? { decisionKey: request.command.decisionKey } : {}),
+        ...(conflicting ? { supersedesDecisionId: conflicting.id } : {}),
         ...(request.command.reviewAt ? { reviewAt: new Date(request.command.reviewAt) } : {}),
         status: "ACTIVE",
         version: 1,
@@ -59,12 +92,57 @@ export class PgDecisionWriter implements DecisionWritePort {
       }).returning();
       if (!created) throw new Error("DECISION_NOT_CREATED");
 
+      if (conflicting) {
+        const priorStatus = conflicting.status as DecisionStatus;
+        const nextPriorVersion = conflicting.version + 1;
+        const [reversed] = await tx.update(decisions).set({
+          status: "REVERSED",
+          version: nextPriorVersion,
+          ...(request.evidence.actorId ? { updatedByActorId: request.evidence.actorId } : {}),
+          updatedAt: request.evidence.occurredAt
+        }).where(and(
+          eq(decisions.id, conflicting.id),
+          eq(decisions.artistId, request.artistId),
+          eq(decisions.version, conflicting.version)
+        )).returning();
+        if (!reversed) throw new DecisionPersistenceError("DECISION_VERSION_CONFLICT");
+
+        await tx.insert(decisionStateHistory).values({
+          id: crypto.randomUUID(),
+          artistId: request.artistId,
+          decisionId: conflicting.id,
+          fromStatus: priorStatus,
+          toStatus: "REVERSED",
+          rationale: request.command.overrideRationale!,
+          actorType: request.evidence.actorType,
+          ...(request.evidence.actorId ? { actorId: request.evidence.actorId } : {}),
+          traceId: request.evidence.traceId,
+          changedAt: request.evidence.occurredAt
+        });
+
+        await writeDecisionEvidence(tx, {
+          artistId: request.artistId,
+          decisionId: conflicting.id,
+          aggregateVersion: reversed.version,
+          eventType: "DecisionReversed",
+          payload: {
+            fromStatus: priorStatus,
+            toStatus: "REVERSED",
+            rationale: request.command.overrideRationale!,
+            supersededByDecisionId: created.id
+          },
+          auditAction: "DECISION_REVERSED",
+          evidence: request.evidence
+        });
+      }
+
       await tx.insert(decisionStateHistory).values({
         id: crypto.randomUUID(),
         artistId: request.artistId,
         decisionId: created.id,
         fromStatus: null,
         toStatus: "ACTIVE",
+        ...(request.command.overrideRationale ? { rationale: request.command.overrideRationale } : {}),
         actorType: request.evidence.actorType,
         ...(request.evidence.actorId ? { actorId: request.evidence.actorId } : {}),
         traceId: request.evidence.traceId,
@@ -78,9 +156,13 @@ export class PgDecisionWriter implements DecisionWritePort {
         eventType: "DecisionCreated",
         payload: {
           scope: created.scope,
+          decisionKey: created.decisionKey,
           reviewAt: created.reviewAt?.toISOString() ?? null,
           evidenceIds: created.evidenceIds,
-          experimentIds: created.experimentIds
+          experimentIds: created.experimentIds,
+          references: created.references,
+          supersedesDecisionId: created.supersedesDecisionId,
+          overrideRationale: request.command.overrideRationale ?? null
         },
         auditAction: "DECISION_CREATED",
         evidence: request.evidence
