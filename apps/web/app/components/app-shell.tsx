@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { navigation } from "../../lib/navigation";
+import { CommandPalette } from "./command-palette";
 
 const primaryNavByRoute: Record<string, string> = {
   overview: "today",
@@ -56,10 +57,7 @@ export function AppShell({
 
       <section className="app-main">
         <header className="topbar">
-          <div className="command-shell">
-            <span>⌘K</span>
-            <p>Search or run command</p>
-          </div>
+          <CommandPalette />
           <div className="topbar-spacer" />
           <div className="context-pill"><i />Context Ready</div>
           <a className="account-pill" href="/auth">{sessionEmail ?? "Sign in"}</a>
