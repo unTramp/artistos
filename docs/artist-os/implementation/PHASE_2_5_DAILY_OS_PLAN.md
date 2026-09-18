@@ -299,9 +299,24 @@ Scope:
 Non-goal:
 - do not collapse canonical Brain and Memory models.
 
-#### PR-E — Deep-work ergonomics, not feature removal
+#### PR-E — Deep-work ergonomics, not feature removal 🚧 IN PROGRESS
 
 **Goal:** make the deep system easier to operate without deleting useful capability.
+
+Implemented in the current branch:
+- Weekly Review Decision / Action commits use contextual inline forms instead of chained browser prompts;
+- Learning validation / stale / deprecate rationales use contextual review forms;
+- validated Learning → Decision uses an explicit inline Decision form with direct lineage preserved;
+- Execution authoring is split by working context:
+  - Creative Core;
+  - Production;
+  - Edit;
+  - Publish Prep;
+  - Constraints;
+- all existing Execution snapshot fields are preserved in the same payload and one immutable revision;
+- required-field validation routes the user to the relevant working section rather than flattening the model;
+- provider / model / prompt / token plumbing is moved under Generation diagnostics instead of occupying the main creative surface;
+- E2E is updated to exercise the new human-control surfaces and all Execution sections.
 
 Scope:
 - replace material `window.prompt` flows with contextual forms/drawers;
