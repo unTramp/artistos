@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { entityReferenceKey, shortEntityId, type ResolvedEntityReference } from "@/lib/entity-reference";
 
 type LearningStatus = "CANDIDATE" | "TESTING" | "VALIDATED" | "STALE" | "DEPRECATED";
 type LearningScope = "ARTIST_GLOBAL" | "PLATFORM" | "SONG" | "PILLAR" | "FORMAT" | "AUDIENCE" | "CAMPAIGN" | "AUDIO_SEGMENT" | "NARRATIVE" | "MARKET" | "BUSINESS" | "IDENTITY";
@@ -22,7 +23,7 @@ type LearningView = {
 const scopes: LearningScope[] = ["ARTIST_GLOBAL", "PLATFORM", "SONG", "PILLAR", "FORMAT", "AUDIENCE", "CAMPAIGN", "AUDIO_SEGMENT", "NARRATIVE", "MARKET", "BUSINESS", "IDENTITY"];
 const idempotencyKey = () => `learning-ui-${crypto.randomUUID()}`;
 
-export function LearningMemoryClient({ initialLearnings }: { initialLearnings: LearningView[] }) {
+export function LearningMemoryClient({ initialLearnings, resolvedReferences }: { initialLearnings: LearningView[]; resolvedReferences: Record<string, ResolvedEntityReference> }) {
   const [learnings, setLearnings] = useState(initialLearnings);
   const [showCreate, setShowCreate] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -134,15 +135,15 @@ export function LearningMemoryClient({ initialLearnings }: { initialLearnings: L
 
       <section className="decision-section">
         <div className="section-heading"><p className="eyebrow">CURRENT LEARNING</p><h2>Evidence-backed memory in progress</h2></div>
-        {live.length === 0 ? <div className="empty-state compact-empty"><h3>No Learnings yet</h3><p>Record findings from real work. Artist OS will keep candidate, validated and stale states distinct instead of turning every success into a rule.</p></div> : <div className="decision-list">{live.map((item) => <LearningCard key={item.id} item={item} busy={busy} onTransition={transition} onDecision={createDecision} />)}</div>}
+        {live.length === 0 ? <div className="empty-state compact-empty"><h3>No Learnings yet</h3><p>Record findings from real work. Artist OS will keep candidate, validated and stale states distinct instead of turning every success into a rule.</p></div> : <div className="decision-list">{live.map((item) => <LearningCard key={item.id} item={item} busy={busy} resolvedReferences={resolvedReferences} onTransition={transition} onDecision={createDecision} />)}</div>}
       </section>
 
-      {historical.length > 0 && <section className="decision-section"><div className="section-heading"><p className="eyebrow">HISTORY</p><h2>Deprecated Learnings</h2></div><div className="decision-list decision-history-list">{historical.map((item) => <LearningCard key={item.id} item={item} busy={busy} onTransition={transition} onDecision={createDecision} />)}</div></section>}
+      {historical.length > 0 && <section className="decision-section"><div className="section-heading"><p className="eyebrow">HISTORY</p><h2>Deprecated Learnings</h2></div><div className="decision-list decision-history-list">{historical.map((item) => <LearningCard key={item.id} item={item} busy={busy} resolvedReferences={resolvedReferences} onTransition={transition} onDecision={createDecision} />)}</div></section>}
     </>
   );
 }
 
-function LearningCard({ item, busy, onTransition, onDecision }: { item: LearningView; busy: boolean; onTransition: (item: LearningView, action: "test" | "validate" | "stale" | "deprecate", rationale?: string) => Promise<void>; onDecision: (item: LearningView) => Promise<void> }) {
+function LearningCard({ item, busy, resolvedReferences, onTransition, onDecision }: { item: LearningView; busy: boolean; resolvedReferences: Record<string, ResolvedEntityReference>; onTransition: (item: LearningView, action: "test" | "validate" | "stale" | "deprecate", rationale?: string) => Promise<void>; onDecision: (item: LearningView) => Promise<void> }) {
   const ask = (label: string) => window.prompt(label)?.trim() || undefined;
   return (
     <article className="decision-card" id={`learning-${item.id}`}>
@@ -150,6 +151,27 @@ function LearningCard({ item, busy, onTransition, onDecision }: { item: Learning
       <h3>{item.statement}</h3>
       <p>{item.confidenceRationale}</p>
       <small>{item.references.length} provenance ref{item.references.length === 1 ? "" : "s"}</small>
+      {item.references.length > 0 && (
+        <div className="provenance-inline-list" aria-label="Learning provenance">
+          {item.references.map((reference) => {
+            const resolved = resolvedReferences[entityReferenceKey(reference.refType, reference.refId)];
+            const label = resolved?.label ?? `${reference.refType} · ${shortEntityId(reference.refId)}`;
+            return resolved?.href ? (
+              <a className="provenance-inline-ref" href={resolved.href} key={`${reference.relation}-${reference.refType}-${reference.refId}`}>
+                <span>{reference.relation} · {reference.refType}</span>
+                <strong>{label}</strong>
+                <i aria-hidden="true">→</i>
+              </a>
+            ) : (
+              <span className="provenance-inline-ref unresolved" key={`${reference.relation}-${reference.refType}-${reference.refId}`}>
+                <span>{reference.relation} · {reference.refType}</span>
+                <strong>{label}</strong>
+                <i>UNRESOLVED</i>
+              </span>
+            );
+          })}
+        </div>
+      )}
       {item.references.some((ref) => ref.relation === "CONTRADICTS") && <small>⚠ Contradictory evidence preserved</small>}
       <div className="decision-form-actions">
         {item.status === "CANDIDATE" && <button className="decision-secondary-button" disabled={busy} onClick={() => void onTransition(item, "test")} type="button">Start testing</button>}
