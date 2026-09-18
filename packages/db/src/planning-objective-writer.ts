@@ -66,6 +66,7 @@ export class PgPlanningObjectiveWriter implements PlanningObjectiveWritePort {
         priority: request.command.priority,
         status: request.command.status,
         successCriteria: request.command.successCriteria,
+        relatedRefs: request.command.relatedRefs,
         version: 1,
         ...(request.evidence.actorId ? { createdByActorId: request.evidence.actorId, updatedByActorId: request.evidence.actorId } : {}),
         createdAt: request.evidence.occurredAt,
@@ -86,6 +87,7 @@ export class PgPlanningObjectiveWriter implements PlanningObjectiveWritePort {
           priority: created.priority,
           status: created.status,
           successCriteria: created.successCriteria,
+          relatedRefs: created.relatedRefs,
           campaignId: created.campaignId,
           releaseId: created.releaseId
         },

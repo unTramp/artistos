@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, gte, inArray, lte } from "drizzle-orm";
-import type { PlanningObjectivePriority, PlanningObjectiveScope, PlanningObjectiveStatus } from "@artist-os/core";
+import type { PlanningObjectivePriority, PlanningObjectiveReference, PlanningObjectiveScope, PlanningObjectiveStatus } from "@artist-os/core";
 import type { Stage0Database } from "./runtime";
 import { planningObjectives } from "./planning-objective-schema";
 
@@ -16,6 +16,7 @@ export interface PlanningObjectiveView {
   priority: PlanningObjectivePriority;
   status: PlanningObjectiveStatus;
   successCriteria: string[];
+  relatedRefs: PlanningObjectiveReference[];
   version: number;
   completedAt: Date | null;
   createdAt: Date;
@@ -35,6 +36,7 @@ const mapRow = (row: typeof planningObjectives.$inferSelect): PlanningObjectiveV
   priority: row.priority as PlanningObjectivePriority,
   status: row.status as PlanningObjectiveStatus,
   successCriteria: row.successCriteria,
+  relatedRefs: row.relatedRefs,
   version: row.version,
   completedAt: row.completedAt,
   createdAt: row.createdAt,

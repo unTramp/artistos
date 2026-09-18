@@ -6,6 +6,11 @@ export type PlanningObjectiveScope = "ARTIST" | "CAMPAIGN" | "RELEASE" | "EVERGR
 export type PlanningObjectivePriority = "PRIMARY" | "SECONDARY";
 export type PlanningObjectiveStatus = "DRAFT" | "ACTIVE" | "COMPLETED" | "CANCELLED" | "ARCHIVED";
 
+export interface PlanningObjectiveReference {
+  refType: string;
+  refId: string;
+}
+
 export interface CreatePlanningObjectiveCommand {
   title: string;
   statement: string;
@@ -17,6 +22,7 @@ export interface CreatePlanningObjectiveCommand {
   priority: PlanningObjectivePriority;
   status?: "DRAFT" | "ACTIVE";
   successCriteria?: string[];
+  relatedRefs?: PlanningObjectiveReference[];
 }
 
 export interface TransitionPlanningObjectiveCommand {
@@ -53,7 +59,7 @@ export interface PlanningObjectiveWritePort {
   createObjective(request: {
     artistId: string;
     objectiveId: string;
-    command: CreatePlanningObjectiveCommand & { status: "DRAFT" | "ACTIVE"; successCriteria: string[] };
+    command: CreatePlanningObjectiveCommand & { status: "DRAFT" | "ACTIVE"; successCriteria: string[]; relatedRefs: PlanningObjectiveReference[] };
     evidence: FoundationEvidence;
   }): Promise<PlanningObjectiveResult>;
   transitionObjective(request: {
@@ -66,6 +72,10 @@ export interface PlanningObjectiveWritePort {
 }
 
 const dateOnly = /^\d{4}-\d{2}-\d{2}$/;
+const referenceSchema = z.object({
+  refType: z.string().trim().min(1).max(120),
+  refId: z.string().trim().min(1).max(240)
+});
 const createSchema = z.object({
   title: z.string().trim().min(1).max(200),
   statement: z.string().trim().min(1).max(2000),
@@ -76,7 +86,8 @@ const createSchema = z.object({
   releaseId: z.string().uuid().optional(),
   priority: z.enum(["PRIMARY", "SECONDARY"]),
   status: z.enum(["DRAFT", "ACTIVE"]).default("ACTIVE"),
-  successCriteria: z.array(z.string().trim().min(1).max(500)).max(20).default([])
+  successCriteria: z.array(z.string().trim().min(1).max(500)).max(20).default([]),
+  relatedRefs: z.array(referenceSchema).max(100).default([])
 }).superRefine((value, ctx) => {
   if (value.periodStart > value.periodEnd) ctx.addIssue({ code: "custom", path: ["periodEnd"], message: "periodEnd must be on or after periodStart" });
   if (value.scope === "CAMPAIGN" && !value.campaignId) ctx.addIssue({ code: "custom", path: ["campaignId"], message: "campaignId is required for CAMPAIGN scope" });
@@ -124,7 +135,7 @@ export class CreatePlanningObjectiveService {
       };
     }
 
-    const normalized: CreatePlanningObjectiveCommand & { status: "DRAFT" | "ACTIVE"; successCriteria: string[] } = {
+    const normalized: CreatePlanningObjectiveCommand & { status: "DRAFT" | "ACTIVE"; successCriteria: string[]; relatedRefs: PlanningObjectiveReference[] } = {
       title: parsed.data.title,
       statement: parsed.data.statement,
       periodStart: parsed.data.periodStart,
@@ -133,6 +144,7 @@ export class CreatePlanningObjectiveService {
       priority: parsed.data.priority,
       status: parsed.data.status,
       successCriteria: parsed.data.successCriteria,
+      relatedRefs: parsed.data.relatedRefs,
       ...(parsed.data.campaignId ? { campaignId: parsed.data.campaignId } : {}),
       ...(parsed.data.releaseId ? { releaseId: parsed.data.releaseId } : {})
     };

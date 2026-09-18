@@ -15,6 +15,27 @@ const base = {
   operationalActions: []
 };
 
+const action = (overrides: Partial<{
+  id: string;
+  sourceDomain: string;
+  sourceEntityType: string;
+  sourceEntityId: string;
+  title: string;
+  status: "OPEN" | "IN_PROGRESS" | "BLOCKED" | "DONE" | "SKIPPED" | "EXPIRED";
+  priority: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+  version: number;
+}> = {}) => ({
+  id: "action-1",
+  sourceDomain: "CONTENT",
+  sourceEntityType: "ContentUnit",
+  sourceEntityId: "unit-1",
+  title: "Review content unit",
+  status: "OPEN" as const,
+  priority: "NORMAL" as const,
+  version: 1,
+  ...overrides
+});
+
 describe("AttentionProjectionService", () => {
   it("keeps projection deterministic and empty when nothing needs attention", () => {
     expect(service.project(base)).toEqual({ computedAt: now, activeObjective: null, items: [] });
@@ -45,7 +66,7 @@ describe("AttentionProjectionService", () => {
     });
   });
 
-  it("uses the active PlanningObjective as a ranking boost, not as a hard rule", () => {
+  it("uses a release-scoped PlanningObjective as a bounded ranking boost, not a hard rule", () => {
     const result = service.project({
       ...base,
       activeObjective: {
@@ -57,35 +78,73 @@ describe("AttentionProjectionService", () => {
         releaseId: "release-trastevere"
       },
       operationalActions: [
-        {
-          id: "evergreen-action",
-          sourceDomain: "CONTENT",
-          sourceEntityType: "ContentUnit",
-          sourceEntityId: "evergreen-1",
-          title: "Review evergreen caption",
-          status: "OPEN",
-          priority: "NORMAL",
-          version: 1
-        },
-        {
-          id: "release-action",
-          sourceDomain: "MUSIC",
-          sourceEntityType: "Release",
-          sourceEntityId: "release-trastevere",
-          title: "Confirm Trastevere artwork",
-          status: "OPEN",
-          priority: "NORMAL",
-          version: 1
-        }
+        action({ id: "evergreen-action", sourceEntityId: "evergreen-1", title: "Review evergreen caption" }),
+        action({ id: "release-action", sourceDomain: "MUSIC", sourceEntityType: "Release", sourceEntityId: "release-trastevere", title: "Confirm Trastevere artwork" })
       ]
     });
 
-    expect(result.items[0]).toMatchObject({
-      id: "operational-action:release-action",
-      objectiveAligned: true
-    });
+    expect(result.items[0]).toMatchObject({ id: "operational-action:release-action", objectiveAligned: true });
     expect(result.items[0]?.whyThis.join(" ")).toContain("Prepare Trastevere release");
     expect(result.items[1]).toMatchObject({ objectiveAligned: false });
+  });
+
+  it("does not treat an ARTIST objective without related evidence as aligned with every action", () => {
+    const result = service.project({
+      ...base,
+      activeObjective: {
+        id: "objective-artist",
+        title: "Build momentum",
+        statement: "Keep the month focused on momentum.",
+        priority: "PRIMARY",
+        scope: "ARTIST"
+      },
+      operationalActions: [action()]
+    });
+
+    expect(result.items[0]).toMatchObject({ id: "operational-action:action-1", objectiveAligned: false });
+    expect(result.items[0]?.whyThis.join(" ")).not.toContain("Build momentum");
+  });
+
+  it("aligns an ARTIST objective only when an explicit related reference matches action lineage", () => {
+    const result = service.project({
+      ...base,
+      activeObjective: {
+        id: "objective-related",
+        title: "Finish the chosen production task",
+        statement: "Close the exact work selected in review.",
+        priority: "PRIMARY",
+        scope: "ARTIST",
+        relatedRefs: [{ type: "ContentUnit", id: "unit-1" }]
+      },
+      operationalActions: [
+        action({ id: "matching" }),
+        action({ id: "other", sourceEntityId: "unit-2", title: "Other content unit" })
+      ]
+    });
+
+    expect(result.items.find((item) => item.id === "operational-action:matching")).toMatchObject({ objectiveAligned: true });
+    expect(result.items.find((item) => item.id === "operational-action:other")).toMatchObject({ objectiveAligned: false });
+  });
+
+  it("can align a focus directly to one OperationalAction without widening to sibling actions", () => {
+    const result = service.project({
+      ...base,
+      activeObjective: {
+        id: "objective-action",
+        title: "Close one blocker",
+        statement: "Finish the selected action.",
+        priority: "PRIMARY",
+        scope: "ARTIST",
+        relatedRefs: [{ type: "OperationalAction", id: "target-action" }]
+      },
+      operationalActions: [
+        action({ id: "target-action", sourceEntityId: "shared-unit", title: "Target action" }),
+        action({ id: "sibling-action", sourceEntityId: "shared-unit", title: "Sibling action" })
+      ]
+    });
+
+    expect(result.items.find((item) => item.id === "operational-action:target-action")).toMatchObject({ objectiveAligned: true });
+    expect(result.items.find((item) => item.id === "operational-action:sibling-action")).toMatchObject({ objectiveAligned: false });
   });
 
   it("lets deadline urgency override objective alignment when constraints are not comparable", () => {
@@ -100,36 +159,17 @@ describe("AttentionProjectionService", () => {
         releaseId: "release-trastevere"
       },
       operationalActions: [
+        action({ id: "aligned", sourceDomain: "MUSIC", sourceEntityType: "Release", sourceEntityId: "release-trastevere", title: "Review release notes" }),
         {
-          id: "aligned",
-          sourceDomain: "MUSIC",
-          sourceEntityType: "Release",
-          sourceEntityId: "release-trastevere",
-          title: "Review release notes",
-          status: "OPEN",
-          priority: "NORMAL",
-          version: 1
-        },
-        {
-          id: "urgent",
-          sourceDomain: "DSP",
-          sourceEntityType: "EditorialPitch",
-          sourceEntityId: "pitch-1",
-          title: "Submit editorial pitch",
-          status: "OPEN",
-          priority: "URGENT",
-          dueAt: new Date("2026-09-17T09:00:00.000Z"),
-          version: 1
+          ...action({ id: "urgent", sourceDomain: "DSP", sourceEntityType: "EditorialPitch", sourceEntityId: "pitch-1", title: "Submit editorial pitch", priority: "URGENT" }),
+          dueAt: new Date("2026-09-17T09:00:00.000Z")
         }
       ]
     });
 
     expect(result.items[0]).toMatchObject({
       id: "operational-action:urgent",
-      guidanceRef: {
-        key: "music.editorial-pitch",
-        estimatedMinutes: 6
-      }
+      guidanceRef: { key: "music.editorial-pitch", estimatedMinutes: 6 }
     });
     expect(result.items[1]?.id).toBe("operational-action:aligned");
   });
@@ -146,20 +186,12 @@ describe("AttentionProjectionService", () => {
       basedOn: [{ type: "CandidateKnowledge", id: "candidate-1" }],
       uncertainty: [],
       blockedBy: [],
-      guidanceRef: {
-        key: "brain.candidate-review",
-        label: "How to review a Brain candidate",
-        estimatedMinutes: 3
-      }
+      guidanceRef: { key: "brain.candidate-review", label: "How to review a Brain candidate", estimatedMinutes: 3 }
     });
   });
 
   it("offers guidance for foundational setup while keeping execution optional", () => {
-    const result = service.project({
-      ...base,
-      identity: { active: false },
-      songsCount: 0
-    });
+    const result = service.project({ ...base, identity: { active: false }, songsCount: 0 });
 
     expect(result.items[0]).toMatchObject({
       id: "foundation:identity",

@@ -42,6 +42,7 @@ export interface PlanningObjectiveContext {
   scope: "ARTIST" | "CAMPAIGN" | "RELEASE" | "EVERGREEN" | "CUSTOM";
   campaignId?: string;
   releaseId?: string;
+  relatedRefs?: AttentionEntityRef[];
 }
 
 export interface AttentionOperationalActionInput {
@@ -81,11 +82,14 @@ export interface AttentionProjection {
 const priorityScore: Record<AttentionPriority, number> = { CRITICAL: 400, HIGH: 300, NORMAL: 200, LOW: 100 };
 const operationalPriorityScore: Record<AttentionOperationalActionInput["priority"], number> = { URGENT: 80, HIGH: 50, NORMAL: 20, LOW: 0 };
 
-const objectiveMatches = (objective: PlanningObjectiveContext | null | undefined, sourceType: string, sourceId: string) => {
+const sameRef = (left: AttentionEntityRef, right: AttentionEntityRef) =>
+  left.type.toLowerCase() === right.type.toLowerCase() && left.id === right.id;
+
+const objectiveMatches = (objective: PlanningObjectiveContext | null | undefined, candidateRefs: AttentionEntityRef[]) => {
   if (!objective) return false;
-  if (objective.scope === "RELEASE" && objective.releaseId) return sourceType.toLowerCase().includes("release") && sourceId === objective.releaseId;
-  if (objective.scope === "CAMPAIGN" && objective.campaignId) return sourceType.toLowerCase().includes("campaign") && sourceId === objective.campaignId;
-  return objective.scope === "ARTIST";
+  if (objective.scope === "RELEASE" && objective.releaseId && candidateRefs.some((ref) => ref.type.toLowerCase().includes("release") && ref.id === objective.releaseId)) return true;
+  if (objective.scope === "CAMPAIGN" && objective.campaignId && candidateRefs.some((ref) => ref.type.toLowerCase().includes("campaign") && ref.id === objective.campaignId)) return true;
+  return (objective.relatedRefs ?? []).some((objectiveRef) => candidateRefs.some((candidateRef) => sameRef(objectiveRef, candidateRef)));
 };
 
 const dueStateScore = (action: AttentionOperationalActionInput, now: Date) => {
@@ -115,6 +119,8 @@ export class AttentionProjectionService {
     const push = (item: AttentionItem, extra = 0) => scored.push({ item, score: priorityScore[item.priority] + extra });
 
     if (!input.identity.active) {
+      const identityRefs: AttentionEntityRef[] = input.identity.versionRef ? [input.identity.versionRef] : [];
+      const aligned = objectiveMatches(objective, identityRefs);
       push({
         id: "foundation:identity",
         kind: "FOUNDATION",
@@ -124,8 +130,8 @@ export class AttentionProjectionService {
         basedOn: [], uncertainty: [], blockedBy: [],
         expectedEffect: "Gives future content and strategy work a canonical identity context.",
         guidanceRef: { key: "identity.active-context", label: "What an active Identity changes", estimatedMinutes: 4 },
-        action: { label: "Open Identity", href: "/identity" }, objectiveAligned: objective?.scope === "ARTIST"
-      }, objective?.scope === "ARTIST" ? 25 : 0);
+        action: { label: "Open Identity", href: "/identity" }, objectiveAligned: aligned
+      }, aligned ? 25 : 0);
     }
 
     for (const unit of input.unitsWithoutApprovedExecution) {
@@ -185,7 +191,11 @@ export class AttentionProjectionService {
     for (const action of input.operationalActions) {
       if (["DONE", "SKIPPED", "EXPIRED"].includes(action.status)) continue;
       if (action.notBefore && action.notBefore > input.computedAt) continue;
-      const aligned = objectiveMatches(objective, action.sourceEntityType, action.sourceEntityId);
+      const actionRefs: AttentionEntityRef[] = [
+        { type: "OperationalAction", id: action.id, version: action.version },
+        { type: action.sourceEntityType, id: action.sourceEntityId }
+      ];
+      const aligned = objectiveMatches(objective, actionRefs);
       const isBlocked = action.status === "BLOCKED";
       const priority: AttentionPriority = isBlocked || action.priority === "URGENT" ? "HIGH" : action.priority === "HIGH" ? "HIGH" : "NORMAL";
       const why = isBlocked
@@ -199,7 +209,7 @@ export class AttentionProjectionService {
         priority,
         title: action.title,
         whyThis: why,
-        basedOn: [{ type: "OperationalAction", id: action.id, version: action.version }, { type: action.sourceEntityType, id: action.sourceEntityId }],
+        basedOn: actionRefs,
         uncertainty: [], blockedBy: isBlocked ? [{ type: action.sourceEntityType, id: action.sourceEntityId }] : [],
         expectedEffect: "Advances the linked workflow without changing source-domain truth by itself.",
         ...(guidanceRef ? { guidanceRef } : {}),

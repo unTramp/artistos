@@ -13,7 +13,9 @@ import {
 import { AppShell } from "./components/app-shell";
 import { AttentionExplainability } from "./components/attention-explainability";
 import { CurrentFocusEditor } from "./components/current-focus-editor";
+import { OperationalActionControls } from "./components/operational-action-controls";
 import { resolveAuthenticatedActorContext } from "@/lib/actor-context";
+import { hrefForOperationalSource } from "@/lib/entity-href";
 import { getDatabaseRuntime } from "@/lib/runtime";
 
 const toneFor = (item: AttentionItem): "violet" | "amber" | "cyan" | "emerald" => {
@@ -30,17 +32,6 @@ const labelFor = (item: AttentionItem) => {
   if (item.kind === "MEMORY") return "MEMORY";
   if (item.kind === "FOUNDATION") return "FOUNDATION";
   return "MUSIC";
-};
-
-const hrefForOperationalSource = (sourceEntityType: string, sourceEntityId: string) => {
-  if (sourceEntityType === "ContentUnit") return `/factory/units/${sourceEntityId}`;
-  if (sourceEntityType === "ContentAngle") return "/factory";
-  if (sourceEntityType === "CandidateKnowledge") return "/knowledge";
-  if (sourceEntityType === "ArtistIdentity" || sourceEntityType === "IdentityVersion") return "/identity";
-  if (sourceEntityType === "Song") return `/songs/${sourceEntityId}`;
-  if (sourceEntityType === "Decision") return `/decisions/${sourceEntityId}`;
-  if (sourceEntityType === "Learning") return "/learnings";
-  return "/";
 };
 
 export default async function HomePage() {
@@ -133,6 +124,7 @@ export default async function HomePage() {
       statement: currentObjective.statement,
       priority: currentObjective.priority,
       scope: currentObjective.scope,
+      relatedRefs: currentObjective.relatedRefs.map((reference) => ({ type: reference.refType, id: reference.refId })),
       ...(currentObjective.campaignId ? { campaignId: currentObjective.campaignId } : {}),
       ...(currentObjective.releaseId ? { releaseId: currentObjective.releaseId } : {})
     } : null,
@@ -171,7 +163,9 @@ export default async function HomePage() {
     }))
   });
 
+  const operationalActionByAttentionId = new Map(operationalActions.map((action) => [`operational-action:${action.id}`, action]));
   const primary = projection.items[0] ?? null;
+  const primaryOperationalAction = primary ? operationalActionByAttentionId.get(primary.id) ?? null : null;
   const secondary = projection.items.slice(1, 4);
   const latestUnit = units[0] ?? null;
 
@@ -207,6 +201,12 @@ export default async function HomePage() {
               <h2>{primary.title}</h2>
               <p>{primary.whyThis[0]}</p>
               {primary.objectiveAligned && <small className="today-objective-note">Aligned with current objective</small>}
+              {primaryOperationalAction && <OperationalActionControls
+                actionId={primaryOperationalAction.id}
+                status={primaryOperationalAction.status as "OPEN" | "IN_PROGRESS" | "BLOCKED"}
+                version={primaryOperationalAction.version}
+                executionMode={primaryOperationalAction.executionMode}
+              />}
             </div>
             <div className="today-hero-actions">
               <AttentionExplainability item={primary} />
@@ -234,16 +234,27 @@ export default async function HomePage() {
         <div className="today-columns">
           <section className="attention-panel">
             <div className="panel-heading"><div><span className="signal-label">NEXT</span><h2>Attention queue</h2></div><small>{projection.items.length} current signal{projection.items.length === 1 ? "" : "s"}</small></div>
-            {secondary.length === 0 ? <div className="quiet-state">No secondary attention items right now.</div> : secondary.map((item) => (
-              <article className="attention-row" key={item.id}>
-                <i className={`attention-dot ${toneFor(item)}`} />
-                <div className="attention-row-copy"><span>{labelFor(item)}</span><strong>{item.title}</strong><p>{item.whyThis[0]}</p></div>
-                <div className="attention-row-actions">
-                  <AttentionExplainability item={item} compact />
-                  <a href={item.action.href} aria-label={item.action.label}>→</a>
-                </div>
-              </article>
-            ))}
+            {secondary.length === 0 ? <div className="quiet-state">No secondary attention items right now.</div> : secondary.map((item) => {
+              const operationalAction = operationalActionByAttentionId.get(item.id) ?? null;
+              return (
+                <article className="attention-row" key={item.id}>
+                  <i className={`attention-dot ${toneFor(item)}`} />
+                  <div className="attention-row-copy">
+                    <span>{labelFor(item)}</span><strong>{item.title}</strong><p>{item.whyThis[0]}</p>
+                    {operationalAction && <OperationalActionControls
+                      actionId={operationalAction.id}
+                      status={operationalAction.status as "OPEN" | "IN_PROGRESS" | "BLOCKED"}
+                      version={operationalAction.version}
+                      executionMode={operationalAction.executionMode}
+                    />}
+                  </div>
+                  <div className="attention-row-actions">
+                    <AttentionExplainability item={item} compact />
+                    <a href={item.action.href} aria-label={item.action.label}>→</a>
+                  </div>
+                </article>
+              );
+            })}
           </section>
 
           <section className="memory-panel">
