@@ -109,7 +109,7 @@ test("capture current Artist OS product surfaces", async ({ page }) => {
     await whyButton.click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await page.screenshot({ path: "artifacts/ui-screenshots/02-today-why.png", fullPage: true });
-    await page.getByRole("button", { name: "Close explanation" }).click();
+    await page.locator(".drawer-close").click();
   }
 
   await page.goto("/factory");
