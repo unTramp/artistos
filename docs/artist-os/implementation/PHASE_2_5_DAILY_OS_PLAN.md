@@ -1,6 +1,6 @@
 # Phase 2.5 — Daily OS / Decision Intelligence
 
-**Status:** Closure PR-F in review — runtime reconciliation PR-A → PR-E is merged
+**Status:** COMPLETE — reconciled through PR-F
 **Architecture baseline:** MASTER v1.4 remains frozen and normative.
 **Current implementation track:** Post-audit reconciliation PR-A → PR-F
 **Last reconciled:** 2026-09-18
