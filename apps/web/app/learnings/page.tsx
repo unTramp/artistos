@@ -32,7 +32,7 @@ export default async function LearningsPage() {
         <p className="eyebrow">MEMORY · LEARNINGS</p>
         <h1>Remember what the work actually taught you</h1>
         <p>Learning is scoped evidence-backed memory from actions and results. It stays separate from Knowledge, keeps contradictions visible and only becomes VALIDATED through explicit human approval.</p>
-        <p><a className="inline-link" href="/decisions">Decisions →</a></p>
+        <p><a className="inline-link" href="/memory">← Memory</a> · <a className="inline-link" href="/decisions">Decisions →</a></p>
       </header>
       <LearningMemoryClient initialLearnings={serialized} resolvedReferences={resolvedReferences} />
     </AppShell>
