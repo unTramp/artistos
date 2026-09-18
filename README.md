@@ -28,10 +28,17 @@ Core product formula:
   - bounded Context Assembler;
   - structured AI Angle proposals / AgentRun provenance;
   - manual workflows continue to work with AI disabled.
-- **Phase 2.5 — Daily OS / Decision Intelligence** 🚧
-  - Today / attention surface;
-  - product coherence and onboarding;
-  - next: OperationalAction, AttentionProjection, Decision Memory, Learning and Weekly Review.
+- **Phase 2.5 — Daily OS / Decision Intelligence** ✅
+  - Today / deterministic Attention projection;
+  - Current Focus / PlanningObjective;
+  - OperationalAction lifecycle and Today action controls;
+  - WHY / provenance traversal;
+  - Decision Memory and Learning Memory;
+  - immutable Weekly Review;
+  - Brain / Memory information architecture;
+  - contextual Learn → Apply guidance;
+  - command palette;
+  - deep-work ergonomics and product telemetry closure.
 
 MASTER v1.4 remains the frozen architecture Source of Truth. Phase 2.5 changes product priority and surface, not canonical domain ownership.
 

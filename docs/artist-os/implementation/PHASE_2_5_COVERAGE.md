@@ -1,7 +1,7 @@
 # Phase 2.5 — Runtime & Measurement Coverage
 
 **Baseline:** MASTER v1.4 + AR-001…AR-062  
-**Runtime baseline:** `main@0bb22633b47baed7798ce87830f3daf80d4219fe` + PR-F measurement closure  
+**Runtime baseline:** `main@a9e5b737bc2abbfb27d1bc0a6349d1b715b21bce` — Phase 2.5 closed through PR-F  
 **Purpose:** record what Phase 2.5 actually ships, how it is proven, what is measured, and what remains intentionally deferred.
 
 ## Product loop coverage
