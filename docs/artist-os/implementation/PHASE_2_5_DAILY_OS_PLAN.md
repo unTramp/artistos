@@ -266,9 +266,11 @@ Acceptance:
 - broken/unresolvable refs fail soft in presentation but do not fabricate labels or relationships;
 - Today remains selective rather than becoming a graph browser.
 
-#### PR-D — Intelligence / Brain information architecture
+#### PR-D — Intelligence / Brain information architecture 🚧 IN PROGRESS — GitHub PR #30
 
 **Goal:** make the semantic split understandable in product navigation while preserving domain ownership.
+
+**Current state:** Draft PR #30 is stacked on PR #27. The current implementation adds a real `/memory` workspace, keeps Brain as a separate top-level destination, moves Weekly Review under Memory, and aligns specialist Memory navigation without changing canonical ownership.
 
 Scope:
 - preserve:
