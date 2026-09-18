@@ -24,3 +24,24 @@
 .factory-ai-proposal .secondary-button { width: 100%; margin-top: 4px; }
 @media (max-width: 1100px) { .factory-ai-controls { grid-template-columns: 1fr 1fr; } .factory-ai-controls label:first-child { grid-column: span 2; } }
 @media (max-width: 720px) { .factory-ai-workspace { padding: 18px; } .factory-ai-head { display: grid; } .factory-ai-controls { grid-template-columns: 1fr; } .factory-ai-controls label:first-child { grid-column: auto; } }
+
+
+.factory-ai-diagnostics {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid #252934;
+  border-radius: 10px;
+  background: #0c0f13;
+}
+
+.factory-ai-diagnostics summary {
+  color: #7f8591;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.factory-ai-diagnostics[open] summary {
+  margin-bottom: 9px;
+  color: #b9bdc6;
+}

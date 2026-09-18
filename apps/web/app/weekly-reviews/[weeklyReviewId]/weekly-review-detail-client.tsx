@@ -9,6 +9,7 @@ type Item = { text: string; epistemicLabel?: EpistemicLabel; references?: Refere
 type Section = { kind: string; label: string; items: Item[] };
 type Review = { id: string; generatedAt: string; configurationVersion: string; sections: Section[] };
 type FocusDraft = { section: Section; item: Item; itemIndex: number };
+type CommitDraft = { kind: "DECISION" | "ACTION"; section: Section; item: Item; itemIndex: number };
 
 const idempotencyKey = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
 const canCreateDecision = (kind: string) => kind === "DECISIONS_TO_MAKE" || kind === "RECOMMENDED_NEXT_FOCUS";
@@ -25,7 +26,26 @@ export function WeeklyReviewDetailClient({ review, resolvedReferences }: { revie
   const [focusStart, setFocusStart] = useState("");
   const [focusEnd, setFocusEnd] = useState("");
 
+  const [commitDraft, setCommitDraft] = useState<CommitDraft | null>(null);
+  const [decisionTitle, setDecisionTitle] = useState("");
+  const [decisionText, setDecisionText] = useState("");
+  const [decisionReason, setDecisionReason] = useState("");
+  const [decisionScope, setDecisionScope] = useState("weekly_review");
+  const [actionTitle, setActionTitle] = useState("");
+  const [actionDescription, setActionDescription] = useState("");
+
+  function clearCommitDraft() {
+    setCommitDraft(null);
+    setDecisionTitle("");
+    setDecisionText("");
+    setDecisionReason("");
+    setDecisionScope("weekly_review");
+    setActionTitle("");
+    setActionDescription("");
+  }
+
   function beginFocus(section: Section, item: Item, itemIndex: number) {
+    clearCommitDraft();
     const start = new Date();
     const end = new Date(start);
     end.setDate(end.getDate() + 29);
@@ -34,6 +54,24 @@ export function WeeklyReviewDetailClient({ review, resolvedReferences }: { revie
     setFocusStatement(item.text);
     setFocusStart(dateInputValue(start));
     setFocusEnd(dateInputValue(end));
+    setError(null);
+  }
+
+  function beginDecision(section: Section, item: Item, itemIndex: number) {
+    setFocusDraft(null);
+    setCommitDraft({ kind: "DECISION", section, item, itemIndex });
+    setDecisionTitle(section.kind === "RECOMMENDED_NEXT_FOCUS" ? "Set next focus" : "Commit Weekly Review decision");
+    setDecisionText(item.text);
+    setDecisionReason(`Based on Weekly Review: ${item.text}`);
+    setDecisionScope("weekly_review");
+    setError(null);
+  }
+
+  function beginAction(section: Section, item: Item, itemIndex: number) {
+    setFocusDraft(null);
+    setCommitDraft({ kind: "ACTION", section, item, itemIndex });
+    setActionTitle(item.text.replace(/^(Continue|Resolve|Blocked|Due):\s*/i, ""));
+    setActionDescription(`Created from Weekly Review: ${item.text}`);
     setError(null);
   }
 
@@ -66,21 +104,22 @@ export function WeeklyReviewDetailClient({ review, resolvedReferences }: { revie
     }
   }
 
-  async function createDecision(section: Section, item: Item, itemIndex: number) {
-    const title = window.prompt("Decision title", section.kind === "RECOMMENDED_NEXT_FOCUS" ? "Set next focus" : "Commit Weekly Review decision");
-    if (!title) return;
-    const decision = window.prompt("What are we choosing?", item.text);
-    if (!decision) return;
-    const reason = window.prompt("Why are we choosing this?", `Based on Weekly Review: ${item.text}`);
-    if (!reason) return;
-    const scope = window.prompt("Decision scope", "weekly_review")?.trim();
-    if (!scope) return;
+  async function createDecision() {
+    if (!commitDraft || commitDraft.kind !== "DECISION") return;
+    if (!decisionTitle.trim() || !decisionText.trim() || !decisionReason.trim() || !decisionScope.trim()) return;
     setBusy(true); setError(null);
     try {
       const response = await fetch(`/api/v1/weekly-reviews/${review.id}/decision`, {
         method: "POST",
         headers: { "content-type": "application/json", "idempotency-key": idempotencyKey("decision-from-weekly-review") },
-        body: JSON.stringify({ title, decision, reason, scope, sectionKind: section.kind, itemIndex })
+        body: JSON.stringify({
+          title: decisionTitle.trim(),
+          decision: decisionText.trim(),
+          reason: decisionReason.trim(),
+          scope: decisionScope.trim(),
+          sectionKind: commitDraft.section.kind,
+          itemIndex: commitDraft.itemIndex
+        })
       });
       const body = await response.json() as { data?: { decisionId?: string }; error?: { message?: string } };
       if (!response.ok) throw new Error(body.error?.message ?? "Decision could not be created.");
@@ -91,23 +130,21 @@ export function WeeklyReviewDetailClient({ review, resolvedReferences }: { revie
     }
   }
 
-  async function createAction(section: Section, item: Item, itemIndex: number) {
-    const title = window.prompt("Action title", item.text.replace(/^(Continue|Resolve|Blocked|Due):\s*/i, ""));
-    if (!title) return;
-    const description = window.prompt("Optional action detail", `Created from Weekly Review: ${item.text}`)?.trim() || undefined;
+  async function createAction() {
+    if (!commitDraft || commitDraft.kind !== "ACTION" || !actionTitle.trim()) return;
     setBusy(true); setError(null);
     try {
       const response = await fetch(`/api/v1/weekly-reviews/${review.id}/action`, {
         method: "POST",
         headers: { "content-type": "application/json", "idempotency-key": idempotencyKey("action-from-weekly-review") },
         body: JSON.stringify({
-          title,
-          description,
+          title: actionTitle.trim(),
+          description: actionDescription.trim() || undefined,
           actionType: "WEEKLY_REVIEW_FOLLOW_UP",
-          priority: section.kind === "SIGNALS" ? "HIGH" : "NORMAL",
+          priority: commitDraft.section.kind === "SIGNALS" ? "HIGH" : "NORMAL",
           executionMode: "MANUAL_NATIVE",
-          sectionKind: section.kind,
-          itemIndex
+          sectionKind: commitDraft.section.kind,
+          itemIndex: commitDraft.itemIndex
         })
       });
       const body = await response.json() as { data?: { actionId?: string }; error?: { message?: string } };
@@ -132,6 +169,7 @@ export function WeeklyReviewDetailClient({ review, resolvedReferences }: { revie
             <div className="section-heading"><p className="eyebrow">{section.kind.replaceAll("_", " ")}</p><h2>{section.label}</h2></div>
             {section.items.length === 0 ? <div className="quiet-state">No supported signal in this snapshot.</div> : section.items.map((item, itemIndex) => {
               const focusOpen = focusDraft?.section.kind === section.kind && focusDraft.itemIndex === itemIndex;
+              const commitOpen = commitDraft?.section.kind === section.kind && commitDraft.itemIndex === itemIndex;
               const existingFocusRef = item.references?.find((reference) => reference.refType === "PlanningObjective");
               const showFocusConfirmation = canSetFocus(section.kind) && !existingFocusRef;
               return (
@@ -161,9 +199,10 @@ export function WeeklyReviewDetailClient({ review, resolvedReferences }: { revie
                   {(showFocusConfirmation || existingFocusRef || canCreateDecision(section.kind) || canCreateAction(section.kind)) && <div className="decision-form-actions">
                     {showFocusConfirmation && <button className="decision-primary-button" type="button" disabled={busy} onClick={() => focusOpen ? setFocusDraft(null) : beginFocus(section, item, itemIndex)}>{focusOpen ? "Cancel focus" : "Set current focus →"}</button>}
                     {existingFocusRef && <a className="decision-secondary-button" href="/">Open current focus →</a>}
-                    {canCreateDecision(section.kind) && <button className="decision-secondary-button" type="button" disabled={busy} onClick={() => void createDecision(section, item, itemIndex)}>Turn into Decision →</button>}
-                    {canCreateAction(section.kind) && <button className="decision-primary-button" type="button" disabled={busy} onClick={() => void createAction(section, item, itemIndex)}>Create Action →</button>}
+                    {canCreateDecision(section.kind) && <button className="decision-secondary-button" type="button" disabled={busy} onClick={() => commitOpen && commitDraft?.kind === "DECISION" ? clearCommitDraft() : beginDecision(section, item, itemIndex)}>{commitOpen && commitDraft?.kind === "DECISION" ? "Cancel decision" : "Turn into Decision →"}</button>}
+                    {canCreateAction(section.kind) && <button className="decision-primary-button" type="button" disabled={busy} onClick={() => commitOpen && commitDraft?.kind === "ACTION" ? clearCommitDraft() : beginAction(section, item, itemIndex)}>{commitOpen && commitDraft?.kind === "ACTION" ? "Cancel action" : "Create Action →"}</button>}
                   </div>}
+
                   {focusOpen && showFocusConfirmation && <div className="decision-create-card">
                     <label>Focus title<input value={focusTitle} onChange={(event) => setFocusTitle(event.target.value)} maxLength={200} /></label>
                     <label>What does success look like?<textarea value={focusStatement} onChange={(event) => setFocusStatement(event.target.value)} rows={3} maxLength={2000} /></label>
@@ -174,6 +213,28 @@ export function WeeklyReviewDetailClient({ review, resolvedReferences }: { revie
                     <p className="muted-note">This is an explicit confirmation. The review itself remains immutable; its references become bounded focus context for Today.</p>
                     <div className="decision-form-actions">
                       <button className="decision-primary-button" type="button" disabled={busy || !focusTitle.trim() || !focusStatement.trim() || !focusStart || !focusEnd} onClick={() => void createFocus()}>{busy ? "Setting focus…" : "Confirm current focus"}</button>
+                    </div>
+                  </div>}
+
+                  {commitOpen && commitDraft?.kind === "DECISION" && <div className="decision-create-card contextual-commit-card">
+                    <div className="section-heading"><p className="eyebrow">HUMAN COMMIT</p><h3>Turn this recommendation into a Decision</h3><p>The Weekly Review stays immutable. You are explicitly choosing what should become durable Decision Memory.</p></div>
+                    <label>Decision title<input aria-label="Decision title" value={decisionTitle} onChange={(event) => setDecisionTitle(event.target.value)} maxLength={200} /></label>
+                    <label>Decision<textarea aria-label="Decision" value={decisionText} onChange={(event) => setDecisionText(event.target.value)} rows={3} maxLength={4000} /></label>
+                    <label>Reason<textarea aria-label="Reason" value={decisionReason} onChange={(event) => setDecisionReason(event.target.value)} rows={3} maxLength={6000} /></label>
+                    <label>Scope<input aria-label="Scope" value={decisionScope} onChange={(event) => setDecisionScope(event.target.value)} maxLength={120} /></label>
+                    <div className="decision-form-actions">
+                      <button className="decision-secondary-button" type="button" onClick={clearCommitDraft} disabled={busy}>Cancel</button>
+                      <button className="decision-primary-button" type="button" onClick={() => void createDecision()} disabled={busy || !decisionTitle.trim() || !decisionText.trim() || !decisionReason.trim() || !decisionScope.trim()}>{busy ? "Committing…" : "Commit decision"}</button>
+                    </div>
+                  </div>}
+
+                  {commitOpen && commitDraft?.kind === "ACTION" && <div className="decision-create-card contextual-commit-card">
+                    <div className="section-heading"><p className="eyebrow">FOLLOW-UP ACTION</p><h3>Create a concrete next action</h3><p>The source review and item index stay attached as provenance. Completion will not mutate the Weekly Review.</p></div>
+                    <label>Action title<input aria-label="Action title" value={actionTitle} onChange={(event) => setActionTitle(event.target.value)} maxLength={200} /></label>
+                    <label>Action detail<textarea aria-label="Action detail" value={actionDescription} onChange={(event) => setActionDescription(event.target.value)} rows={3} maxLength={4000} /></label>
+                    <div className="decision-form-actions">
+                      <button className="decision-secondary-button" type="button" onClick={clearCommitDraft} disabled={busy}>Cancel</button>
+                      <button className="decision-primary-button" type="button" onClick={() => void createAction()} disabled={busy || !actionTitle.trim()}>{busy ? "Creating…" : "Create action"}</button>
                     </div>
                   </div>}
                 </article>

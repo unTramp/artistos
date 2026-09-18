@@ -11,6 +11,8 @@ type RevisionAction = {
   snapshot: ContentExecutionSnapshot;
 };
 
+type AuthoringSection = "creative" | "production" | "edit" | "publish" | "constraints";
+
 const intents: ProductionIntent[] = ["AUTHENTIC", "CASUAL", "POLISHED", "CINEMATIC", "EXPERIMENTAL"];
 const shotText = (snapshot?: ContentExecutionSnapshot) => snapshot?.shotList.map((shot) => shot.instruction).join("\n") ?? "";
 const platformText = (snapshot?: ContentExecutionSnapshot) => snapshot?.platformNotes.map((note) => `${note.platform}: ${note.note}`).join("\n") ?? "";
@@ -23,12 +25,21 @@ const parsePlatformNotes = (value: string) => value.split("\n").map((line) => li
     : { platform: "GENERAL", note: line };
 }).filter((item) => item.note.length > 0);
 
+const sectionMeta: Array<{ id: AuthoringSection; label: string; note: string }> = [
+  { id: "creative", label: "Creative Core", note: "Hook · structure · performance" },
+  { id: "production", label: "Production", note: "Shots · feasibility · fallback" },
+  { id: "edit", label: "Edit", note: "Edit brief · platform adaptation" },
+  { id: "publish", label: "Publish Prep", note: "Caption · CTA" },
+  { id: "constraints", label: "Constraints", note: "Rights · known boundaries" }
+];
+
 export function ExecutionActions({ unitId, revisions }: { unitId: string; revisions: RevisionAction[] }) {
   const router = useRouter();
   const keys = useRef(new Map<string, string>());
   const latest = revisions[0]?.snapshot;
   const [pending, setPending] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<AuthoringSection>("creative");
   const [format, setFormat] = useState(latest?.format ?? "VERTICAL_PERFORMANCE");
   const [intent, setIntent] = useState<ProductionIntent>(latest?.productionIntent ?? "AUTHENTIC");
   const [hookType, setHookType] = useState(latest?.hookType ?? "PERSONAL_LINE");
@@ -74,6 +85,23 @@ export function ExecutionActions({ unitId, revisions }: { unitId: string; revisi
 
   const createRevision = async (event: FormEvent) => {
     event.preventDefault();
+
+    if (!format.trim() || !structure.trim() || !concept.trim()) {
+      setActiveSection("creative");
+      setMessage("Complete Format, Structure and Script / performance concept before saving the revision.");
+      return;
+    }
+    if (!feasibility.trim()) {
+      setActiveSection("production");
+      setMessage("Complete Feasibility notes before saving the revision.");
+      return;
+    }
+    if (!editBrief.trim()) {
+      setActiveSection("edit");
+      setMessage("Complete the Edit brief before saving the revision.");
+      return;
+    }
+
     await run("create-execution-revision", `/api/v1/content-factory/units/${unitId}/execution-revisions`, {
       format: format.trim(),
       productionIntent: intent,
@@ -98,30 +126,115 @@ export function ExecutionActions({ unitId, revisions }: { unitId: string; revisi
       <div className="section-heading">
         <p className="eyebrow">VERSIONED EXECUTION</p>
         <h2>{revisions.length === 0 ? "Create the first execution revision" : "Create the next execution revision"}</h2>
-        <p className="muted-note">Editing means a new immutable snapshot. Approval can supersede the prior approved source, but never rewrites it.</p>
+        <p className="muted-note">One canonical snapshot, edited by working context. Switching sections never discards fields; saving creates a new immutable revision.</p>
       </div>
 
       <form className="execution-form" onSubmit={createRevision}>
-        <div className="execution-form-grid">
-          <label>Format<input aria-label="Execution format" value={format} onChange={(event) => setFormat(event.target.value)} required /></label>
-          <label>Production intent<select aria-label="Production intent" value={intent} onChange={(event) => setIntent(event.target.value as ProductionIntent)}>{intents.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
-          <label>Hook type<input aria-label="Hook type" value={hookType} onChange={(event) => setHookType(event.target.value)} /></label>
-          <label>Hook text<input aria-label="Hook text" value={hookText} onChange={(event) => setHookText(event.target.value)} /></label>
-          <label className="execution-wide">Structure<textarea aria-label="Execution structure" value={structure} onChange={(event) => setStructure(event.target.value)} required /></label>
-          <label className="execution-wide">Script / performance concept<textarea aria-label="Script or performance concept" value={concept} onChange={(event) => setConcept(event.target.value)} required /></label>
-          <label className="execution-wide">Shot list · one instruction per line<textarea aria-label="Shot list" value={shots} onChange={(event) => setShots(event.target.value)} placeholder="Locked waist-up opening\nStay in the same setup for the first phrase" /></label>
-          <label className="execution-wide">Edit brief<textarea aria-label="Edit brief" value={editBrief} onChange={(event) => setEditBrief(event.target.value)} required /></label>
-          <label>Caption<textarea aria-label="Execution caption" value={caption} onChange={(event) => setCaption(event.target.value)} /></label>
-          <label>CTA<textarea aria-label="Execution CTA" value={cta} onChange={(event) => setCta(event.target.value)} /></label>
-          <label className="execution-wide">Platform notes · one PLATFORM: note per line<textarea aria-label="Platform notes" value={platformNotes} onChange={(event) => setPlatformNotes(event.target.value)} /></label>
-          <label className="execution-wide">Feasibility notes<textarea aria-label="Feasibility notes" value={feasibility} onChange={(event) => setFeasibility(event.target.value)} required /></label>
-          <label className="execution-wide">Fallback plan<textarea aria-label="Fallback plan" value={fallback} onChange={(event) => setFallback(event.target.value)} /></label>
+        <nav className="execution-authoring-nav" aria-label="Execution authoring sections">
+          {sectionMeta.map((section) => (
+            <button
+              className={activeSection === section.id ? "active" : undefined}
+              key={section.id}
+              type="button"
+              onClick={() => { setActiveSection(section.id); setMessage(null); }}
+            >
+              <strong>{section.label}</strong>
+              <small>{section.note}</small>
+            </button>
+          ))}
+        </nav>
+
+        <div className="execution-section-shell">
+          {activeSection === "creative" && (
+            <section className="execution-work-section" aria-labelledby="execution-section-creative">
+              <div className="execution-section-heading">
+                <span>01 · CREATIVE CORE</span>
+                <h3 id="execution-section-creative">What is the viewer meant to experience?</h3>
+                <p>Define the creative spine first. Production and editing should serve this rather than invent a second concept.</p>
+              </div>
+              <div className="execution-form-grid">
+                <label>Format<input aria-label="Execution format" value={format} onChange={(event) => setFormat(event.target.value)} /></label>
+                <label>Production intent<select aria-label="Production intent" value={intent} onChange={(event) => setIntent(event.target.value as ProductionIntent)}>{intents.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+                <label>Hook type<input aria-label="Hook type" value={hookType} onChange={(event) => setHookType(event.target.value)} /></label>
+                <label>Hook text<input aria-label="Hook text" value={hookText} onChange={(event) => setHookText(event.target.value)} /></label>
+                <label className="execution-wide">Structure<textarea aria-label="Execution structure" value={structure} onChange={(event) => setStructure(event.target.value)} /></label>
+                <label className="execution-wide">Script / performance concept<textarea aria-label="Script or performance concept" value={concept} onChange={(event) => setConcept(event.target.value)} /></label>
+              </div>
+            </section>
+          )}
+
+          {activeSection === "production" && (
+            <section className="execution-work-section" aria-labelledby="execution-section-production">
+              <div className="execution-section-heading">
+                <span>02 · PRODUCTION</span>
+                <h3 id="execution-section-production">Can this be captured with the real setup?</h3>
+                <p>Turn the concept into shootable instructions and preserve fallback thinking instead of hiding production risk.</p>
+              </div>
+              <div className="execution-form-grid">
+                <label className="execution-wide">Shot list · one instruction per line<textarea aria-label="Shot list" value={shots} onChange={(event) => setShots(event.target.value)} placeholder="Locked waist-up opening\nStay in the same setup for the first phrase" /></label>
+                <label className="execution-wide">Feasibility notes<textarea aria-label="Feasibility notes" value={feasibility} onChange={(event) => setFeasibility(event.target.value)} /></label>
+                <label className="execution-wide">Fallback plan<textarea aria-label="Fallback plan" value={fallback} onChange={(event) => setFallback(event.target.value)} /></label>
+              </div>
+            </section>
+          )}
+
+          {activeSection === "edit" && (
+            <section className="execution-work-section" aria-labelledby="execution-section-edit">
+              <div className="execution-section-heading">
+                <span>03 · EDIT</span>
+                <h3 id="execution-section-edit">How should the captured material become the final asset?</h3>
+                <p>Keep the edit brief distinct from platform adaptations so one source execution can survive multiple outputs.</p>
+              </div>
+              <div className="execution-form-grid">
+                <label className="execution-wide">Edit brief<textarea aria-label="Edit brief" value={editBrief} onChange={(event) => setEditBrief(event.target.value)} /></label>
+                <label className="execution-wide">Platform notes · one PLATFORM: note per line<textarea aria-label="Platform notes" value={platformNotes} onChange={(event) => setPlatformNotes(event.target.value)} /></label>
+              </div>
+            </section>
+          )}
+
+          {activeSection === "publish" && (
+            <section className="execution-work-section" aria-labelledby="execution-section-publish">
+              <div className="execution-section-heading">
+                <span>04 · PUBLISH PREP</span>
+                <h3 id="execution-section-publish">What accompanies the finished asset?</h3>
+                <p>Caption and CTA remain optional execution fields. Leaving them blank is explicit; Artist OS does not invent missing publish copy.</p>
+              </div>
+              <div className="execution-form-grid">
+                <label>Caption<textarea aria-label="Execution caption" value={caption} onChange={(event) => setCaption(event.target.value)} /></label>
+                <label>CTA<textarea aria-label="Execution CTA" value={cta} onChange={(event) => setCta(event.target.value)} /></label>
+              </div>
+            </section>
+          )}
+
+          {activeSection === "constraints" && (
+            <section className="execution-work-section" aria-labelledby="execution-section-constraints">
+              <div className="execution-section-heading">
+                <span>05 · CONSTRAINTS</span>
+                <h3 id="execution-section-constraints">What must not be silently assumed?</h3>
+                <p>This surface exposes only constraints with a real owner today. Future Audio Segment, Identity Constraint and Production Capability references should appear here when their canonical owners exist.</p>
+              </div>
+              <div className="execution-governance-note">
+                <strong>Rights: UNKNOWN</strong>
+                <span>Rights domain is not connected yet. Execution approval never implies publishability.</span>
+              </div>
+              <div className="execution-constraint-summary">
+                <div><span>Format</span><strong>{format || "UNKNOWN"}</strong></div>
+                <div><span>Production intent</span><strong>{intent}</strong></div>
+                <div><span>Fallback</span><strong>{fallback.trim() ? "RECORDED" : "UNKNOWN"}</strong></div>
+              </div>
+            </section>
+          )}
         </div>
-        <div className="execution-governance-note">
-          <strong>Rights: UNKNOWN</strong>
-          <span>Rights domain is not connected yet. Execution approval never implies publishability.</span>
-        </div>
-        <button className="command-button" disabled={pending !== null} type="submit">Save new execution revision</button>
+
+        {message && <p className="command-message" role="status">{message}</p>}
+
+        <footer className="execution-authoring-footer">
+          <div>
+            <span>IMMUTABLE SNAPSHOT</span>
+            <small>All five sections belong to one revision. Save does not rewrite earlier snapshots.</small>
+          </div>
+          <button className="command-button" disabled={pending !== null} type="submit">{pending === "create-execution-revision" ? "Saving revision…" : "Save new execution revision"}</button>
+        </footer>
       </form>
 
       {drafts.length > 0 && (
@@ -139,8 +252,6 @@ export function ExecutionActions({ unitId, revisions }: { unitId: string; revisi
           ))}
         </div>
       )}
-
-      {message && <p className="command-message" role="status">{message}</p>}
     </section>
   );
 }

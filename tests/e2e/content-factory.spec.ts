@@ -112,19 +112,29 @@ test("reviews an Angle, degrades AI safely, creates one Content Unit and version
   await expect(page.getByText("No approved execution source yet", { exact: true })).toBeVisible();
   await expect(page.getByText("Rights domain is not connected in this slice.", { exact: true })).toBeVisible();
 
+  await expect(page.getByRole("navigation", { name: "Execution authoring sections" })).toBeVisible();
   await page.getByLabel("Execution format").fill("VERTICAL_PERFORMANCE_STORY");
   await page.getByLabel("Production intent").selectOption("AUTHENTIC");
   await page.getByLabel("Hook type").fill("PERSONAL_LINE");
   await page.getByLabel("Hook text").fill("I did not know how to explain this song when I wrote it.");
   await page.getByLabel("Execution structure").fill("PERSONAL LINE → FIRST VERSE → CHORUS → QUIET CTA");
   await page.getByLabel("Script or performance concept").fill("One honest sentence, then move directly into a live performance with no promotional interruption.");
+
+  await page.getByRole("button", { name: /Production Shots/ }).click();
   await page.getByLabel("Shot list").fill("Locked waist-up personal line\nStay in the same frame for the first verse\nOne restrained closer crop for the chorus");
-  await page.getByLabel("Edit brief").fill("Keep natural pauses and breath. No speed ramps or fake reaction cuts.");
-  await page.getByLabel("Execution caption").fill("A small part of the story behind this song.");
-  await page.getByLabel("Execution CTA").fill("Listen if this feels familiar.");
-  await page.getByLabel("Platform notes").fill("INSTAGRAM_REELS: Keep the spoken line inside the safe title area.\nTIKTOK: Keep the same master premise.");
   await page.getByLabel("Feasibility notes").fill("One room, one camera and the existing audio setup are enough.");
   await page.getByLabel("Fallback plan").fill("If the full performance take fails, capture a simpler acoustic version without changing the story premise.");
+
+  await page.getByRole("button", { name: /Edit Edit brief/ }).click();
+  await page.getByLabel("Edit brief").fill("Keep natural pauses and breath. No speed ramps or fake reaction cuts.");
+  await page.getByLabel("Platform notes").fill("INSTAGRAM_REELS: Keep the spoken line inside the safe title area.\nTIKTOK: Keep the same master premise.");
+
+  await page.getByRole("button", { name: /Publish Prep Caption/ }).click();
+  await page.getByLabel("Execution caption").fill("A small part of the story behind this song.");
+  await page.getByLabel("Execution CTA").fill("Listen if this feels familiar.");
+
+  await page.getByRole("button", { name: /Constraints Rights/ }).click();
+  await expect(page.getByText("Rights: UNKNOWN", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Save new execution revision" }).click();
 
   const revision1 = page.locator(".execution-revision-list article").filter({ hasText: "REV 1" });
@@ -135,7 +145,9 @@ test("reviews an Angle, degrades AI safely, creates one Content Unit and version
   await expect(page.getByRole("heading", { name: "Revision 1", exact: true })).toBeVisible();
   await expect(page.locator(".execution-revision-list article").filter({ hasText: "REV 1" }).getByText("APPROVED", { exact: true })).toBeVisible();
 
+  await page.getByRole("button", { name: /Creative Core Hook/ }).click();
   await page.getByLabel("Execution structure").fill("PERSONAL LINE → FIRST VERSE → CHORUS → SILENT END FRAME");
+  await page.getByRole("button", { name: /Edit Edit brief/ }).click();
   await page.getByLabel("Edit brief").fill("Revision two removes the CTA cut and holds the final frame for two seconds.");
   await page.getByRole("button", { name: "Save new execution revision" }).click();
 
