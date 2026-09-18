@@ -7,7 +7,11 @@ const primaryNavByRoute: Record<string, string> = {
   identity: "brain",
   knowledge: "brain",
   songs: "music",
-  factory: "create"
+  factory: "create",
+  decisions: "memory",
+  learnings: "memory",
+  "weekly-reviews": "memory",
+  memory: "memory"
 };
 
 export function AppShell({
