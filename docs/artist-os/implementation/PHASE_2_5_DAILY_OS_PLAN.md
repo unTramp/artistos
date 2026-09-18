@@ -299,7 +299,7 @@ Scope:
 Non-goal:
 - do not collapse canonical Brain and Memory models.
 
-#### PR-E — Deep-work ergonomics, not feature removal 🚧 IN PROGRESS
+#### PR-E — Deep-work ergonomics, not feature removal ✅ READY FOR REVIEW — GitHub PR #29
 
 **Goal:** make the deep system easier to operate without deleting useful capability.
 
@@ -317,6 +317,12 @@ Implemented in the current branch:
 - required-field validation routes the user to the relevant working section rather than flattening the model;
 - provider / model / prompt / token plumbing is moved under Generation diagnostics instead of occupying the main creative surface;
 - E2E is updated to exercise the new human-control surfaces and all Execution sections.
+
+Validation:
+- CI #378 is fully green on implementation head `941a760e2734493bbeb84901efe0d469cef7ca15`;
+- migrations, architecture, lint, typecheck, unit, integration, build and Playwright all pass;
+- Weekly Review / Learning no longer require browser prompt dialogs for the material flows covered by PR-E;
+- Execution E2E proves the same immutable revision contract across contextual authoring sections.
 
 Scope:
 - replace material `window.prompt` flows with contextual forms/drawers;
