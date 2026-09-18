@@ -20,6 +20,8 @@ test("records Decision Memory and explicitly overrides a conflicting prior Decis
   await page.waitForURL("**/");
 
   await page.getByRole("link", { name: "Memory", exact: true }).click();
+  await page.waitForURL("**/memory");
+  await page.getByRole("link", { name: "Decisions", exact: true }).click();
   await page.waitForURL("**/decisions");
   await expect(page.getByRole("heading", { name: "Remember the choice, not just the outcome" })).toBeVisible();
 
