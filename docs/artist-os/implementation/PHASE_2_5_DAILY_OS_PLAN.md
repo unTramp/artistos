@@ -245,7 +245,7 @@ Implemented:
 - unresolved or not-yet-owned refs remain explicit rather than fabricated.
 
 Validation:
-- CI #368 is fully green on runtime head `fc2c7ec2efed0fad9744bf9acbdb66f4716b42de`;
+- CI #371 is fully green on implementation head `7da9dceff96a5d2f4445182e8cacd4b0a19cadd3`;
 - lint, typecheck, unit, integration, build and Playwright all pass;
 - E2E proves Today WHY provenance, Weekly Review provenance, Decision → Learning traversal and completed-action historical traversal;
 - targeted surfaces no longer use full raw UUIDs as primary presentation;
