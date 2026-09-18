@@ -63,6 +63,17 @@ test("Weekly Review recommendation becomes bounded focus and closes an Operation
   await controls.getByRole("button", { name: "Done" }).click();
   await expect(page.getByTestId(`action-controls-${actionId}`)).toHaveCount(0);
 
+  await expect.poll(async () => page.evaluate(async () => {
+    const response = await fetch("/api/v1/product-telemetry?windowDays=1", { cache: "no-store" });
+    const body = await response.json() as {
+      data: { summary: { attention: { explanationsOpened: number; outcomes: { completed: number } } } }
+    };
+    return body.data.summary.attention;
+  })).toMatchObject({
+    explanationsOpened: expect.any(Number),
+    outcomes: { completed: 1 }
+  });
+
   const active = await page.evaluate(async () => {
     const response = await fetch("/api/v1/actions?status=OPEN,IN_PROGRESS,BLOCKED&limit=100", { cache: "no-store" });
     return response.json() as Promise<{ data: { actions: Array<{ id: string }> } }>;

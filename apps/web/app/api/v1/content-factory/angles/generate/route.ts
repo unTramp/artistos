@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PgAgentRunWriter, PgContentAngleContextReader, PgRequestIdempotency } from "@artist-os/db";
+import { PgAgentRunWriter, PgContentAngleContextReader, PgRequestIdempotency, writeProductTelemetryEvent } from "@artist-os/db";
 import { resolveAuthenticatedActorContext } from "@/lib/actor-context";
 import { createConfiguredAIProvider } from "@/lib/ai-provider";
 import { GenerateContentAnglesService, type GenerateContentAnglesOutput } from "@/lib/content-angle-generation";
@@ -52,6 +52,34 @@ export async function POST(request: Request) {
       ...(body.data.platformTargets ? { platformTargets: body.data.platformTargets } : {}),
       ...(body.data.maxCandidates !== undefined ? { maxCandidates: body.data.maxCandidates } : {})
     });
+    const contextWasConsumed = result.result.status === "PROPOSALS" || result.result.status === "REJECTED_OUTPUT";
+    if (contextWasConsumed) {
+      const telemetry = [writeProductTelemetryEvent(runtime.db, {
+        artistId: actorContext.artistId,
+        eventName: "CONTENT_CONTEXT_CONSUMED",
+        surface: "ContentFactory",
+        entityType: "AgentRun",
+        ...(result.agentRunId ? { entityId: result.agentRunId } : {}),
+        metadata: {
+          resultStatus: result.result.status,
+          contextMaturity: result.context.maturity,
+          validatedLearningSourceCount: result.context.validatedLearningSourceCount
+        },
+        actorId: actorContext.actor.id
+      })];
+      if (result.context.validatedLearningSourceCount > 0) {
+        telemetry.push(writeProductTelemetryEvent(runtime.db, {
+          artistId: actorContext.artistId,
+          eventName: "MEMORY_REUSED",
+          surface: "ContentFactory",
+          entityType: "AgentRun",
+          ...(result.agentRunId ? { entityId: result.agentRunId } : {}),
+          metadata: { sourceType: "ValidatedLearning", sourceCount: result.context.validatedLearningSourceCount },
+          actorId: actorContext.actor.id
+        }));
+      }
+      await Promise.allSettled(telemetry);
+    }
     await gate.complete(claim.recordId, result, new Date());
     return successResponse(result, traceId);
   } catch (error) {

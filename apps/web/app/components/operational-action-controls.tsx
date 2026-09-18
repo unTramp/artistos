@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { emitProductTelemetry } from "@/lib/product-telemetry-client";
 
 type ActionStatus = "OPEN" | "IN_PROGRESS" | "BLOCKED";
 type ReasonMode = "block" | "reopen" | null;
@@ -41,6 +42,14 @@ export function OperationalActionControls({
       });
       const payload = await response.json() as { error?: { message?: string } };
       if (!response.ok) throw new Error(payload.error?.message ?? "Action could not be updated.");
+      const outcome = path === "start" ? "STARTED" : path === "complete" ? "COMPLETED" : path === "block" ? "BLOCKED" : "REOPENED";
+      emitProductTelemetry({
+        eventName: "ATTENTION_ACTION_OUTCOME_RECORDED",
+        surface: "Today",
+        entityType: "OperationalAction",
+        entityId: actionId,
+        metadata: { outcome, executionMode }
+      });
       setReason("");
       setReasonMode(null);
       if (path === "complete") {

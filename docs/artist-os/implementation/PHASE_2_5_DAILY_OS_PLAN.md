@@ -1,6 +1,6 @@
 # Phase 2.5 — Daily OS / Decision Intelligence
 
-**Status:** Active execution roadmap — reconciled after post-branch audit
+**Status:** Closure PR-F in review — runtime reconciliation PR-A → PR-E is merged
 **Architecture baseline:** MASTER v1.4 remains frozen and normative.
 **Current implementation track:** Post-audit reconciliation PR-A → PR-F
 **Last reconciled:** 2026-09-18
@@ -202,7 +202,7 @@ Completed:
 Merged into `main` as:
 `3ceaa8ae4a14da2280e8cf94abff7fa14224b5f0`.
 
-#### PR-B — Daily OS loop closure — GitHub PR #26 ✅ READY FOR REVIEW
+#### PR-B — Daily OS loop closure — GitHub PR #26 ✅ MERGED
 
 **Goal:** close the first human-controlled operating loop:
 
@@ -225,13 +225,13 @@ Validation:
 - CI #358 attempt 2: full green;
 - representative E2E proves Weekly Review → Focus → aligned Today action → Done → removal from active action projection.
 
-**State:** ready, intentionally not merged until explicit approval.
+Merged into `main` as `ca6784f40c06f5ea76a036f3285f846ed2cd243b`.
 
-#### PR-C — Provenance / Memory Traversal ✅ READY FOR REVIEW — GitHub PR #27
+#### PR-C — Provenance / Memory Traversal — GitHub PR #27 ✅ MERGED
 
 **Goal:** make the existing intelligence graph understandable and traversable without inventing missing lineage.
 
-**Current state:** PR #27 is implementation-complete and stacked on PR #26 so its diff contains only provenance work. It must not land in `main` until #26 is explicitly merged first.
+Merged into `main` as `ee548421803b892fb35862d8af8cdbb3d3f0ae9e`.
 
 Implemented:
 - shared entity-reference route resolver;
@@ -266,7 +266,7 @@ Acceptance:
 - broken/unresolvable refs fail soft in presentation but do not fabricate labels or relationships;
 - Today remains selective rather than becoming a graph browser.
 
-#### PR-D — Intelligence / Brain information architecture
+#### PR-D — Intelligence / Brain information architecture — GitHub PR #28 ✅ MERGED
 
 **Goal:** make the semantic split understandable in product navigation while preserving domain ownership.
 
@@ -282,7 +282,9 @@ Scope:
 Non-goal:
 - do not collapse canonical Brain and Memory models.
 
-#### PR-E — Deep-work ergonomics, not feature removal
+Merged into `main` as `d00c3e323441acc77b13508795c668ab6453f63b`.
+
+#### PR-E — Deep-work ergonomics, not feature removal — GitHub PR #29 ✅ MERGED
 
 **Goal:** make the deep system easier to operate without deleting useful capability.
 
@@ -303,29 +305,32 @@ Principle:
 
 > Do not make Artist OS a simple app. Make the complex system simple to use.
 
+Merged into `main` as `0bb22633b47baed7798ce87830f3daf80d4219fe`.
+
 #### PR-F — Measurement + documentation reconciliation
 
 **Goal:** close Phase 2.5 as a measurable, documented product slice.
 
-Scope:
-- measure attention outcomes at actual action points;
-- measure memory reuse where memory is actually consumed;
-- reconcile stale Phase 2.5 vocabulary with MASTER v1.4;
-- add missing Content Factory completion/coverage report or current-state coverage matrix;
-- resolve pre-v1.4 Product Spec questions already frozen by MASTER/AR without rewriting future intent to match incomplete runtime;
-- document final Phase 2.5 representative E2E and remaining deferred domain dependencies.
+Implemented in PR-F:
+- attention outcomes are measured only after confirmed Start / Done / Block / Reopen transitions on Today;
+- Decision Memory reuse is measured at Decision creation when canonical memory refs are actually consumed;
+- Content Factory memory reuse is measured only when an AI provider actually consumes assembled context containing fresh applicable Validated Learnings;
+- a workspace-scoped telemetry summary endpoint exposes bounded 1–365 day measurement windows without turning product telemetry into Artist Brain truth;
+- the Phase 2.5 roadmap is reconciled with merged PR-B → PR-E state;
+- `PHASE_2_5_COVERAGE.md` records current capability, measurement coverage, representative E2E and explicit deferred owners;
+- no new canonical domain or analytics source of truth is introduced.
 
 ### Gate before another large horizontal domain
 
 Do not expand aggressively into another major horizontal domain until:
 
 - PR-A is merged ✅;
-- PR-B is merged;
-- PR-C provenance traversal is usable;
-- one end-to-end flow visibly demonstrates prior evidence/memory improving a later action/recommendation;
-- Today can explain WHY with trustworthy provenance;
-- Weekly Review can close into the next focus/action loop;
-- no known P0 MASTER v1.4 contract gap remains in the Phase 2.5 runtime.
+- PR-B is merged ✅;
+- PR-C provenance traversal is usable ✅;
+- one end-to-end flow visibly demonstrates prior evidence/memory improving a later action/recommendation ✅;
+- Today can explain WHY with trustworthy provenance ✅;
+- Weekly Review can close into the next focus/action loop ✅;
+- no known P0 MASTER v1.4 contract gap remains in the Phase 2.5 runtime ✅.
 
 ## Today data-source rule
 
@@ -359,12 +364,12 @@ A representative Artist OS demo should be able to show:
 
 ## Stop conditions
 
-Phase 2.5 is not considered reconciled until:
-- PR-B is merged;
-- PR-C provenance / memory traversal is complete enough to inspect supported lineage;
-- Today recommendations can expose trustworthy WHY / BASED ON without raw-ID plumbing dominating the surface;
-- at least one representative workflow proves reusable memory changes later context/action;
-- documentation no longer contradicts MASTER v1.4 lifecycles or ownership boundaries;
-- no remaining P0 contract gap identified by the post-branch audit is unresolved.
+Phase 2.5 closure gates after PR-F:
+- PR-B is merged ✅;
+- PR-C provenance / memory traversal is inspectable ✅;
+- Today exposes trustworthy WHY / BASED ON without raw-ID plumbing dominating the surface ✅;
+- Weekly Review E2E proves validated Learning can shape a later recommendation, Decision and OperationalAction ✅;
+- documentation uses MASTER v1.4 lifecycles and ownership boundaries ✅;
+- no remaining P0 contract gap identified by the post-branch audit is known ✅.
 
-After these gates, PR-D/E/F may continue polishing and closing the phase while planning the next horizontal domain.
+Remaining work listed in the coverage matrix is intentionally deferred to future canonical owners rather than treated as hidden Phase 2.5 debt.

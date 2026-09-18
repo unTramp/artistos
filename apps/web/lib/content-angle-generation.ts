@@ -36,6 +36,7 @@ export interface GenerateContentAnglesOutput {
     maturity: "COLD" | "WARM" | "MATURE";
     missingSources: string[];
     sourceCount: number;
+    validatedLearningSourceCount: number;
     estimatedTokens: number;
     truncated: boolean;
     contextVersion: string;
@@ -70,6 +71,7 @@ export class GenerateContentAnglesService {
       maturity: pack.maturity,
       missingSources: pack.missingSources,
       sourceCount: pack.sourceReferences.length,
+      validatedLearningSourceCount: pack.sourceReferences.filter((reference) => reference.entityType === "ValidatedLearning").length,
       estimatedTokens: pack.budget.estimatedTokens,
       truncated: pack.budget.truncated,
       contextVersion: pack.contextVersion

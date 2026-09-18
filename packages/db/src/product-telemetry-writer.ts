@@ -4,6 +4,8 @@ import { productTelemetryEvents } from "./product-telemetry-schema";
 export type ProductTelemetryEventName =
   | "ATTENTION_EXPLANATION_OPENED"
   | "ATTENTION_ACTION_OPENED"
+  | "ATTENTION_ACTION_OUTCOME_RECORDED"
+  | "CONTENT_CONTEXT_CONSUMED"
   | "DECISION_CREATED"
   | "MEMORY_REUSED"
   | "PASSIVE_LEARNING_CANDIDATE_CAPTURED"
