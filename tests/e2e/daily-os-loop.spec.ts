@@ -45,7 +45,7 @@ test("Weekly Review recommendation becomes bounded focus and closes an Operation
   await page.waitForURL("**/weekly-reviews/*");
 
   const focusSection = page.locator(".decision-section").filter({ hasText: "RECOMMENDED NEXT FOCUS" });
-  await expect(focusSection.getByText(actionTitle, { exact: false })).toBeVisible();
+  await expect(focusSection.getByRole("link", { name: actionTitle, exact: false })).toHaveAttribute("href", `/actions/${actionId}`);
   await focusSection.getByRole("button", { name: "Set current focus →" }).click();
   await focusSection.getByRole("button", { name: "Confirm current focus" }).click();
   await page.waitForURL("**/");
