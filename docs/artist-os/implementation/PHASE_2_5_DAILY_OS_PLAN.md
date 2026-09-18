@@ -227,26 +227,29 @@ Validation:
 
 **State:** ready, intentionally not merged until explicit approval.
 
-#### PR-C — Provenance / Memory Traversal 🚧 IN PROGRESS — GitHub PR #27
+#### PR-C — Provenance / Memory Traversal ✅ READY FOR REVIEW — GitHub PR #27
 
 **Goal:** make the existing intelligence graph understandable and traversable without inventing missing lineage.
 
-**Current state:** Draft PR #27 is stacked on PR #26 so its diff contains only provenance work. It is not eligible to land in `main` until #26 is explicitly merged first.
+**Current state:** PR #27 is implementation-complete and stacked on PR #26 so its diff contains only provenance work. It must not land in `main` until #26 is explicitly merged first.
 
-Implemented in the current draft:
+Implemented:
 - shared entity-reference route resolver;
 - artist-scoped canonical label resolver;
 - human-readable / clickable provenance in Today WHY;
 - Decision lineage traversal;
 - Weekly Review provenance traversal;
 - Learning provenance traversal;
-- stable anchors for Current Focus, Learnings and active OperationalActions;
+- stable historical OperationalAction detail route at `/actions/:id`;
+- stable anchors for Current Focus and Learnings;
 - unresolved or not-yet-owned refs remain explicit rather than fabricated.
 
-Remaining before Ready for Review:
-- full CI / E2E green on the stacked branch;
-- final fail-soft review for unsupported Evidence / Experiment owners;
-- confirm no raw UUID presentation remains on the targeted PR-C surfaces.
+Validation:
+- CI #368 is fully green on runtime head `fc2c7ec2efed0fad9744bf9acbdb66f4716b42de`;
+- lint, typecheck, unit, integration, build and Playwright all pass;
+- E2E proves Today WHY provenance, Weekly Review provenance, Decision → Learning traversal and completed-action historical traversal;
+- targeted surfaces no longer use full raw UUIDs as primary presentation;
+- unsupported Evidence / Experiment owners remain explicit unresolved references rather than fabricated lineage.
 
 Scope:
 - introduce a shared typed entity-reference resolver for user-facing provenance;
