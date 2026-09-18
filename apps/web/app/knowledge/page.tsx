@@ -23,7 +23,7 @@ export default async function KnowledgePage() {
         <section className="empty-state">
           <p className="eyebrow">AUTH REQUIRED</p>
           <h1>Knowledge</h1>
-          <p>Sign in before Artist OS can read private artist memory and provenance.</p>
+          <p>Sign in before Artist OS can read private artist context and provenance.</p>
           <a className="inline-link" href="/auth">Sign in →</a>
         </section>
       </AppShell>
@@ -36,7 +36,7 @@ export default async function KnowledgePage() {
         <section className="empty-state">
           <p className="eyebrow">WORKSPACE REQUIRED</p>
           <h1>Knowledge</h1>
-          <p>Create the artist workspace first. Every memory item must have one canonical Artist owner.</p>
+          <p>Create the artist workspace first. Every context source must have one canonical Artist owner.</p>
           <a className="inline-link" href="/">Open Overview →</a>
         </section>
       </AppShell>
@@ -52,8 +52,8 @@ export default async function KnowledgePage() {
     <AppShell activeId="knowledge" sessionEmail={actorContext.user.email} stage="Phase 1 · Artist Foundation">
       <header className="product-header knowledge-hero">
         <p className="eyebrow">ARTIST BRAIN · KNOWLEDGE</p>
-        <h1>Memory that earns permanence</h1>
-        <p>Artist Brain is a versioned projection over approved sources — not a hidden AI memory dump. Candidates stay outside durable context until a human accepts them through the owning workflow.</p>
+        <h1>Current context, compiled deliberately</h1>
+        <p>Artist Brain is the current working projection over approved sources — identity, knowledge, tone and eligible validated learnings. It consumes Memory where relevant, but does not own the historical learning or decision record.</p>
       </header>
 
       <div className="status-row">
@@ -107,7 +107,7 @@ export default async function KnowledgePage() {
       <section className="collection-section knowledge-inbox">
         <div className="section-heading">
           <p className="eyebrow">CANDIDATE INBOX</p>
-          <h2>Review before memory</h2>
+          <h2>Review before context</h2>
           <p>Lifecycle is fixed by AR-062: PENDING → ACCEPTED / REJECTED / MERGED / EXPIRED. Candidate rows remain evidence; they never become permanent truth themselves.</p>
         </div>
         {home.candidates.length === 0 ? (
@@ -132,7 +132,7 @@ export default async function KnowledgePage() {
       </section>
 
       <section className="collection-section">
-        <div className="section-heading"><p className="eyebrow">APPROVED MEMORY</p><h2>Durable Artist Brain knowledge</h2></div>
+        <div className="section-heading"><p className="eyebrow">APPROVED CONTEXT</p><h2>Durable Artist Brain knowledge</h2></div>
         {home.approvedKnowledge.length === 0 ? (
           <div className="empty-state compact-empty"><h3>No promoted Artist Brain items</h3><p>This is valid cold-start state. Artist OS prefers unknown over generic musician clichés.</p></div>
         ) : (
