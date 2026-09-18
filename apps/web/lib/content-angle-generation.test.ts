@@ -108,6 +108,32 @@ describe("GenerateContentAnglesService", () => {
     expect(runWriter.completions[0]).toMatchObject({ status: "SUCCEEDED", artifact: { artifactType: "CONTENT_ANGLE_PROPOSALS" } });
     expect(runWriter.starts[0]?.contextManifest).not.toHaveProperty("prompt");
     expect(runWriter.starts[0]?.contextManifest).not.toHaveProperty("chainOfThought");
+    expect(result.context.validatedLearningSourceCount).toBe(0);
+  });
+
+  it("reports validated Learning memory only when it survives context assembly", async () => {
+    const runWriter = new MemoryRunWriter();
+    const provider = new FakeProposalProvider();
+    const data = source();
+    data.validatedLearnings = [{
+      id: "learning-1",
+      statement: "Performance-first clips create stronger downstream intent.",
+      scope: "ARTIST_GLOBAL",
+      confidence: "HIGH",
+      confidenceRationale: "Repeated evidence.",
+      version: 3,
+      references: []
+    }];
+    const service = new GenerateContentAnglesService(new FakeSourceReader(data), provider, runWriter);
+
+    const result = await service.execute({ artistId: "artist-1", traceId: "trace-memory", explicitRequest: "Generate angles." });
+
+    expect(result.result.status).toBe("PROPOSALS");
+    expect(result.context.validatedLearningSourceCount).toBe(1);
+    expect(runWriter.starts[0]?.contextManifest.sourceReferences).toContainEqual(expect.objectContaining({
+      entityType: "ValidatedLearning",
+      entityId: "learning-1"
+    }));
   });
 
   it("does not create an AgentRun when context preflight is cold-start", async () => {
