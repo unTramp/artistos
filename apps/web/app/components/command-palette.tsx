@@ -18,7 +18,7 @@ const commands: PaletteCommand[] = [
   { id: "today", label: "Today", description: "Open current focus, next action and blockers", group: "Navigate", href: "/", keywords: ["home", "attention", "next"] },
   { id: "create", label: "Create", description: "Open Content Factory", group: "Navigate", href: "/factory", keywords: ["content", "factory", "angles"] },
   { id: "music", label: "Music", description: "Open songs and Song Brain", group: "Navigate", href: "/songs", keywords: ["song", "track", "brain"] },
-  { id: "brain", label: "Brain", description: "Open artist knowledge and review inbox", group: "Navigate", href: "/knowledge", keywords: ["knowledge", "memory", "inbox"] },
+  { id: "brain", label: "Brain", description: "Open current artist context and knowledge inbox", group: "Navigate", href: "/knowledge", keywords: ["knowledge", "context", "rules", "inbox"] },
   { id: "memory", label: "Memory", description: "Open decisions, learnings and review history", group: "Navigate", href: "/memory", keywords: ["memory", "decision", "learning", "review", "history"] },
   { id: "decisions", label: "Decision Memory", description: "Review material choices and rationale", group: "Navigate", href: "/decisions", keywords: ["decision", "why", "history"] },
   { id: "learnings", label: "Learning Memory", description: "Review validated and candidate Learnings", group: "Navigate", href: "/learnings", keywords: ["learning", "evidence", "validated"] },
