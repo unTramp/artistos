@@ -95,6 +95,17 @@ test("signs up, uses command palette, manages current focus, explains maturity, 
   await guide.getByRole("link", { name: "Apply now →" }).click();
   await page.waitForURL("**/identity");
 
+  await page.getByRole("link", { name: "Memory", exact: true }).click();
+  await page.waitForURL("**/memory");
+  await expect(page.getByRole("heading", { name: "What happened, what changed, and what should be reused" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Memory workspace" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Memory", exact: true })).toHaveClass(/active/);
+
+  await page.getByRole("link", { name: "Brain", exact: true }).click();
+  await page.waitForURL("**/knowledge");
+  await expect(page.getByRole("heading", { name: "Current context, compiled deliberately" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Brain", exact: true })).toHaveClass(/active/);
+
   await page.goto("/auth");
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
   await page.getByRole("button", { name: "Sign out" }).click();
