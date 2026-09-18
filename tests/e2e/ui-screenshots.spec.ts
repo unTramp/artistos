@@ -101,6 +101,7 @@ test("capture current Artist OS product surfaces", async ({ page }) => {
     await page.goto("/");
   }
 
+  await expect(page.getByRole("heading", { name: "What needs attention now?" })).toBeVisible();
   await page.screenshot({ path: "artifacts/ui-screenshots/01-today.png", fullPage: true });
 
   const whyButton = page.getByRole("button", { name: /Why this recommendation:/ }).first();
@@ -112,26 +113,34 @@ test("capture current Artist OS product surfaces", async ({ page }) => {
   }
 
   await page.goto("/factory");
+  await expect(page.getByRole("heading", { name: "Start with intent. Let context accumulate." })).toBeVisible();
   await page.screenshot({ path: "artifacts/ui-screenshots/03-create-factory.png", fullPage: true });
 
   await page.goto("/songs");
+  await expect(page.getByRole("heading", { name: "Songs", exact: true })).toBeVisible();
   await page.screenshot({ path: "artifacts/ui-screenshots/04-music.png", fullPage: true });
 
   await page.goto("/knowledge");
+  await expect(page.getByRole("heading", { name: "Memory that earns permanence", exact: true })).toBeVisible();
   await page.screenshot({ path: "artifacts/ui-screenshots/05-brain.png", fullPage: true });
 
   await page.goto("/memory");
+  await expect(page.getByRole("heading", { name: "Remember what happened — and why it matters next." })).toBeVisible();
   await page.screenshot({ path: "artifacts/ui-screenshots/06-memory.png", fullPage: true });
 
   await page.goto("/decisions");
+  await expect(page.getByRole("heading", { name: "Remember the choice, not just the outcome" })).toBeVisible();
   await page.screenshot({ path: "artifacts/ui-screenshots/07-decisions.png", fullPage: true });
 
   await page.goto(weeklyReviewUrl);
+  await expect(page.getByRole("heading", { name: "What happened", exact: true })).toBeVisible();
   await page.screenshot({ path: "artifacts/ui-screenshots/08-weekly-review.png", fullPage: true });
 
   await page.goto(`/factory/units/${unit.id}`);
+  await expect(page.getByRole("heading", { name: unit.title, exact: true })).toBeVisible();
   await page.screenshot({ path: "artifacts/ui-screenshots/09-execution.png", fullPage: true });
 
   await page.goto("/identity");
+  await expect(page.getByRole("heading", { name: "Identity", exact: true })).toBeVisible();
   await page.screenshot({ path: "artifacts/ui-screenshots/10-identity.png", fullPage: true });
 });
