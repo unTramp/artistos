@@ -1,7 +1,9 @@
 # Phase 2.5 — Daily OS / Decision Intelligence
 
-**Status:** Active implementation plan
+**Status:** Active execution roadmap — reconciled after post-branch audit
 **Architecture baseline:** MASTER v1.4 remains frozen and normative.
+**Current implementation track:** Post-audit reconciliation PR-A → PR-F
+**Last reconciled:** 2026-09-18
 
 ## Goal
 
@@ -103,266 +105,219 @@ Every representative Artist OS demo must demonstrate all four moments:
 
 A release that cannot demonstrate these four moments is not yet a complete Daily OS experience.
 
-## Implementation order
+## Implementation status and execution order
 
-### PR 10 — Product Coherence Foundation ✅
+This section is the current implementation source of truth for Phase 2.5 execution.
+
+The older logical labels `PR 11…18` used during planning no longer map 1:1 to GitHub PR numbers. They are intentionally retired here to avoid confusing plan order with repository history.
+
+### Shipped Daily OS foundation
+
+The following runtime slices are already in `main` and should be treated as foundation, not future work:
+
+- **PR #10 — Product Coherence Foundation** ✅
+  - real signup → onboarding → Artist workspace;
+  - Today-first product shell;
+  - deterministic Today baseline;
+  - dark workstation direction;
+  - AI-disabled usefulness.
+
+- **PR #13 — OperationalAction Foundation** ✅
+  - canonical lifecycle:
+    `OPEN | IN_PROGRESS | BLOCKED | DONE | SKIPPED | EXPIRED`;
+  - owning-domain truth remains separate;
+  - source/provenance required;
+  - completion does not overwrite foreign canonical state.
+
+- **PR #14–#15 — Attention Projection + Today / WHY** ✅
+  - rebuildable deterministic Attention projection;
+  - WHY / BASED ON / uncertainty / blockers / expected effect / what may be learned;
+  - Today remains an attention layer rather than a source of truth.
+
+- **PR #16–#17 — PlanningObjective + Current Focus** ✅ foundation
+  - explicit current focus on Today;
+  - human-controlled completion;
+  - later canonical gaps were corrected by PR #25.
+
+- **PR #18 — Decision Memory** ✅
+  - `ACTIVE | UNDER_REVIEW | REVERSED | EXPIRED`;
+  - supersession preserved through lineage rather than a fake status;
+  - prior decisions remain advisory and overridable with rationale.
+
+- **PR #19 — Learning Foundation + Decision Lineage** ✅
+  - canonical lifecycle:
+    `CANDIDATE | TESTING | VALIDATED | STALE | DEPRECATED`;
+  - Knowledge and Learning remain semantically separate;
+  - validated memory can affect later context.
+
+- **PR #20 — Weekly Review** ✅ foundation
+  - immutable review artifact;
+  - deterministic generation;
+  - explicit Decisions / OperationalActions from review;
+  - later epistemic and focus-loop gaps were corrected by PR #25/#26.
+
+- **PR #21 — Passive Capture + Factory UX** ✅
+  - rejection/review evidence captured from normal work;
+  - low-confidence candidates rather than automatic truth promotion;
+  - Factory progressive disclosure preserves the rich canonical model.
+
+- **PR #22 — Contextual Guidance** ✅
+  - human guidance remains separate from canonical Learning;
+  - `Need → Learn → Apply` stays contextual and optional.
+
+- **PR #23 — Command Palette + Recommendation Maturity** ✅
+  - bounded command-palette slice;
+  - provenance-backed maturity labels;
+  - no fake intelligence score.
+
+### Post-branch reconciliation track
+
+#### Audit baseline — GitHub PR #24 ✅ MERGED
+
+**Purpose:** review PR #8–#23 as one evolving product against frozen MASTER v1.4 and AR-001…AR-062.
+
+Result:
+- architecture direction confirmed;
+- Brain vs Memory boundary preserved;
+- Factory / Execution depth explicitly protected;
+- real contract gaps separated from UX debt and intentional incremental scope;
+- revised execution track PR-A → PR-F established.
+
+Merge baseline after audit:
+`c9b4d6db7aff2c5c8d3507862e0cd1eacb3670fd`.
+
+#### PR-A — Canonical contract reconciliation — GitHub PR #25 ✅ MERGED
+
+**Goal:** repair frozen-contract mismatches before further UX work.
+
+Completed:
+- PlanningObjective now persists canonical `status` lifecycle and `successCriteria[]`;
+- unsupported CAMPAIGN / RELEASE objective targets fail closed until canonical owners can validate them;
+- Weekly Review items persist explicit epistemic labels:
+  `FACT | OBSERVATION | HYPOTHESIS | RECOMMENDATION`;
+- eligible fresh `VALIDATED` Learnings are compiled into Artist Brain projection with provenance;
+- Context Assembler no longer leaks scoped Learnings globally when target applicability cannot be proven;
+- regression/integration coverage added.
+
+Merged into `main` as:
+`3ceaa8ae4a14da2280e8cf94abff7fa14224b5f0`.
+
+#### PR-B — Daily OS loop closure — GitHub PR #26 ✅ READY FOR REVIEW
+
+**Goal:** close the first human-controlled operating loop:
+
+`Weekly Review → Current Focus → Today → OperationalAction → Result`
 
 Implemented:
-- current product language instead of Stage 0 front-door wording;
-- real signup → onboarding → Artist workspace;
-- Today-first navigation shell;
-- deterministic Today v0;
-- dark workstation design direction;
-- worker `.env` loading / local dev cleanup;
-- demo seed;
-- README / product principles / visual direction;
-- E2E through real onboarding.
+- PlanningObjective carries bounded `relatedRefs[]` for evidence-backed affinity;
+- ARTIST focus no longer marks every OperationalAction as aligned;
+- alignment requires demonstrable canonical lineage;
+- Weekly Review `RECOMMENDED_NEXT_FOCUS` can be explicitly confirmed into a PRIMARY ARTIST PlanningObjective;
+- an overlapping PRIMARY objective is never silently replaced;
+- compact Start / Done / Block / Resolve blocker controls exist for `MANUAL_NATIVE` and `EXTERNAL` actions only;
+- `API_ASSISTED` / `SYSTEM_CHECK` remain outside manual controls;
+- completed actions leave the active Today interaction immediately after confirmed backend success;
+- WeeklyReview-sourced actions route back to `/weekly-reviews/:id`;
+- source-domain truth remains untouched by OperationalAction completion.
 
-### PR 11 — OperationalAction Foundation
+Validation:
+- final head: `bb9837d0a176504d65d181061611d93ed6e55620`;
+- CI #358 attempt 2: full green;
+- representative E2E proves Weekly Review → Focus → aligned Today action → Done → removal from active action projection.
 
-Implement canonical `OperationalAction` from MASTER v1.4 / ACP-004.
+**State:** ready, intentionally not merged until explicit approval.
 
-Minimum lifecycle:
-`OPEN | IN_PROGRESS | BLOCKED | COMPLETED | CANCELLED`
+#### PR-C — Provenance / Memory Traversal ⏭ NEXT
 
-Each action preserves source domain/entity and can carry due/blocker context.
+**Goal:** make the existing intelligence graph understandable and traversable without inventing missing lineage.
 
-Rules:
-- not a generic task manager;
-- actions may represent human/external work that cannot live only as owning-domain state;
-- completion must not overwrite owning-domain truth;
-- source context and provenance are required;
-- contract should permit optional guidance metadata/reference later without changing canonical action identity.
+Scope:
+- introduce a shared typed entity-reference resolver for user-facing provenance;
+- replace raw `Type:UUID` presentation with human labels where canonical readers can resolve them;
+- support clickable traversal across existing evidence:
+  `Learning ↔ Decision ↔ Weekly Review ↔ OperationalAction`;
+- improve WHY / BASED ON so relevant memory refs are visible only when demonstrably applicable;
+- preserve UNKNOWN / unresolved references honestly;
+- no semantic search result may be promoted into canonical lineage merely because text looks similar;
+- no Brain/Memory merge.
 
 Acceptance:
-- explicit human/external actions are durable and auditable;
-- action state never duplicates owning-domain truth;
-- completion emits durable event/audit evidence;
-- Today can later project these actions without owning them.
+- a user can answer “what led to this?” and “what happened next?” from supported lineage;
+- broken/unresolvable refs fail soft in presentation but do not fabricate labels or relationships;
+- Today remains selective rather than becoming a graph browser.
 
-### PR 12 — Attention Projection + PlanningObjective Prioritization
+#### PR-D — Intelligence / Brain information architecture
 
-Implement deterministic `AttentionProjectionService`.
+**Goal:** make the semantic split understandable in product navigation while preserving domain ownership.
 
-Initial rules over currently implemented domains:
-- no active Identity → next action;
-- pending Knowledge candidate → review;
-- DRAFT/DEFERRED ContentAngle → review;
-- APPROVED ContentAngle without ContentUnit → next action;
-- ContentUnit without approved execution → high-priority action;
-- DRAFT execution revision → review;
-- due/blocked OperationalAction → attention item.
+Scope:
+- preserve:
+  - Brain = current operational context / durable knowledge projection;
+  - Memory / Intelligence = what happened, was inferred/tested/learned/decided and why;
+- decide whether `Memory` becomes a real workspace/hub or remains shallow navigation with specialist routes;
+- align Decisions, Learnings, Weekly Reviews and future Experiments under coherent language;
+- fix misleading nav aliases such as top-level Memory pointing only at Decisions;
+- keep Today as orchestration regardless of navigation depth.
 
-PlanningObjective integration:
-- active PlanningObjective is visible Current Focus;
-- when severity/deadline are otherwise comparable, work aligned to the active objective ranks higher;
-- objective priority must never override a stronger hard blocker or due deadline without explicit policy.
+Non-goal:
+- do not collapse canonical Brain and Memory models.
 
-Output is a rebuildable projection, not canonical truth.
+#### PR-E — Deep-work ergonomics, not feature removal
 
-Recommendation contract:
-- recommendation;
-- reasons;
-- evidence refs;
-- uncertainty;
-- blocked by;
-- expected effect;
-- what may be learned;
-- objective ref where applicable;
-- optional guidance ref/descriptor;
-- action href.
+**Goal:** make the deep system easier to operate without deleting useful capability.
 
-The optional guidance extension point must exist now even though actual guidance content/UI arrives later.
+Scope:
+- replace material `window.prompt` flows with contextual forms/drawers;
+- hide provider/model/token plumbing under diagnostics;
+- restructure Execution authoring by working mode:
+  - Creative Core;
+  - Production;
+  - Edit;
+  - Publish Prep;
+  - Constraints;
+- preserve all useful canonical ContentAngle / Execution fields;
+- keep Factory lightweight-draft progressive disclosure;
+- progressively surface Audio Segment / Identity Constraints / Production Capability only as canonical owners become available.
 
-### PR 13 — Today v1 + Explainability + Bottleneck/Readiness → Action
+Principle:
 
-Replace temporary Today composition with canonical AttentionProjection output.
+> Do not make Artist OS a simple app. Make the complex system simple to use.
 
-Primary sections:
-- CURRENT FOCUS;
-- NOW;
-- NEXT;
-- REVIEW;
-- BLOCKED;
-- RECENT LEARNING;
-- RECENT DECISION.
+#### PR-F — Measurement + documentation reconciliation
 
-Add Explainability Drawer:
-- WHY THIS;
-- BASED ON;
-- UNCERTAINTY;
-- EXPECTED EFFECT;
-- WHAT WE MAY LEARN;
-- optional LEARN BEFORE DOING affordance when guidance metadata is present.
+**Goal:** close Phase 2.5 as a measurable, documented product slice.
 
-Bottleneck projection:
-- detect supported deterministic bottleneck patterns;
-- convert bottleneck into recommended action;
-- show what completing the action is expected to unlock.
+Scope:
+- measure attention outcomes at actual action points;
+- measure memory reuse where memory is actually consumed;
+- reconcile stale Phase 2.5 vocabulary with MASTER v1.4;
+- add missing Content Factory completion/coverage report or current-state coverage matrix;
+- resolve pre-v1.4 Product Spec questions already frozen by MASTER/AR without rewriting future intent to match incomplete runtime;
+- document final Phase 2.5 representative E2E and remaining deferred domain dependencies.
 
-Readiness projection:
-- prefer concrete passed checks + blockers;
-- avoid arbitrary readiness percentages;
-- each blocker should lead to a resolvable action or owning workspace.
+### Gate before another large horizontal domain
 
-Target: first meaningful action initiated within 60 seconds.
+Do not expand aggressively into another major horizontal domain until:
 
-### PR 14 — Decision Memory + Prior-Decision Conflict Guard
+- PR-A is merged ✅;
+- PR-B is merged;
+- PR-C provenance traversal is usable;
+- one end-to-end flow visibly demonstrates prior evidence/memory improving a later action/recommendation;
+- Today can explain WHY with trustworthy provenance;
+- Weekly Review can close into the next focus/action loop;
+- no known P0 MASTER v1.4 contract gap remains in the Phase 2.5 runtime.
 
-Implement canonical Decision memory:
-- what was decided;
-- why;
-- evidence refs;
-- subject refs;
-- review date;
-- active / reversed / superseded state;
-- reversal/supersede lineage.
+## Today data-source rule
 
-Decision capture should be lightweight and often offered as a by-product of existing review flows.
-
-Forward-compatibility requirement from day one:
-- Decision may exist with no Learning/Insight/Experiment;
-- schema/API identity and provenance model must be able to reference Evidence, Insight, Hypothesis, Experiment, Learning and OperationalAction later without redesigning the Decision aggregate;
-- PR 15 must be able to add lineage through links/refs, not by replacing the Decision contract.
-
-Conflict guard is advisory and human-controlled:
-
-`Detect conflict → explain prior context → ask for override rationale → allow human decision`
+Today now consumes deterministic domain state plus canonical OperationalActions through the rebuildable Attention projection.
 
 Rules:
-- Strategy/recommendation assembly should surface relevant active prior Decisions;
-- if a proposal materially conflicts with prior Decision memory, the system must disclose the conflict;
-- generic AI best practice must not silently override artist-specific Decision history;
-- changed market, song, audience, creative, platform, timing or other context may justify reconsideration;
-- human override must always be possible;
-- override rationale should be preserved as evidence/decision context.
-
-Acceptance scenario:
-- prior strategy was tested and rejected due to weak downstream evidence;
-- later proposal detects the conflict and explains the old context;
-- user may explicitly re-test because conditions changed;
-- Artist OS records why the prior Decision was overridden instead of blocking the action.
-
-### PR 15 — Learning Foundation + Decision Lineage
-
-Implement Learning lifecycle and scope:
-- CANDIDATE;
-- VALIDATED;
-- STALE;
-- REJECTED.
-
-Keep Knowledge and Learning semantically distinct:
-- Knowledge = what is known about artist/song/domain;
-- Learning = what was learned from actions/results.
-
-Validated Learnings become eligible Artist Brain context.
-
-Canonical intelligence direction remains:
-
-`Evidence → Insight / Hypothesis → Experiment → Learning → Decision`
-
-Decision is allowed to exist without upstream Learning when the choice is operational/strategic rather than evidence-derived.
-
-Lineage UX/data contract should support traversal where evidence exists:
-
-`Experiment → Insight → Learning → Decision → OperationalAction`
-
-Do not fabricate missing links. UNKNOWN is acceptable.
-
-### PR 16 — Weekly Review → Decisions → Actions
-
-Versioned immutable weekly review snapshot:
-- what happened;
-- what changed;
-- what was learned;
-- what remains uncertain;
-- fatigue / bottleneck signals where supported;
-- decisions to make;
-- recommended next focus;
-- next OperationalActions.
-
-Weekly Review is a decision ritual, not a BI report.
-
-Deterministic facts first, optional AI summary second.
-
-Review completion should support:
-- accept decision;
-- modify decision;
-- need more evidence;
-- create/confirm action.
-
-### PR 17 — Passive Capture + UX Simplification
-
-- capture review/rejection reasons as evidence;
-- surface decision/learning candidates from normal workflows;
-- simplify manual Factory form with progressive disclosure;
-- keep canonical rich model while reducing required user input;
-- instrument product telemetry for attention, decisions and memory reuse;
-- prefer signals generated by normal work over CRM-like maintenance forms.
-
-### PR 18 — Contextual Guidance / Learn → Apply
-
-Do not build a full LMS.
-
-Introduce contextual human learning attached to current tasks using the extension point already present in Attention/Explainability.
-
-Separate naming from canonical system `Learning`.
-
-Suggested UX concept: `Contextual Guidance` / `Learn` / `Micro-guide`.
-
-Flow:
-
-`Need → Learn → Apply → Measure`
-
-Example:
-- Spotify editorial pitch due tomorrow;
-- user lacks context;
-- offer `How Spotify pitching works · 6 min`;
-- return directly to the pitch workflow.
-
-Context Help (`WHAT IS THIS? / WHY IT MATTERS / HOW TO USE IT`) may evolve into this layer.
-
-### Later polish — Command Palette + Recommendation Maturity
-
-Command Palette may support both navigation and action queries:
-- Add Song;
-- Generate Angles;
-- Start Shoot;
-- Import Metrics;
-- Run Weekly Review;
-- What should I do next?;
-- Show blockers;
-- What did we learn this week?;
-- What decisions are due for review?
-
-Recommendation maturity should make compounding value visible without an artificial intelligence score.
-
-Examples:
-
-**Early context**
-- Identity;
-- Song Brain;
-- authoritative platform knowledge.
-
-**Artist-specific evidence**
-- N publications;
-- N experiments;
-- N validated Learnings;
-- N prior Decisions.
-
-Only show counts that are real and provenance-backed.
-
-## Today v0 data sources
-
-Before OperationalAction/AttentionProjection exist, Today v0 may use deterministic direct reads from currently implemented canonical state. This is a temporary read model only and must be replaced by `AttentionProjectionService` in PR 12.
-
-Allowed Today v0 signals:
-- identity state;
-- song count / Song Brain availability;
-- pending knowledge count;
-- content angle review count;
-- approved angle without unit count;
-- content units lacking approved execution.
+- Today never becomes canonical ownership for domain state;
+- deterministic blockers/review queues come from canonical readers;
+- OperationalActions preserve source-domain/entity provenance;
+- PlanningObjective influences ranking only through bounded, demonstrable affinity;
+- missing context remains UNKNOWN rather than inferred into truth;
+- AI is not required for Today to remain useful.
 
 ## MVP metrics
 
@@ -384,11 +339,12 @@ A representative Artist OS demo should be able to show:
 
 ## Stop conditions
 
-Do not expand into another large horizontal domain until:
-- Today v1 is working;
-- Decision Memory exists;
-- Learning Foundation exists;
-- at least one workflow demonstrates reusable memory affecting a later recommendation;
-- recommendation explainability is visible in UX;
-- Weekly Review can close into Decisions / Next Actions;
-- human override of prior-decision conflict is implemented as explanation + rationale, never as a hard block.
+Phase 2.5 is not considered reconciled until:
+- PR-B is merged;
+- PR-C provenance / memory traversal is complete enough to inspect supported lineage;
+- Today recommendations can expose trustworthy WHY / BASED ON without raw-ID plumbing dominating the surface;
+- at least one representative workflow proves reusable memory changes later context/action;
+- documentation no longer contradicts MASTER v1.4 lifecycles or ownership boundaries;
+- no remaining P0 contract gap identified by the post-branch audit is unresolved.
+
+After these gates, PR-D/E/F may continue polishing and closing the phase while planning the next horizontal domain.
