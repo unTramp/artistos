@@ -266,7 +266,7 @@ Acceptance:
 - broken/unresolvable refs fail soft in presentation but do not fabricate labels or relationships;
 - Today remains selective rather than becoming a graph browser.
 
-#### PR-D — Intelligence / Brain information architecture 🚧 IN PROGRESS
+#### PR-D — Intelligence / Brain information architecture ✅ READY FOR REVIEW — GitHub PR #28
 
 **Goal:** make the semantic split understandable in product navigation while preserving domain ownership.
 
@@ -281,6 +281,11 @@ Implemented in the current branch:
 - Today links to the Memory workspace in addition to specialist surfaces;
 - recent Memory chronology is explicitly non-scored and non-ranked;
 - E2E covers Memory → Decisions navigation and the Brain/Memory boundary copy.
+
+Validation:
+- CI #375 is fully green on implementation head `dc1ead1ba4ab208ce85887ea318e502085c3a227`;
+- migrations, architecture, lint, typecheck, unit, integration, build and Playwright all pass;
+- navigation tests protect Brain and Memory as distinct top-level destinations.
 
 Scope:
 - preserve:
