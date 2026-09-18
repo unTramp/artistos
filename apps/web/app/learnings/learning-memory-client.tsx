@@ -80,11 +80,7 @@ export function LearningMemoryClient({ initialLearnings, resolvedReferences }: {
     finally { setBusy(false); }
   }
 
-  async function createDecision(learning: LearningView) {
-    const title = window.prompt("Decision title", "Apply validated learning");
-    if (!title) return;
-    const decision = window.prompt("What are we choosing because of this learning?");
-    if (!decision) return;
+  async function createDecision(learning: LearningView, title: string, decision: string) {
     const reason = `Based on validated Learning: ${learning.statement}`;
     setBusy(true); setError(null);
     try {
@@ -92,8 +88,8 @@ export function LearningMemoryClient({ initialLearnings, resolvedReferences }: {
         method: "POST",
         headers: { "content-type": "application/json", "idempotency-key": `decision-from-learning-${crypto.randomUUID()}` },
         body: JSON.stringify({
-          title,
-          decision,
+          title: title.trim(),
+          decision: decision.trim(),
           reason,
           scope: `learning.${learning.scope.toLowerCase()}`,
           references: [{ refType: "Learning", refId: learning.id, relation: "BASED_ON" }]
@@ -143,8 +139,44 @@ export function LearningMemoryClient({ initialLearnings, resolvedReferences }: {
   );
 }
 
-function LearningCard({ item, busy, resolvedReferences, onTransition, onDecision }: { item: LearningView; busy: boolean; resolvedReferences: Record<string, ResolvedEntityReference>; onTransition: (item: LearningView, action: "test" | "validate" | "stale" | "deprecate", rationale?: string) => Promise<void>; onDecision: (item: LearningView) => Promise<void> }) {
-  const ask = (label: string) => window.prompt(label)?.trim() || undefined;
+function LearningCard({ item, busy, resolvedReferences, onTransition, onDecision }: { item: LearningView; busy: boolean; resolvedReferences: Record<string, ResolvedEntityReference>; onTransition: (item: LearningView, action: "test" | "validate" | "stale" | "deprecate", rationale?: string) => Promise<void>; onDecision: (item: LearningView, title: string, decision: string) => Promise<void> }) {
+  const [rationaleAction, setRationaleAction] = useState<"validate" | "stale" | "deprecate" | null>(null);
+  const [rationale, setRationale] = useState("");
+  const [decisionOpen, setDecisionOpen] = useState(false);
+  const [decisionTitle, setDecisionTitle] = useState("Apply validated learning");
+  const [decisionText, setDecisionText] = useState("");
+
+  const beginRationale = (action: "validate" | "stale" | "deprecate") => {
+    setDecisionOpen(false);
+    setRationaleAction(action);
+    setRationale("");
+  };
+
+  const submitRationale = async () => {
+    if (!rationaleAction || !rationale.trim()) return;
+    await onTransition(item, rationaleAction, rationale.trim());
+    setRationaleAction(null);
+    setRationale("");
+  };
+
+  const openDecision = () => {
+    setRationaleAction(null);
+    setDecisionOpen((open) => !open);
+    setDecisionTitle("Apply validated learning");
+    setDecisionText("");
+  };
+
+  const submitDecision = async () => {
+    if (!decisionTitle.trim() || !decisionText.trim()) return;
+    await onDecision(item, decisionTitle, decisionText);
+  };
+
+  const rationaleCopy = rationaleAction === "validate"
+    ? { title: "Validate this Learning", label: "Why is this evidence strong enough to validate?" }
+    : rationaleAction === "stale"
+      ? { title: "Mark this Learning stale", label: "Why does this need revalidation?" }
+      : { title: "Deprecate this Learning", label: "Why should this Learning no longer be reused?" };
+
   return (
     <article className="decision-card" id={`learning-${item.id}`}>
       <div className="decision-card-head"><span className={`decision-status decision-status-${item.status.toLowerCase()}`}>{item.status}</span><span>{item.scope} · {item.confidence}</span></div>
@@ -175,12 +207,44 @@ function LearningCard({ item, busy, resolvedReferences, onTransition, onDecision
       {item.references.some((ref) => ref.relation === "CONTRADICTS") && <small>⚠ Contradictory evidence preserved</small>}
       <div className="decision-form-actions">
         {item.status === "CANDIDATE" && <button className="decision-secondary-button" disabled={busy} onClick={() => void onTransition(item, "test")} type="button">Start testing</button>}
-        {item.status === "TESTING" && <button className="decision-primary-button" disabled={busy} onClick={() => { const rationale = ask("Why is this evidence strong enough to validate?"); if (rationale) void onTransition(item, "validate", rationale); }} type="button">Validate</button>}
-        {item.status === "VALIDATED" && <button className="decision-secondary-button" disabled={busy} onClick={() => { const rationale = ask("Why does this need revalidation?"); if (rationale) void onTransition(item, "stale", rationale); }} type="button">Mark stale</button>}
+        {item.status === "TESTING" && <button className="decision-primary-button" disabled={busy} onClick={() => beginRationale("validate")} type="button">Validate</button>}
+        {item.status === "VALIDATED" && <button className="decision-secondary-button" disabled={busy} onClick={() => beginRationale("stale")} type="button">Mark stale</button>}
         {item.status === "STALE" && <button className="decision-primary-button" disabled={busy} onClick={() => void onTransition(item, "test")} type="button">Retest</button>}
-        {item.status !== "DEPRECATED" && <button className="decision-secondary-button" disabled={busy} onClick={() => { const rationale = ask("Why is this Learning deprecated?"); if (rationale) void onTransition(item, "deprecate", rationale); }} type="button">Deprecate</button>}
-        {item.status === "VALIDATED" && <button className="decision-primary-button" disabled={busy} onClick={() => void onDecision(item)} type="button">Use in decision →</button>}
+        {item.status !== "DEPRECATED" && <button className="decision-secondary-button" disabled={busy} onClick={() => beginRationale("deprecate")} type="button">Deprecate</button>}
+        {item.status === "VALIDATED" && <button className="decision-primary-button" disabled={busy} onClick={openDecision} type="button">{decisionOpen ? "Cancel decision" : "Use in decision →"}</button>}
       </div>
+
+      {rationaleAction && (
+        <div className="decision-create-card contextual-commit-card">
+          <div className="section-heading">
+            <p className="eyebrow">HUMAN REVIEW</p>
+            <h3>{rationaleCopy.title}</h3>
+            <p>Status changes remain explicit human commitments. The Learning statement and provenance are not rewritten.</p>
+          </div>
+          <label>{rationaleCopy.label}<textarea value={rationale} onChange={(event) => setRationale(event.target.value)} rows={3} maxLength={4000} /></label>
+          <div className="decision-form-actions">
+            <button className="decision-secondary-button" type="button" disabled={busy} onClick={() => { setRationaleAction(null); setRationale(""); }}>Cancel</button>
+            <button className="decision-primary-button" type="button" disabled={busy || !rationale.trim()} onClick={() => void submitRationale()}>{busy ? "Saving…" : "Confirm"}</button>
+          </div>
+        </div>
+      )}
+
+      {decisionOpen && (
+        <div className="decision-create-card contextual-commit-card">
+          <div className="section-heading">
+            <p className="eyebrow">USE LEARNING</p>
+            <h3>Turn validated memory into a material choice</h3>
+            <p>The Decision will retain a direct BASED_ON reference to this Learning. The Learning itself remains unchanged.</p>
+          </div>
+          <label>Decision title<input value={decisionTitle} onChange={(event) => setDecisionTitle(event.target.value)} maxLength={200} /></label>
+          <label>What are we choosing because of this Learning?<textarea value={decisionText} onChange={(event) => setDecisionText(event.target.value)} rows={3} maxLength={4000} /></label>
+          <label>Reason<textarea value={`Based on validated Learning: ${item.statement}`} readOnly rows={2} /></label>
+          <div className="decision-form-actions">
+            <button className="decision-secondary-button" type="button" disabled={busy} onClick={() => setDecisionOpen(false)}>Cancel</button>
+            <button className="decision-primary-button" type="button" disabled={busy || !decisionTitle.trim() || !decisionText.trim()} onClick={() => void submitDecision()}>{busy ? "Creating…" : "Create decision"}</button>
+          </div>
+        </div>
+      )}
     </article>
   );
 }

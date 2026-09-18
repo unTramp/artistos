@@ -66,22 +66,13 @@ test("Weekly Review closes into Decision lineage and OperationalAction provenanc
   await expect(decisionSection.getByText("RECOMMENDATION", { exact: true })).toBeVisible();
   await expect(decisionSection.getByRole("link", { name: learningStatement, exact: false })).toHaveAttribute("href", `/learnings#learning-${learningId}`);
 
-  const decisionPrompts = [
-    "Apply performance-first learning",
-    "Prioritize performance-first clips in the next content batch.",
-    `Based on Weekly Review: ${learningStatement}`,
-    "content.format"
-  ];
-  let decisionPromptIndex = 0;
-  const handleDecisionPrompt = async (dialog: import("@playwright/test").Dialog) => {
-    expect(dialog.type()).toBe("prompt");
-    await dialog.accept(decisionPrompts[decisionPromptIndex++] ?? "");
-  };
-  page.on("dialog", handleDecisionPrompt);
   await decisionSection.getByRole("button", { name: "Turn into Decision →" }).click();
+  await decisionSection.getByLabel("Decision title").fill("Apply performance-first learning");
+  await decisionSection.getByLabel("Decision", { exact: true }).fill("Prioritize performance-first clips in the next content batch.");
+  await decisionSection.getByLabel("Reason").fill(`Based on Weekly Review: ${learningStatement}`);
+  await decisionSection.getByLabel("Scope").fill("content.format");
+  await decisionSection.getByRole("button", { name: "Commit decision" }).click();
   await page.waitForURL("**/decisions/*");
-  page.off("dialog", handleDecisionPrompt);
-  expect(decisionPromptIndex).toBe(4);
 
   await expect(page.getByRole("heading", { name: "Apply performance-first learning" })).toBeVisible();
   await expect(page.getByText("BASED_ON · WEEKLYREVIEW", { exact: true })).toBeVisible();
@@ -93,18 +84,11 @@ test("Weekly Review closes into Decision lineage and OperationalAction provenanc
   await expect(actionItem).toBeVisible();
   await expect(actionItem.getByText("RECOMMENDATION", { exact: true })).toBeVisible();
 
-  let actionPromptIndex = 0;
-  const handleActionPrompt = async (dialog: import("@playwright/test").Dialog) => {
-    expect(dialog.type()).toBe("prompt");
-    if (actionPromptIndex === 0) await dialog.accept(`Follow up from review ${suffix}`);
-    else await dialog.accept("Explicitly committed from the Weekly Review ritual.");
-    actionPromptIndex += 1;
-  };
-  page.on("dialog", handleActionPrompt);
   await actionItem.getByRole("button", { name: "Create Action →" }).click();
+  await actionItem.getByLabel("Action title").fill(`Follow up from review ${suffix}`);
+  await actionItem.getByLabel("Action detail").fill("Explicitly committed from the Weekly Review ritual.");
+  await actionItem.getByRole("button", { name: "Create action" }).click();
   await page.waitForURL("**/");
-  page.off("dialog", handleActionPrompt);
-  expect(actionPromptIndex).toBe(2);
 
   const actions = await page.evaluate(async () => {
     const response = await fetch("/api/v1/actions?status=OPEN,IN_PROGRESS,BLOCKED&limit=100", { cache: "no-store" });

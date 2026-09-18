@@ -40,12 +40,9 @@ test("validates a Learning, surfaces it on Today and uses it in Decision lineage
   await card.getByRole("button", { name: "Start testing" }).click();
   await expect(card.getByText("TESTING", { exact: true })).toBeVisible();
 
-  page.once("dialog", async (dialog) => {
-    expect(dialog.type()).toBe("prompt");
-    expect(dialog.message()).toContain("strong enough to validate");
-    await dialog.accept("Repeated evidence was reviewed by the artist and is strong enough for this scope.");
-  });
   await card.getByRole("button", { name: "Validate" }).click();
+  await card.getByLabel("Why is this evidence strong enough to validate?").fill("Repeated evidence was reviewed by the artist and is strong enough for this scope.");
+  await card.getByRole("button", { name: "Confirm" }).click();
   await expect(card.getByText("VALIDATED", { exact: true })).toBeVisible();
 
   await page.goto("/");
@@ -56,24 +53,11 @@ test("validates a Learning, surfaces it on Today and uses it in Decision lineage
   await memoryPanel.getByRole("link", { name: "Open Learning Memory →" }).click();
   await expect(card.getByText("VALIDATED", { exact: true })).toBeVisible();
 
-  let decisionPrompt = 0;
-  const onDecisionPrompt = async (dialog: import("@playwright/test").Dialog) => {
-    expect(dialog.type()).toBe("prompt");
-    if (decisionPrompt === 0) {
-      expect(dialog.message()).toContain("Decision title");
-      decisionPrompt += 1;
-      await dialog.accept("Use performance-first short videos");
-      return;
-    }
-    expect(dialog.message()).toContain("What are we choosing");
-    decisionPrompt += 1;
-    await dialog.accept("Prioritize performance-first short videos for the next content batch.");
-  };
-  page.on("dialog", onDecisionPrompt);
   await card.getByRole("button", { name: "Use in decision →" }).click();
+  await card.getByLabel("Decision title").fill("Use performance-first short videos");
+  await card.getByLabel("What are we choosing because of this Learning?").fill("Prioritize performance-first short videos for the next content batch.");
+  await card.getByRole("button", { name: "Create decision" }).click();
   await page.waitForURL("**/decisions/*");
-  page.off("dialog", onDecisionPrompt);
-  expect(decisionPrompt).toBe(2);
 
   await expect(page.getByRole("heading", { name: "Use performance-first short videos" })).toBeVisible();
   await expect(page.getByText("BASED_ON · LEARNING", { exact: true })).toBeVisible();

@@ -151,11 +151,14 @@ export function FactoryAIProposals({ songs }: { songs: SongOption[] }) {
 
       {data?.result.status === "PROPOSALS" && (
         <div className="factory-ai-results">
-          <div className="factory-ai-run-meta">
-            <span>{data.result.provider} · {data.result.model}</span>
-            <span>{data.context.sourceCount} sources · ~{data.context.estimatedTokens} tokens{data.context.truncated ? " · pruned" : ""}</span>
-          </div>
           <p className="muted-note">{data.result.coverageNote}</p>
+          <details className="factory-ai-diagnostics">
+            <summary>Generation diagnostics</summary>
+            <div className="factory-ai-run-meta">
+              <span>{data.result.provider} · {data.result.model} · {data.result.promptVersion}</span>
+              <span>{data.context.sourceCount} sources · ~{data.context.estimatedTokens} tokens{data.context.truncated ? " · pruned" : ""} · {data.context.contextVersion}</span>
+            </div>
+          </details>
           <div className="factory-angle-grid">
             {data.result.proposals.map((proposal, index) => (
               <article className="factory-angle-card factory-ai-proposal" key={`${proposal.title}-${index}`}>
