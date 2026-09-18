@@ -286,7 +286,7 @@ export default async function HomePage() {
             <div className="memory-block"><span>RECENT DECISION</span><strong>{recentDecision?.title ?? "No decision memory yet"}</strong><p>{recentDecision ? recentDecision.reason : "Record material choices so future strategy can remember what you chose and why."}</p></div>
             <div className="memory-block"><span>VALIDATED LEARNING</span><strong>{recentLearning?.statement ?? "Not enough evidence yet"}</strong><p>{recentLearning ? `${recentLearning.scope} · ${recentLearning.confidence} confidence · ${recentLearning.confidenceRationale}` : "Artist OS will surface reusable findings here only after they move through the canonical Learning lifecycle and receive human validation."}</p></div>
             <div className="memory-block"><span>RECENT EXECUTION</span><strong>{latestUnit?.title ?? "No Content Unit yet"}</strong><p>{latestUnit ? `${latestUnit.status} · ${latestUnit.songTitle ?? "Artist-level"}` : "Create and approve content without losing the reason behind the concept."}</p></div>
-            <a className="inline-link" href="/decisions">Open Decision Memory →</a>
+            <a className="inline-link" href="/memory">Open Memory workspace →</a>\n            <a className="inline-link" href="/decisions">Open Decision Memory →</a>
             <a className="inline-link" href="/learnings">Open Learning Memory →</a>
             <a className="inline-link" href="/knowledge">Open Brain →</a>
           </section>
