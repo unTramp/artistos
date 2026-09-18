@@ -20,7 +20,7 @@ test("reviews Candidate Knowledge and rebuilds Artist Brain from approved source
   await expect(page.getByRole("heading", { name: "What needs attention now?" })).toBeVisible();
 
   await page.goto("/knowledge");
-  await expect(page.getByRole("heading", { name: "Memory that earns permanence", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Current context, compiled deliberately", exact: true })).toBeVisible();
   await expect(page.getByText("NO SNAPSHOT", { exact: true })).toBeVisible();
 
   await page.getByRole("textbox", { name: "Voice example", exact: true }).fill("Warm, direct language without launch hype.");
