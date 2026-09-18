@@ -266,9 +266,21 @@ Acceptance:
 - broken/unresolvable refs fail soft in presentation but do not fabricate labels or relationships;
 - Today remains selective rather than becoming a graph browser.
 
-#### PR-D — Intelligence / Brain information architecture
+#### PR-D — Intelligence / Brain information architecture 🚧 IN PROGRESS
 
 **Goal:** make the semantic split understandable in product navigation while preserving domain ownership.
+
+**Current implementation direction:** Memory becomes a real workspace hub at `/memory`, while Decisions, Learnings and Weekly Reviews remain specialist owner surfaces. Brain remains a separate current-context projection at `/knowledge`.
+
+Implemented in the current branch:
+- top-level Memory navigation points to `/memory` instead of aliasing Decisions;
+- Memory hub summarizes Decisions, Learnings and Weekly Reviews without becoming their canonical owner;
+- Brain vs Memory boundary is explained directly in the workspace;
+- Weekly Review is classified under Memory in navigation state;
+- command palette exposes both Memory hub and specialist memory surfaces;
+- Today links to the Memory workspace in addition to specialist surfaces;
+- recent Memory chronology is explicitly non-scored and non-ranked;
+- E2E covers Memory → Decisions navigation and the Brain/Memory boundary copy.
 
 Scope:
 - preserve:
