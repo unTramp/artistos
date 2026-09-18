@@ -218,10 +218,10 @@ export function WeeklyReviewDetailClient({ review, resolvedReferences }: { revie
 
                   {commitOpen && commitDraft?.kind === "DECISION" && <div className="decision-create-card contextual-commit-card">
                     <div className="section-heading"><p className="eyebrow">HUMAN COMMIT</p><h3>Turn this recommendation into a Decision</h3><p>The Weekly Review stays immutable. You are explicitly choosing what should become durable Decision Memory.</p></div>
-                    <label>Decision title<input value={decisionTitle} onChange={(event) => setDecisionTitle(event.target.value)} maxLength={200} /></label>
-                    <label>Decision<textarea value={decisionText} onChange={(event) => setDecisionText(event.target.value)} rows={3} maxLength={4000} /></label>
-                    <label>Reason<textarea value={decisionReason} onChange={(event) => setDecisionReason(event.target.value)} rows={3} maxLength={6000} /></label>
-                    <label>Scope<input value={decisionScope} onChange={(event) => setDecisionScope(event.target.value)} maxLength={120} /></label>
+                    <label>Decision title<input aria-label="Decision title" value={decisionTitle} onChange={(event) => setDecisionTitle(event.target.value)} maxLength={200} /></label>
+                    <label>Decision<textarea aria-label="Decision" value={decisionText} onChange={(event) => setDecisionText(event.target.value)} rows={3} maxLength={4000} /></label>
+                    <label>Reason<textarea aria-label="Reason" value={decisionReason} onChange={(event) => setDecisionReason(event.target.value)} rows={3} maxLength={6000} /></label>
+                    <label>Scope<input aria-label="Scope" value={decisionScope} onChange={(event) => setDecisionScope(event.target.value)} maxLength={120} /></label>
                     <div className="decision-form-actions">
                       <button className="decision-secondary-button" type="button" onClick={clearCommitDraft} disabled={busy}>Cancel</button>
                       <button className="decision-primary-button" type="button" onClick={() => void createDecision()} disabled={busy || !decisionTitle.trim() || !decisionText.trim() || !decisionReason.trim() || !decisionScope.trim()}>{busy ? "Committing…" : "Commit decision"}</button>
@@ -230,8 +230,8 @@ export function WeeklyReviewDetailClient({ review, resolvedReferences }: { revie
 
                   {commitOpen && commitDraft?.kind === "ACTION" && <div className="decision-create-card contextual-commit-card">
                     <div className="section-heading"><p className="eyebrow">FOLLOW-UP ACTION</p><h3>Create a concrete next action</h3><p>The source review and item index stay attached as provenance. Completion will not mutate the Weekly Review.</p></div>
-                    <label>Action title<input value={actionTitle} onChange={(event) => setActionTitle(event.target.value)} maxLength={200} /></label>
-                    <label>Action detail<textarea value={actionDescription} onChange={(event) => setActionDescription(event.target.value)} rows={3} maxLength={4000} /></label>
+                    <label>Action title<input aria-label="Action title" value={actionTitle} onChange={(event) => setActionTitle(event.target.value)} maxLength={200} /></label>
+                    <label>Action detail<textarea aria-label="Action detail" value={actionDescription} onChange={(event) => setActionDescription(event.target.value)} rows={3} maxLength={4000} /></label>
                     <div className="decision-form-actions">
                       <button className="decision-secondary-button" type="button" onClick={clearCommitDraft} disabled={busy}>Cancel</button>
                       <button className="decision-primary-button" type="button" onClick={() => void createAction()} disabled={busy || !actionTitle.trim()}>{busy ? "Creating…" : "Create action"}</button>
