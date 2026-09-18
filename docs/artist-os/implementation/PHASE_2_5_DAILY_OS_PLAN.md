@@ -227,9 +227,29 @@ Validation:
 
 **State:** ready, intentionally not merged until explicit approval.
 
-#### PR-C — Provenance / Memory Traversal ⏭ NEXT
+#### PR-C — Provenance / Memory Traversal ✅ READY FOR REVIEW — GitHub PR #27
 
 **Goal:** make the existing intelligence graph understandable and traversable without inventing missing lineage.
+
+**Current state:** PR #27 is implementation-complete and stacked on PR #26 so its diff contains only provenance work. It must not land in `main` until #26 is explicitly merged first.
+
+Implemented:
+- shared entity-reference route resolver;
+- artist-scoped canonical label resolver;
+- human-readable / clickable provenance in Today WHY;
+- Decision lineage traversal;
+- Weekly Review provenance traversal;
+- Learning provenance traversal;
+- stable historical OperationalAction detail route at `/actions/:id`;
+- stable anchors for Current Focus and Learnings;
+- unresolved or not-yet-owned refs remain explicit rather than fabricated.
+
+Validation:
+- CI #381 is fully green on final head `ad3ceca041dcbf7ff06b42b4f091b2d02567a8e2`;
+- lint, typecheck, unit, integration, build and Playwright all pass;
+- E2E proves Today WHY provenance, Weekly Review provenance, Decision → Learning traversal and completed-action historical traversal;
+- targeted surfaces no longer use full raw UUIDs as primary presentation;
+- unsupported Evidence / Experiment owners remain explicit unresolved references rather than fabricated lineage.
 
 Scope:
 - introduce a shared typed entity-reference resolver for user-facing provenance;

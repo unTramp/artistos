@@ -109,7 +109,7 @@ export function CurrentFocusEditor({ currentDate, current }: { currentDate: stri
 
   if (current) {
     return (
-      <section className="today-focus-card" aria-label="Current focus">
+      <section className="today-focus-card" id="current-focus" aria-label="Current focus">
         <div className="today-focus-copy">
           <span className="signal-label">CURRENT FOCUS · {current.priority}</span>
           <strong>{current.title}</strong>
@@ -127,7 +127,7 @@ export function CurrentFocusEditor({ currentDate, current }: { currentDate: stri
   }
 
   return (
-    <section className={`today-focus-empty${open ? " is-open" : ""}`}>
+    <section className={`today-focus-empty${open ? " is-open" : ""}`} id="current-focus">
       {!open ? (
         <>
           <div>

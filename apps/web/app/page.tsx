@@ -16,6 +16,8 @@ import { CurrentFocusEditor } from "./components/current-focus-editor";
 import { OperationalActionControls } from "./components/operational-action-controls";
 import { resolveAuthenticatedActorContext } from "@/lib/actor-context";
 import { hrefForOperationalSource } from "@/lib/entity-href";
+import { entityReferenceKey } from "@/lib/entity-reference";
+import { EntityReferenceResolver } from "@/lib/entity-reference-resolver";
 import { getDatabaseRuntime } from "@/lib/runtime";
 
 const toneFor = (item: AttentionItem): "violet" | "amber" | "cyan" | "emerald" => {
@@ -163,6 +165,19 @@ export default async function HomePage() {
     }))
   });
 
+  const provenanceResolver = new EntityReferenceResolver(runtime.db, actorContext.artistId);
+  const resolvedReferenceMap = await provenanceResolver.resolveMany(
+    projection.items.flatMap((item) => [...item.basedOn, ...item.blockedBy])
+  );
+  const resolvedRefsFor = (refs: AttentionItem["basedOn"]) => refs.map((ref) =>
+    resolvedReferenceMap[entityReferenceKey(ref.type, ref.id)] ?? {
+      ...ref,
+      label: ref.type,
+      href: null,
+      resolved: false
+    }
+  );
+
   const operationalActionByAttentionId = new Map(operationalActions.map((action) => [`operational-action:${action.id}`, action]));
   const primary = projection.items[0] ?? null;
   const primaryOperationalAction = primary ? operationalActionByAttentionId.get(primary.id) ?? null : null;
@@ -195,7 +210,7 @@ export default async function HomePage() {
         />
 
         {primary ? (
-          <section className={`today-hero-card tone-${toneFor(primary)}`}>
+          <section className={`today-hero-card tone-${toneFor(primary)}`} id={primaryOperationalAction ? `action-${primaryOperationalAction.id}` : undefined}>
             <div>
               <span className="signal-label">{labelFor(primary)}</span>
               <h2>{primary.title}</h2>
@@ -209,7 +224,11 @@ export default async function HomePage() {
               />}
             </div>
             <div className="today-hero-actions">
-              <AttentionExplainability item={primary} />
+              <AttentionExplainability
+                item={primary}
+                resolvedBasedOn={resolvedRefsFor(primary.basedOn)}
+                resolvedBlockedBy={resolvedRefsFor(primary.blockedBy)}
+              />
               <a className="primary-action" href={primary.action.href}>{primary.action.label} →</a>
             </div>
           </section>
@@ -237,7 +256,7 @@ export default async function HomePage() {
             {secondary.length === 0 ? <div className="quiet-state">No secondary attention items right now.</div> : secondary.map((item) => {
               const operationalAction = operationalActionByAttentionId.get(item.id) ?? null;
               return (
-                <article className="attention-row" key={item.id}>
+                <article className="attention-row" key={item.id} id={operationalAction ? `action-${operationalAction.id}` : undefined}>
                   <i className={`attention-dot ${toneFor(item)}`} />
                   <div className="attention-row-copy">
                     <span>{labelFor(item)}</span><strong>{item.title}</strong><p>{item.whyThis[0]}</p>
@@ -249,7 +268,12 @@ export default async function HomePage() {
                     />}
                   </div>
                   <div className="attention-row-actions">
-                    <AttentionExplainability item={item} compact />
+                    <AttentionExplainability
+                      item={item}
+                      compact
+                      resolvedBasedOn={resolvedRefsFor(item.basedOn)}
+                      resolvedBlockedBy={resolvedRefsFor(item.blockedBy)}
+                    />
                     <a href={item.action.href} aria-label={item.action.label}>→</a>
                   </div>
                 </article>

@@ -45,7 +45,7 @@ test("Weekly Review recommendation becomes bounded focus and closes an Operation
   await page.waitForURL("**/weekly-reviews/*");
 
   const focusSection = page.locator(".decision-section").filter({ hasText: "RECOMMENDED NEXT FOCUS" });
-  await expect(focusSection.getByText(actionTitle, { exact: false })).toBeVisible();
+  await expect(focusSection.getByRole("link", { name: actionTitle, exact: false })).toHaveAttribute("href", `/actions/${actionId}`);
   await focusSection.getByRole("button", { name: "Set current focus →" }).click();
   await focusSection.getByRole("button", { name: "Confirm current focus" }).click();
   await page.waitForURL("**/");
@@ -54,6 +54,12 @@ test("Weekly Review recommendation becomes bounded focus and closes an Operation
   await expect(page.getByText("Aligned with current objective", { exact: true })).toBeVisible();
   const controls = page.getByTestId(`action-controls-${actionId}`);
   await expect(controls).toBeVisible();
+
+  await page.getByRole("button", { name: `Why this recommendation: ${actionTitle}` }).click();
+  const whyDrawer = page.getByRole("dialog");
+  await expect(whyDrawer.getByRole("link", { name: actionTitle, exact: false })).toBeVisible();
+  await expect(whyDrawer.getByText(actionId, { exact: true })).toHaveCount(0);
+  await whyDrawer.getByRole("button", { name: "Close explanation" }).click();
   await controls.getByRole("button", { name: "Done" }).click();
   await expect(page.getByTestId(`action-controls-${actionId}`)).toHaveCount(0);
 
@@ -62,4 +68,8 @@ test("Weekly Review recommendation becomes bounded focus and closes an Operation
     return response.json() as Promise<{ data: { actions: Array<{ id: string }> } }>;
   });
   expect(active.data.actions.some((action) => action.id === actionId)).toBe(false);
+
+  await page.goto(`/actions/${actionId}`);
+  await expect(page.getByRole("heading", { name: actionTitle })).toBeVisible();
+  await expect(page.locator(".status-chip").getByText("DONE", { exact: true })).toBeVisible();
 });

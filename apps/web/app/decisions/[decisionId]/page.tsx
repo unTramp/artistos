@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { PgDecisionReader } from "@artist-os/db";
 import { AppShell } from "../../components/app-shell";
 import { resolveAuthenticatedActorContext } from "@/lib/actor-context";
+import { entityReferenceKey, shortEntityId } from "@/lib/entity-reference";
+import { EntityReferenceResolver } from "@/lib/entity-reference-resolver";
 import { getDatabaseRuntime } from "@/lib/runtime";
 import { DecisionActions } from "./decision-actions";
 
@@ -16,10 +18,22 @@ export default async function DecisionDetailPage({ params }: { params: Promise<{
   }
 
   const { decisionId } = await params;
-  const reader = new PgDecisionReader(getDatabaseRuntime().db);
+  const runtime = getDatabaseRuntime();
+  const reader = new PgDecisionReader(runtime.db);
   const decision = await reader.getDecision(actorContext.artistId, decisionId);
   if (!decision) notFound();
+
   const history = await reader.listHistory(actorContext.artistId, decisionId);
+  const lineage = [
+    ...decision.evidenceIds.map((refId) => ({ relation: "BASED_ON", refType: "Evidence", refId })),
+    ...decision.experimentIds.map((refId) => ({ relation: "BASED_ON", refType: "Experiment", refId })),
+    ...decision.references
+  ];
+  const resolver = new EntityReferenceResolver(runtime.db, actorContext.artistId);
+  const resolvedReferences = await resolver.resolveMany([
+    ...lineage.map((reference) => ({ type: reference.refType, id: reference.refId })),
+    ...(decision.supersedesDecisionId ? [{ type: "Decision", id: decision.supersedesDecisionId }] : [])
+  ]);
 
   return (
     <AppShell activeId="memory" sessionEmail={actorContext.user.email} stage="Phase 2.5 · Decision Intelligence">
@@ -39,13 +53,24 @@ export default async function DecisionDetailPage({ params }: { params: Promise<{
           <div className="decision-detail-block"><h3>Why</h3><p>{decision.reason}</p></div>
           <div className="decision-detail-block">
             <h3>Based on / subject / lineage</h3>
-            {decision.references.length === 0 && decision.evidenceIds.length === 0 && decision.experimentIds.length === 0 ? (
+            {lineage.length === 0 ? (
               <p className="muted-note">No explicit upstream references were recorded. Artist OS keeps this unknown rather than fabricating lineage.</p>
             ) : (
               <div className="decision-reference-list">
-                {decision.evidenceIds.map((id) => <div className="decision-reference-item" key={`e-${id}`}><span>BASED ON · EVIDENCE</span><strong>{id}</strong></div>)}
-                {decision.experimentIds.map((id) => <div className="decision-reference-item" key={`x-${id}`}><span>BASED ON · EXPERIMENT</span><strong>{id}</strong></div>)}
-                {decision.references.map((reference, index) => <div className="decision-reference-item" key={`${reference.relation}-${reference.refType}-${reference.refId}-${index}`}><span>{reference.relation} · {reference.refType.toUpperCase()}</span><strong>{reference.refId}</strong></div>)}
+                {lineage.map((reference, index) => {
+                  const resolved = resolvedReferences[entityReferenceKey(reference.refType, reference.refId)];
+                  return (
+                    <div className="decision-reference-item" key={`${reference.relation}-${reference.refType}-${reference.refId}-${index}`}>
+                      <span>{reference.relation} · {reference.refType.toUpperCase()}</span>
+                      {resolved?.href ? (
+                        <a className="provenance-link" href={resolved.href}>{resolved.label} →</a>
+                      ) : (
+                        <strong>{resolved?.label ?? `${reference.refType} · ${shortEntityId(reference.refId)}`}</strong>
+                      )}
+                      {resolved && !resolved.resolved && <small>Unresolved canonical reference · {shortEntityId(reference.refId)}</small>}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -68,7 +93,15 @@ export default async function DecisionDetailPage({ params }: { params: Promise<{
           <div><span>Scope</span><strong>{decision.scope}</strong></div>
           <div><span>Topic key</span><strong>{decision.decisionKey ?? "Ad-hoc decision"}</strong></div>
           <div><span>Version</span><strong>v{decision.version}</strong></div>
-          {decision.supersedesDecisionId && <div><span>Replaces</span><strong><a className="inline-link" href={`/decisions/${decision.supersedesDecisionId}`}>{decision.supersedesDecisionId}</a></strong></div>}
+          {decision.supersedesDecisionId && (() => {
+            const prior = resolvedReferences[entityReferenceKey("Decision", decision.supersedesDecisionId)];
+            return (
+              <div>
+                <span>Replaces</span>
+                <strong><a className="inline-link" href={prior?.href ?? `/decisions/${decision.supersedesDecisionId}`}>{prior?.label ?? shortEntityId(decision.supersedesDecisionId)}</a></strong>
+              </div>
+            );
+          })()}
         </aside>
       </section>
 
