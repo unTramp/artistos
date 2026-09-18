@@ -145,7 +145,7 @@ export function LearningMemoryClient({ initialLearnings }: { initialLearnings: L
 function LearningCard({ item, busy, onTransition, onDecision }: { item: LearningView; busy: boolean; onTransition: (item: LearningView, action: "test" | "validate" | "stale" | "deprecate", rationale?: string) => Promise<void>; onDecision: (item: LearningView) => Promise<void> }) {
   const ask = (label: string) => window.prompt(label)?.trim() || undefined;
   return (
-    <article className="decision-card">
+    <article className="decision-card" id={`learning-${item.id}`}>
       <div className="decision-card-head"><span className={`decision-status decision-status-${item.status.toLowerCase()}`}>{item.status}</span><span>{item.scope} · {item.confidence}</span></div>
       <h3>{item.statement}</h3>
       <p>{item.confidenceRationale}</p>
