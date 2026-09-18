@@ -71,5 +71,5 @@ test("Weekly Review recommendation becomes bounded focus and closes an Operation
 
   await page.goto(`/actions/${actionId}`);
   await expect(page.getByRole("heading", { name: actionTitle })).toBeVisible();
-  await expect(page.getByText("DONE", { exact: true })).toBeVisible();
+  await expect(page.locator(".status-chip").getByText("DONE", { exact: true })).toBeVisible();
 });
