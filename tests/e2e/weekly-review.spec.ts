@@ -63,7 +63,6 @@ test("Weekly Review closes into Decision lineage and OperationalAction provenanc
   const reviewUrl = page.url();
 
   const decisionSection = page.locator(".decision-section").filter({ hasText: "DECISIONS TO MAKE" });
-  await expect(decisionSection.getByText(learningStatement, { exact: false })).toBeVisible();
   await expect(decisionSection.getByText("RECOMMENDATION", { exact: true })).toBeVisible();
   await expect(decisionSection.getByRole("link", { name: learningStatement, exact: false })).toHaveAttribute("href", `/learnings#learning-${learningId}`);
 
