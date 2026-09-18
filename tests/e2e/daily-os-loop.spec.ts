@@ -54,6 +54,12 @@ test("Weekly Review recommendation becomes bounded focus and closes an Operation
   await expect(page.getByText("Aligned with current objective", { exact: true })).toBeVisible();
   const controls = page.getByTestId(`action-controls-${actionId}`);
   await expect(controls).toBeVisible();
+
+  await page.getByRole("button", { name: `Why this recommendation: ${actionTitle}` }).click();
+  const whyDrawer = page.getByRole("dialog");
+  await expect(whyDrawer.getByRole("link", { name: actionTitle, exact: false })).toBeVisible();
+  await expect(whyDrawer.getByText(actionId, { exact: true })).toHaveCount(0);
+  await whyDrawer.getByRole("button", { name: "Close explanation" }).click();
   await controls.getByRole("button", { name: "Done" }).click();
   await expect(page.getByTestId(`action-controls-${actionId}`)).toHaveCount(0);
 
