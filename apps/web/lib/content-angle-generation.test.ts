@@ -117,12 +117,8 @@ describe("GenerateContentAnglesService", () => {
     const data = source();
     data.validatedLearnings = [{
       id: "learning-1",
-      statement: "Performance-first clips create stronger downstream intent.",
-      scope: "ARTIST_GLOBAL",
-      confidence: "HIGH",
-      confidenceRationale: "Repeated evidence.",
-      version: 3,
-      references: []
+      content: "Performance-first clips create stronger downstream intent.",
+      version: 3
     }];
     const service = new GenerateContentAnglesService(new FakeSourceReader(data), provider, runWriter);
 
