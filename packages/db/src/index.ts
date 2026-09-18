@@ -37,6 +37,7 @@ export * from "./learning-reader";
 export * from "./weekly-review-writer";
 export * from "./weekly-review-reader";
 export * from "./product-telemetry-writer";
+export * from "./product-telemetry-reader";
 export * from "./request-idempotency";
 export * from "./outbox-dispatcher";
 export * from "./job-queue";
