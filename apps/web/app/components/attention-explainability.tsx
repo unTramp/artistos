@@ -4,10 +4,13 @@ import { useEffect, useState } from "react";
 import type { AttentionItem } from "@artist-os/core";
 import { getContextualGuide } from "@/lib/contextual-guidance";
 import { emitProductTelemetry } from "@/lib/product-telemetry-client";
+import type { ResolvedEntityReference } from "@/lib/entity-reference";
 
 type Props = {
   item: AttentionItem;
   compact?: boolean;
+  resolvedBasedOn?: ResolvedEntityReference[];
+  resolvedBlockedBy?: ResolvedEntityReference[];
 };
 
 type DrawerMode = "explanation" | "guidance";
@@ -59,11 +62,23 @@ const basisMaturityFor = (item: AttentionItem): BasisMaturity => {
   };
 };
 
-export function AttentionExplainability({ item, compact = false }: Props) {
+export function AttentionExplainability({ item, compact = false, resolvedBasedOn, resolvedBlockedBy }: Props) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<DrawerMode>("explanation");
   const guide = item.guidanceRef ? getContextualGuide(item.guidanceRef.key) : null;
   const maturity = basisMaturityFor(item);
+  const basedOn = resolvedBasedOn ?? item.basedOn.map((ref) => ({
+    ...ref,
+    label: ref.type,
+    href: null,
+    resolved: false
+  }));
+  const blockedBy = resolvedBlockedBy ?? item.blockedBy.map((ref) => ({
+    ...ref,
+    label: ref.type,
+    href: null,
+    resolved: false
+  }));
 
   useEffect(() => {
     if (!open) return;
@@ -208,11 +223,17 @@ export function AttentionExplainability({ item, compact = false }: Props) {
                   <span>BASED ON</span>
                   {item.basedOn.length > 0 ? (
                     <div className="drawer-ref-grid">
-                      {item.basedOn.map((ref) => (
+                      {basedOn.map((ref) => ref.href ? (
+                        <a className="drawer-ref drawer-ref-link" href={ref.href} key={`${ref.type}-${ref.id}-${ref.version ?? "current"}`}>
+                          <strong>{ref.label}</strong>
+                          <small>{ref.type}{ref.version !== undefined ? ` · v${ref.version}` : ""}</small>
+                          <span aria-hidden="true">→</span>
+                        </a>
+                      ) : (
                         <div className="drawer-ref" key={`${ref.type}-${ref.id}-${ref.version ?? "current"}`}>
-                          <strong>{ref.type}</strong>
+                          <strong>{ref.label}</strong>
                           <code>{shortId(ref.id)}</code>
-                          {ref.version !== undefined && <small>v{ref.version}</small>}
+                          <small>{ref.resolved ? ref.type : "UNRESOLVED"}</small>
                         </div>
                       ))}
                     </div>
@@ -250,10 +271,17 @@ export function AttentionExplainability({ item, compact = false }: Props) {
                   <section className="drawer-section">
                     <span>BLOCKED BY</span>
                     <div className="drawer-ref-grid">
-                      {item.blockedBy.map((ref) => (
+                      {blockedBy.map((ref) => ref.href ? (
+                        <a className="drawer-ref drawer-ref-link" href={ref.href} key={`blocked-${ref.type}-${ref.id}`}>
+                          <strong>{ref.label}</strong>
+                          <small>{ref.type}</small>
+                          <span aria-hidden="true">→</span>
+                        </a>
+                      ) : (
                         <div className="drawer-ref" key={`blocked-${ref.type}-${ref.id}`}>
-                          <strong>{ref.type}</strong>
+                          <strong>{ref.label}</strong>
                           <code>{shortId(ref.id)}</code>
+                          <small>UNRESOLVED</small>
                         </div>
                       ))}
                     </div>

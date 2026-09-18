@@ -78,4 +78,12 @@ test("validates a Learning, surfaces it on Today and uses it in Decision lineage
   await expect(page.getByRole("heading", { name: "Use performance-first short videos" })).toBeVisible();
   await expect(page.getByText("BASED_ON · LEARNING", { exact: true })).toBeVisible();
   await expect(page.getByText(`Based on validated Learning: ${statement}`, { exact: true })).toBeVisible();
+  const learningId = await page.evaluate(async (expectedStatement) => {
+    const response = await fetch("/api/v1/learnings", { cache: "no-store" });
+    const body = await response.json() as { data: { learnings: Array<{ id: string; statement: string }> } };
+    return body.data.learnings.find((learning) => learning.statement === expectedStatement)?.id ?? "";
+  }, statement);
+  expect(learningId).not.toBe("");
+  const learningRef = page.locator(".decision-reference-item").filter({ hasText: "BASED_ON · LEARNING" });
+  await expect(learningRef.getByRole("link", { name: statement, exact: false })).toHaveAttribute("href", `/learnings#learning-${learningId}`);
 });

@@ -63,8 +63,8 @@ test("Weekly Review closes into Decision lineage and OperationalAction provenanc
   const reviewUrl = page.url();
 
   const decisionSection = page.locator(".decision-section").filter({ hasText: "DECISIONS TO MAKE" });
-  await expect(decisionSection.getByText(learningStatement, { exact: false })).toBeVisible();
   await expect(decisionSection.getByText("RECOMMENDATION", { exact: true })).toBeVisible();
+  await expect(decisionSection.getByRole("link", { name: learningStatement, exact: false })).toHaveAttribute("href", `/learnings#learning-${learningId}`);
 
   const decisionPrompts = [
     "Apply performance-first learning",
@@ -85,6 +85,7 @@ test("Weekly Review closes into Decision lineage and OperationalAction provenanc
 
   await expect(page.getByRole("heading", { name: "Apply performance-first learning" })).toBeVisible();
   await expect(page.getByText("BASED_ON · WEEKLYREVIEW", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Weekly Review", exact: false })).toBeVisible();
 
   await page.goto(reviewUrl);
   const actionSection = page.locator(".decision-section").filter({ hasText: "NEXT ACTIONS" });

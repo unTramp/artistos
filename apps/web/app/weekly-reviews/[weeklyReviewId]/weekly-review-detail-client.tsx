@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { entityReferenceKey, shortEntityId, type ResolvedEntityReference } from "@/lib/entity-reference";
 
 type Reference = { refType: string; refId: string };
 type EpistemicLabel = "FACT" | "OBSERVATION" | "HYPOTHESIS" | "RECOMMENDATION";
@@ -15,7 +16,7 @@ const canCreateAction = (kind: string) => kind === "NEXT_ACTIONS" || kind === "S
 const canSetFocus = (kind: string) => kind === "RECOMMENDED_NEXT_FOCUS";
 const dateInputValue = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
-export function WeeklyReviewDetailClient({ review }: { review: Review }) {
+export function WeeklyReviewDetailClient({ review, resolvedReferences }: { review: Review; resolvedReferences: Record<string, ResolvedEntityReference> }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [focusDraft, setFocusDraft] = useState<FocusDraft | null>(null);
@@ -137,7 +138,26 @@ export function WeeklyReviewDetailClient({ review }: { review: Review }) {
                 <article className="decision-card" key={`${section.kind}-${itemIndex}`}>
                   <div className="status-row"><span className="status-chip">{item.epistemicLabel ?? "LEGACY · UNLABELLED"}</span></div>
                   <p>{item.text}</p>
-                  {item.references?.length ? <small>{item.references.map((reference) => `${reference.refType}:${reference.refId}`).join(" · ")}</small> : null}
+                  {item.references?.length ? (
+                    <div className="provenance-inline-list" aria-label="Provenance">
+                      {item.references.map((reference) => {
+                        const resolved = resolvedReferences[entityReferenceKey(reference.refType, reference.refId)];
+                        return resolved?.href ? (
+                          <a className="provenance-inline-ref" href={resolved.href} key={entityReferenceKey(reference.refType, reference.refId)}>
+                            <span>{reference.refType}</span>
+                            <strong>{resolved.label}</strong>
+                            <i aria-hidden="true">→</i>
+                          </a>
+                        ) : (
+                          <span className="provenance-inline-ref unresolved" key={entityReferenceKey(reference.refType, reference.refId)}>
+                            <span>{reference.refType}</span>
+                            <strong>{resolved?.label ?? shortEntityId(reference.refId)}</strong>
+                            <i>UNRESOLVED</i>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : null}
                   {(showFocusConfirmation || existingFocusRef || canCreateDecision(section.kind) || canCreateAction(section.kind)) && <div className="decision-form-actions">
                     {showFocusConfirmation && <button className="decision-primary-button" type="button" disabled={busy} onClick={() => focusOpen ? setFocusDraft(null) : beginFocus(section, item, itemIndex)}>{focusOpen ? "Cancel focus" : "Set current focus →"}</button>}
                     {existingFocusRef && <a className="decision-secondary-button" href="/">Open current focus →</a>}

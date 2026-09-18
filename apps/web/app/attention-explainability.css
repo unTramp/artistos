@@ -392,3 +392,26 @@
     justify-content: flex-start;
   }
 }
+
+
+.drawer-ref-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.drawer-ref-link:hover {
+  border-color: rgba(139, 92, 246, .38);
+  background: #141720;
+}
+
+.drawer-ref-link strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drawer-ref-link > span {
+  color: #8b7dd1;
+  font-size: 11px;
+}
