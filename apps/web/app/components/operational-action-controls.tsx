@@ -43,7 +43,11 @@ export function OperationalActionControls({
       if (!response.ok) throw new Error(payload.error?.message ?? "Action could not be updated.");
       setReason("");
       setReasonMode(null);
-      router.refresh();
+      if (path === "complete") {
+        setCompleted(true);
+      } else {
+        router.refresh();
+      }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Action could not be updated.");
     } finally {
