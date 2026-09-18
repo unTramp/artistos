@@ -21,7 +21,8 @@ export function OperationalActionControls({
   const [busy, setBusy] = useState(false);
   const [reasonMode, setReasonMode] = useState<ReasonMode>(null);
   const [reason, setReason] = useState("");
-  const [error, setError] = useState<string | null>(null);\n  const [completed, setCompleted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [completed, setCompleted] = useState(false);
 
   if (completed || (executionMode !== "MANUAL_NATIVE" && executionMode !== "EXTERNAL")) return null;
 
