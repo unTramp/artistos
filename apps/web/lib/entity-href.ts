@@ -8,7 +8,7 @@ export const hrefForEntityReference = (entityType: string, entityId: string): st
   if (entityType === "Learning") return `/learnings#learning-${entityId}`;
   if (entityType === "WeeklyReview") return `/weekly-reviews/${entityId}`;
   if (entityType === "PlanningObjective") return "/#current-focus";
-  if (entityType === "OperationalAction") return `/#action-${entityId}`;
+  if (entityType === "OperationalAction") return `/actions/${entityId}`;
   return null;
 };
 
