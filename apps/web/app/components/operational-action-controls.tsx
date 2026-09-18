@@ -37,7 +37,7 @@ export function OperationalActionControls({
           "idempotency-key": `today-${path}-${crypto.randomUUID()}`,
           "if-match": String(version)
         },
-        ...(body ? { body: JSON.stringify(body) } : {})
+        body: JSON.stringify(body ?? {})
       });
       const payload = await response.json() as { error?: { message?: string } };
       if (!response.ok) throw new Error(payload.error?.message ?? "Action could not be updated.");
