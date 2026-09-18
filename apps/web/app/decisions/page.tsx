@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { PgDecisionReader } from "@artist-os/db";
 import { AppShell } from "../components/app-shell";
+import { MemorySubnav } from "../components/memory-subnav";
 import { resolveAuthenticatedActorContext } from "@/lib/actor-context";
 import { getDatabaseRuntime } from "@/lib/runtime";
 import { DecisionMemoryClient } from "./decision-memory-client";
@@ -48,8 +49,8 @@ export default async function DecisionsPage() {
         <p className="eyebrow">MEMORY · DECISIONS</p>
         <h1>Remember the choice, not just the outcome</h1>
         <p>Decision Memory preserves what you chose, why you chose it, when it should be reconsidered and what later replaced it. Prior choices advise future strategy without becoming a hard policy.</p>
-        <p><a className="inline-link" href="/learnings">Learnings →</a></p>
       </header>
+      <MemorySubnav active="decisions" />
       <DecisionMemoryClient initialDecisions={serialized} />
     </AppShell>
   );
