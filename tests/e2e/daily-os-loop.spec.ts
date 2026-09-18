@@ -68,4 +68,8 @@ test("Weekly Review recommendation becomes bounded focus and closes an Operation
     return response.json() as Promise<{ data: { actions: Array<{ id: string }> } }>;
   });
   expect(active.data.actions.some((action) => action.id === actionId)).toBe(false);
+
+  await page.goto(`/actions/${actionId}`);
+  await expect(page.getByRole("heading", { name: actionTitle })).toBeVisible();
+  await expect(page.getByText("DONE", { exact: true })).toBeVisible();
 });
