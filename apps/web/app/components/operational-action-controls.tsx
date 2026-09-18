@@ -21,9 +21,9 @@ export function OperationalActionControls({
   const [busy, setBusy] = useState(false);
   const [reasonMode, setReasonMode] = useState<ReasonMode>(null);
   const [reason, setReason] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);\n  const [completed, setCompleted] = useState(false);
 
-  if (executionMode !== "MANUAL_NATIVE" && executionMode !== "EXTERNAL") return null;
+  if (completed || (executionMode !== "MANUAL_NATIVE" && executionMode !== "EXTERNAL")) return null;
 
   async function mutate(path: "start" | "complete" | "block" | "reopen", body?: Record<string, string>) {
     setBusy(true);
