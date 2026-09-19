@@ -71,7 +71,7 @@ export function CurrentFocusEditor({ currentDate, current, locale }: { currentDa
       const payload = await response.json() as ApiErrorPayload;
       if (!response.ok) {
         const firstFieldError = payload.error?.fieldErrors ? Object.values(payload.error.fieldErrors)[0] : undefined;
-        setMessage(firstFieldError ?? payload.error?.message ?? locale === "ru" ? "Не удалось создать текущий фокус." : "Current focus could not be created.");
+        setMessage(firstFieldError ?? payload.error?.message ?? (locale === "ru" ? "Не удалось создать текущий фокус." : "Current focus could not be created."));
         return;
       }
       reset();
@@ -98,7 +98,7 @@ export function CurrentFocusEditor({ currentDate, current, locale }: { currentDa
       });
       const payload = await response.json() as ApiErrorPayload;
       if (!response.ok) {
-        setMessage(payload.error?.message ?? locale === "ru" ? "Не удалось завершить текущий фокус." : "Current focus could not be completed.");
+        setMessage(payload.error?.message ?? (locale === "ru" ? "Не удалось завершить текущий фокус." : "Current focus could not be completed."));
         return;
       }
       router.refresh();
@@ -113,7 +113,7 @@ export function CurrentFocusEditor({ currentDate, current, locale }: { currentDa
     return (
       <section className="today-focus-card" id="current-focus" aria-label={copy.focus.label}>
         <div className="today-focus-copy">
-          <span className="signal-label">{copy.focus.label} · {current.priority}</span>
+          <span className="signal-label">{copy.focus.label} · {locale === "ru" ? (current.priority === "PRIMARY" ? "ГЛАВНЫЙ" : "ВТОРИЧНЫЙ") : current.priority}</span>
           <strong>{current.title}</strong>
           <p>{current.statement}</p>
           {message && <small className="focus-form-message" role="alert">{message}</small>}
