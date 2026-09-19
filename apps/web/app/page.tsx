@@ -216,7 +216,7 @@ export default async function HomePage() {
 
         <div className="today-workspace-grid">
           <main className="today-main-column">
-            {primary ? (
+            {primaryDisplay ? (
               <section
                 className={`today-hero-card today-primary-card tone-${toneFor(primary)}`}
                 id={primaryOperationalAction ? `action-${primaryOperationalAction.id}` : undefined}
