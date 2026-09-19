@@ -2,7 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getUiCopy, type Locale } from "@/lib/i18n";
+import { getUiCopy, priorityLabel, type Locale } from "@/lib/i18n";
 
 type CurrentFocus = {
   id: string;
@@ -113,7 +113,7 @@ export function CurrentFocusEditor({ currentDate, current, locale }: { currentDa
     return (
       <section className="today-focus-card" id="current-focus" aria-label={copy.aria}>
         <div className="today-focus-copy">
-          <span className="signal-label">{copy.current} · {current.priority}</span>
+          <span className="signal-label">{copy.current} · {priorityLabel(locale, current.priority)}</span>
           <strong>{current.title}</strong>
           <p>{current.statement}</p>
           {message && <small className="focus-form-message" role="alert">{message}</small>}
