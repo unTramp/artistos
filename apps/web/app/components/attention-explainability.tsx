@@ -70,7 +70,7 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
   const triggerRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const guide = item.guidanceRef ? getContextualGuide(item.guidanceRef.key) : null;
+  const guide = item.guidanceRef ? getContextualGuide(item.guidanceRef.key, locale) : null;
   const maturity = basisMaturityFor(item, locale);
   const basedOn = resolvedBasedOn ?? item.basedOn.map((ref) => ({
     ...ref,
