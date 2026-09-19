@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 import { Brain, History, Home, Music2, Orbit, Sparkles, UserRound, type LucideIcon } from "lucide-react";
 import { navigation } from "../../lib/navigation";
+import { getServerLocale } from "@/lib/i18n-server";
+import { getUiCopy } from "@/lib/i18n";
 import { CommandPalette } from "./command-palette";
+import { LocaleSwitcher } from "./locale-switcher";
 
 const primaryNavByRoute: Record<string, string> = {
   overview: "today",
@@ -26,10 +29,10 @@ const initialsFor = (label: string) => {
   return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("") || "AO";
 };
 
-export function AppShell({
+export async function AppShell({
   activeId,
   sessionEmail,
-  workspaceLabel = "Artist Workspace",
+  workspaceLabel,
   children
 }: {
   activeId: string;
@@ -38,11 +41,14 @@ export function AppShell({
   stage?: string | undefined;
   children: ReactNode;
 }) {
+  const locale = await getServerLocale();
+  const copy = getUiCopy(locale);
   const primaryActiveId = primaryNavByRoute[activeId] ?? activeId;
+  const effectiveWorkspaceLabel = workspaceLabel ?? copy.shell.workspace;
 
   return (
     <main className="app-shell">
-      <aside className="app-sidebar" aria-label="Artist OS workspace">
+      <aside className="app-sidebar" aria-label={copy.shell.workspaceLabel}>
         <div className="app-brand-row">
           <div className="app-brand-mark" aria-hidden="true"><Orbit size={17} /></div>
           <div className="app-brand-copy">
@@ -52,43 +58,40 @@ export function AppShell({
         </div>
 
         <div className="workspace-card">
-          <div className="workspace-avatar" aria-hidden="true">{initialsFor(workspaceLabel)}</div>
+          <div className="workspace-avatar" aria-hidden="true">{initialsFor(effectiveWorkspaceLabel)}</div>
           <div>
-            <strong>{workspaceLabel}</strong>
-            <span>{sessionEmail ? "Active workspace" : "Authentication required"}</span>
+            <strong>{effectiveWorkspaceLabel}</strong>
+            <span>{sessionEmail ? copy.shell.activeWorkspace : copy.shell.authRequired}</span>
           </div>
         </div>
 
-        <nav className="app-primary-nav" aria-label="Primary">
+        <nav className="app-primary-nav" aria-label={copy.shell.primaryNav}>
           {navigation.map((item) => {
             const Icon = navIcons[item.id];
             const active = item.id === primaryActiveId;
+            const label = copy.shell.nav[item.id as keyof typeof copy.shell.nav] ?? item.label;
             return (
-              <a
-                className={active ? "active" : undefined}
-                href={item.href}
-                key={item.id}
-                aria-current={active ? "page" : undefined}
-              >
+              <a className={active ? "active" : undefined} href={item.href} key={item.id} aria-current={active ? "page" : undefined}>
                 {Icon ? <Icon aria-hidden={true} focusable={false} /> : null}
-                <span>{item.label}</span>
+                <span>{label}</span>
               </a>
             );
           })}
         </nav>
 
         <div className="loop-card" aria-label="Artist OS learning loop">
-          <span>Learning loop active</span>
-          <p>Context → Action → Evidence → Learning → Better decision</p>
+          <span>{copy.shell.learningLoop}</span>
+          <p>{copy.shell.learningLoopFlow}</p>
         </div>
       </aside>
 
       <section className="app-main">
         <header className="app-topbar">
-          <CommandPalette />
+          <CommandPalette locale={locale} />
           <div className="app-topbar-spacer" />
-          <div className="context-pill"><i aria-hidden="true" />Context Ready</div>
-          <a className="account-pill" href="/auth">{sessionEmail ?? "Sign in"}</a>
+          <LocaleSwitcher locale={locale} />
+          <div className="context-pill"><i aria-hidden="true" />{copy.shell.contextReady}</div>
+          <a className="account-pill" href="/auth">{sessionEmail ?? copy.shell.signIn}</a>
         </header>
         <section className="app-content">{children}</section>
       </section>
