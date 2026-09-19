@@ -191,7 +191,7 @@ export default async function HomePage() {
   const primaryWorkflowRefs = primaryBasedOn.filter((ref) => !memoryReferenceTypes.has(ref.type));
 
   return (
-    <AppShell activeId="today" sessionEmail={actorContext.user.email} workspaceLabel="Artist Workspace">
+    <AppShell activeId="today" sessionEmail={actorContext.user.email} workspaceLabel={copy.shell.workspace}>
       <section className="today-shell">
         <PageHeader
           eyebrow={copy.today.eyebrow}
