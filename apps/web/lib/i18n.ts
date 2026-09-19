@@ -200,3 +200,29 @@ export const uiCopy = {
 } as const;
 
 export const getUiCopy = (locale: Locale) => uiCopy[locale];
+
+
+const entityTypeLabelsRu: Record<string, string> = {
+  Decision: "Решение",
+  Learning: "Вывод",
+  WeeklyReview: "Недельный обзор",
+  OperationalAction: "Действие",
+  PlanningObjective: "Цель",
+  ContentUnit: "Контент",
+  ContentAngle: "Идея контента",
+  CandidateKnowledge: "Кандидат знания",
+  IdentityVersion: "Версия Identity",
+  ArtistIdentity: "Identity артиста",
+  Song: "Песня",
+  ExecutionRevision: "Версия исполнения",
+  Evidence: "Данные",
+  Insight: "Инсайт",
+  Hypothesis: "Гипотеза",
+  Experiment: "Эксперимент"
+};
+
+export const entityTypeLabel = (locale: Locale, type: string) =>
+  locale === "ru" ? (entityTypeLabelsRu[type] ?? type) : type;
+
+export const priorityLabel = (locale: Locale, priority: "PRIMARY" | "SECONDARY") =>
+  locale === "ru" ? (priority === "PRIMARY" ? "ГЛАВНЫЙ" : "ВТОРИЧНЫЙ") : priority;
