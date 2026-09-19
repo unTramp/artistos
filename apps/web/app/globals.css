@@ -100,19 +100,7 @@ button, a, input, select, textarea, summary { -webkit-tap-highlight-color: trans
   }
 }
 
-.shell { min-height: 100vh; display: grid; grid-template-columns: 250px 1fr; }
-.sidebar { position: sticky; top: 0; height: 100vh; border-right: 1px solid var(--border); padding: 30px 24px; display: flex; flex-direction: column; background: #0c0e12; }
-.brand { font-size: 18px; font-weight: 800; letter-spacing: .16em; }
-.brand span { color: var(--accent); }
-nav { display: grid; gap: 8px; margin-top: 54px; }
-nav a { color: var(--muted); padding: 11px 12px; border-radius: 10px; }
-nav a:hover { color: var(--text); background: var(--surface); }
-nav a.active { background: var(--surface2); color: var(--text); }
-.session-state { margin-top: auto; display: grid; gap: 6px; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden; }
-.session-state span { color: var(--accent); font-size: 10px; font-weight: 800; letter-spacing: .14em; }
-.session-state strong { color: var(--muted); font-size: 12px; font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
-.stage { margin-top: 14px; color: var(--muted); font-size: 12px; }
-.content { padding: 64px; max-width: 1250px; width: 100%; }
+/* Shared shell/navigation/layout primitives live in design-system.css. */
 .eyebrow { font-size: 11px; letter-spacing: .18em; color: var(--accent); font-weight: 700; }
 h1 { font-size: 64px; line-height: 1; margin: 10px 0 18px; }
 header > p:last-child, .focus p:last-child { color: var(--muted); max-width: 720px; font-size: 17px; line-height: 1.6; }
