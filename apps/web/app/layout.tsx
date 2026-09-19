@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { LocaleProvider } from "./components/locale-provider";
+import { getRequestLocale } from "@/lib/i18n-server";
 import "./globals.css";
 import "./design-system.css";
 import "./commands.css";
@@ -18,6 +20,13 @@ export const metadata: Metadata = {
   description: "Human-controlled operating system for independent artists"
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body>{children}</body></html>;
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await getRequestLocale();
+  return (
+    <html lang={locale}>
+      <body>
+        <LocaleProvider locale={locale}>{children}</LocaleProvider>
+      </body>
+    </html>
+  );
 }

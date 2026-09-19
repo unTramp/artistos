@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 import { Brain, History, Home, Music2, Orbit, Sparkles, UserRound, type LucideIcon } from "lucide-react";
 import { navigation } from "../../lib/navigation";
+import { getMessages } from "@/lib/i18n";
+import { getRequestLocale } from "@/lib/i18n-server";
 import { CommandPalette } from "./command-palette";
+import { LanguageSwitcher } from "./language-switcher";
 
 const primaryNavByRoute: Record<string, string> = {
   overview: "today",
@@ -26,7 +29,7 @@ const initialsFor = (label: string) => {
   return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("") || "AO";
 };
 
-export function AppShell({
+export async function AppShell({
   activeId,
   sessionEmail,
   workspaceLabel = "Artist Workspace",
@@ -38,16 +41,18 @@ export function AppShell({
   stage?: string | undefined;
   children: ReactNode;
 }) {
+  const locale = await getRequestLocale();
+  const messages = getMessages(locale);
   const primaryActiveId = primaryNavByRoute[activeId] ?? activeId;
 
   return (
     <main className="app-shell">
-      <aside className="app-sidebar" aria-label="Artist OS workspace">
+      <aside className="app-sidebar" aria-label={messages.shell.workspaceAria}>
         <div className="app-brand-row">
           <div className="app-brand-mark" aria-hidden="true"><Orbit size={17} /></div>
           <div className="app-brand-copy">
             <strong>Artist OS</strong>
-            <span>Human-Controlled · Evidence-Driven</span>
+            <span>{messages.shell.brandTagline}</span>
           </div>
         </div>
 
@@ -55,14 +60,15 @@ export function AppShell({
           <div className="workspace-avatar" aria-hidden="true">{initialsFor(workspaceLabel)}</div>
           <div>
             <strong>{workspaceLabel}</strong>
-            <span>{sessionEmail ? "Active workspace" : "Authentication required"}</span>
+            <span>{sessionEmail ? messages.shell.activeWorkspace : messages.shell.authRequired}</span>
           </div>
         </div>
 
-        <nav className="app-primary-nav" aria-label="Primary">
+        <nav className="app-primary-nav" aria-label={messages.shell.primaryNav}>
           {navigation.map((item) => {
             const Icon = navIcons[item.id];
             const active = item.id === primaryActiveId;
+            const label = messages.shell.navigation[item.id as keyof typeof messages.shell.navigation] ?? item.label;
             return (
               <a
                 className={active ? "active" : undefined}
@@ -71,15 +77,15 @@ export function AppShell({
                 aria-current={active ? "page" : undefined}
               >
                 {Icon ? <Icon aria-hidden={true} focusable={false} /> : null}
-                <span>{item.label}</span>
+                <span>{label}</span>
               </a>
             );
           })}
         </nav>
 
-        <div className="loop-card" aria-label="Artist OS learning loop">
-          <span>Learning loop active</span>
-          <p>Context → Action → Evidence → Learning → Better decision</p>
+        <div className="loop-card" aria-label={messages.shell.learningLoopAria}>
+          <span>{messages.shell.learningLoopLabel}</span>
+          <p>{messages.shell.learningLoopText}</p>
         </div>
       </aside>
 
@@ -87,8 +93,9 @@ export function AppShell({
         <header className="app-topbar">
           <CommandPalette />
           <div className="app-topbar-spacer" />
-          <div className="context-pill"><i aria-hidden="true" />Context Ready</div>
-          <a className="account-pill" href="/auth">{sessionEmail ?? "Sign in"}</a>
+          <LanguageSwitcher />
+          <div className="context-pill"><i aria-hidden="true" />{messages.shell.contextReady}</div>
+          <a className="account-pill" href="/auth">{sessionEmail ?? messages.shell.signIn}</a>
         </header>
         <section className="app-content">{children}</section>
       </section>

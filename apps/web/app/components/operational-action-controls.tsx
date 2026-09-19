@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { emitProductTelemetry } from "@/lib/product-telemetry-client";
+import { useI18n } from "./locale-provider";
 
 type ActionStatus = "OPEN" | "IN_PROGRESS" | "BLOCKED";
 type ReasonMode = "block" | "reopen" | null;
@@ -19,6 +20,8 @@ export function OperationalActionControls({
   executionMode: string;
 }) {
   const router = useRouter();
+  const { messages } = useI18n();
+  const copy = messages.actions;
   const [busy, setBusy] = useState(false);
   const [reasonMode, setReasonMode] = useState<ReasonMode>(null);
   const [reason, setReason] = useState("");
@@ -41,7 +44,7 @@ export function OperationalActionControls({
         body: JSON.stringify(body ?? {})
       });
       const payload = await response.json() as { error?: { message?: string } };
-      if (!response.ok) throw new Error(payload.error?.message ?? "Action could not be updated.");
+      if (!response.ok) throw new Error(payload.error?.message ?? copy.updateError);
       const outcome = path === "start" ? "STARTED" : path === "complete" ? "COMPLETED" : path === "block" ? "BLOCKED" : "REOPENED";
       emitProductTelemetry({
         eventName: "ATTENTION_ACTION_OUTCOME_RECORDED",
@@ -58,7 +61,7 @@ export function OperationalActionControls({
         router.refresh();
       }
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Action could not be updated.");
+      setError(caught instanceof Error ? caught.message : copy.updateError);
     } finally {
       setBusy(false);
     }
@@ -73,21 +76,21 @@ export function OperationalActionControls({
   return (
     <div className="operational-action-controls" data-testid={`action-controls-${actionId}`}>
       <div className="operational-action-buttons">
-        {status === "OPEN" && <button type="button" disabled={busy} onClick={() => void mutate("start")}>Start</button>}
-        {(status === "OPEN" || status === "IN_PROGRESS" || status === "BLOCKED") && <button type="button" className="action-done-button" disabled={busy} onClick={() => void mutate("complete")}>Done</button>}
-        {(status === "OPEN" || status === "IN_PROGRESS") && <button type="button" disabled={busy} aria-expanded={reasonMode === "block"} onClick={() => { setReasonMode(reasonMode === "block" ? null : "block"); setReason(""); setError(null); }}>Block</button>}
-        {status === "BLOCKED" && <button type="button" disabled={busy} aria-expanded={reasonMode === "reopen"} onClick={() => { setReasonMode(reasonMode === "reopen" ? null : "reopen"); setReason(""); setError(null); }}>Resolve blocker</button>}
+        {status === "OPEN" && <button type="button" disabled={busy} onClick={() => void mutate("start")}>{copy.start}</button>}
+        {(status === "OPEN" || status === "IN_PROGRESS" || status === "BLOCKED") && <button type="button" className="action-done-button" disabled={busy} onClick={() => void mutate("complete")}>{copy.done}</button>}
+        {(status === "OPEN" || status === "IN_PROGRESS") && <button type="button" disabled={busy} aria-expanded={reasonMode === "block"} onClick={() => { setReasonMode(reasonMode === "block" ? null : "block"); setReason(""); setError(null); }}>{copy.block}</button>}
+        {status === "BLOCKED" && <button type="button" disabled={busy} aria-expanded={reasonMode === "reopen"} onClick={() => { setReasonMode(reasonMode === "reopen" ? null : "reopen"); setReason(""); setError(null); }}>{copy.resolve}</button>}
       </div>
       {reasonMode && <div className="operational-action-reason">
         <input
-          aria-label={reasonMode === "block" ? "Block reason" : "Resolution reason"}
+          aria-label={reasonMode === "block" ? copy.blockReason : copy.resolutionReason}
           value={reason}
           onChange={(event) => setReason(event.target.value)}
-          placeholder={reasonMode === "block" ? "What is blocking this?" : "What changed?"}
+          placeholder={reasonMode === "block" ? copy.blockPlaceholder : copy.resolutionPlaceholder}
           maxLength={1000}
           disabled={busy}
         />
-        <button type="button" disabled={busy || !reason.trim()} onClick={submitReason}>{reasonMode === "block" ? "Confirm block" : "Reopen"}</button>
+        <button type="button" disabled={busy || !reason.trim()} onClick={submitReason}>{reasonMode === "block" ? copy.confirmBlock : copy.reopen}</button>
       </div>}
       {error && <p className="operational-action-error" role="alert">{error}</p>}
     </div>
