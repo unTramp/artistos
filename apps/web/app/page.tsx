@@ -218,14 +218,14 @@ export default async function HomePage() {
           <main className="today-main-column">
             {primaryDisplay ? (
               <section
-                className={`today-hero-card today-primary-card tone-${toneFor(primary)}`}
+                className={`today-hero-card today-primary-card tone-${toneFor(primaryDisplay)}`}
                 id={primaryOperationalAction ? `action-${primaryOperationalAction.id}` : undefined}
               >
                 <div className="today-primary-copy">
                   <span className="signal-label">{copy.today.primary} · {labelFor(primaryDisplay, copy.today)}</span>
                   <h2>{primaryDisplay.title}</h2>
                   <p>{primaryDisplay.whyThis[0]}</p>
-                  {primary.objectiveAligned && <small className="today-objective-note">{copy.today.aligned}</small>}
+                  {primaryDisplay.objectiveAligned && <small className="today-objective-note">{copy.today.aligned}</small>}
                   {primaryOperationalAction && (
                     <OperationalActionControls
                       actionId={primaryOperationalAction.id}
