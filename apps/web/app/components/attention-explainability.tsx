@@ -6,7 +6,7 @@ import { getContextualGuide } from "@/lib/contextual-guidance";
 import { emitProductTelemetry } from "@/lib/product-telemetry-client";
 import type { ResolvedEntityReference } from "@/lib/entity-reference";
 import { useModalFocusTrap } from "./ui/use-modal-focus-trap";
-import { getUiCopy, type Locale } from "@/lib/i18n";
+import { entityTypeLabel, getUiCopy, type Locale } from "@/lib/i18n";
 
 type Props = {
   item: AttentionItem;
@@ -228,13 +228,13 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
                       {basedOn.map((ref) => ref.href ? (
                         <a className="drawer-ref drawer-ref-link" href={ref.href} key={`${ref.type}-${ref.id}-${ref.version ?? "current"}`}>
                           <strong>{ref.label}</strong>
-                          <small>{ref.type}{ref.version !== undefined ? ` · v${ref.version}` : ""}</small>
+                          <small>{entityTypeLabel(locale, ref.type)}{ref.version !== undefined ? ` · v${ref.version}` : ""}</small>
                           <span aria-hidden="true">→</span>
                         </a>
                       ) : (
                         <div className="drawer-ref unresolved" key={`${ref.type}-${ref.id}-${ref.version ?? "current"}`}>
                           <strong>{ref.label}</strong>
-                          <small>{ref.type} · {copy.unresolved}</small>
+                          <small>{entityTypeLabel(locale, ref.type)} · {copy.unresolved}</small>
                         </div>
                       ))}
                     </div>
@@ -258,7 +258,7 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
                     <p>{maturity.description}</p>
                     {maturity.counts.length > 0 && (
                       <div className="maturity-counts">
-                        {maturity.counts.map(({ type, count }) => <span key={type}>{type} · {count}</span>)}
+                        {maturity.counts.map(({ type, count }) => <span key={type}>{entityTypeLabel(locale, type)} · {count}</span>)}
                       </div>
                     )}
                   </div>
@@ -280,13 +280,13 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
                       {blockedBy.map((ref) => ref.href ? (
                         <a className="drawer-ref drawer-ref-link" href={ref.href} key={`blocked-${ref.type}-${ref.id}`}>
                           <strong>{ref.label}</strong>
-                          <small>{ref.type}</small>
+                          <small>{entityTypeLabel(locale, ref.type)}</small>
                           <span aria-hidden="true">→</span>
                         </a>
                       ) : (
                         <div className="drawer-ref unresolved" key={`blocked-${ref.type}-${ref.id}`}>
                           <strong>{ref.label}</strong>
-                          <small>{ref.type} · {copy.unresolved}</small>
+                          <small>{entityTypeLabel(locale, ref.type)} · {copy.unresolved}</small>
                         </div>
                       ))}
                     </div>
