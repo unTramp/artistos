@@ -332,7 +332,7 @@ export const getUiCopy = (locale: UiLocale) => uiCopy[locale];
 const replaceKnownSystemText = (locale: UiLocale, value: string): string => {
   if (locale === "en") return value;
   const exact: Record<string, string> = {
-    "Future recommendations need one canonical active Identity Version.": "Будущим рекомендациям нужна одна каноническая активная версия Identity.",
+    "Future recommendations need one canonical active Identity Version.": "Будущим рекомендациям нужна одна каноническая активная версия идентичности артиста.",
     "Gives future content and strategy work a canonical identity context.": "Даёт будущей работе с контентом и стратегией канонический контекст идентичности.",
     "This Content Unit exists but has no approved execution revision.": "Content Unit уже существует, но для него ещё нет утверждённой версии исполнения.",
     "Unlocks the unit's path toward execution readiness.": "Разблокирует путь Content Unit к готовности к исполнению.",
@@ -341,7 +341,7 @@ const replaceKnownSystemText = (locale: UiLocale, value: string): string => {
     "Draft and deferred ideas remain proposals until you explicitly review them.": "Черновики и отложенные идеи остаются предложениями, пока вы явно их не проверите.",
     "Candidate knowledge stays outside permanent Artist Brain context until you review it.": "Кандидат в знания не входит в постоянный контекст Artist Brain, пока вы его не проверите.",
     "Keeps durable memory human-controlled.": "Сохраняет долговременный контекст под контролем человека.",
-    "Song Brain gives future content and strategy decisions track-specific context.": "Song Brain даёт будущим решениям по контенту и стратегии контекст конкретной песни.",
+    "Song Brain gives future content and strategy decisions track-specific context.": "Контекст песни даст будущим решениям по контенту и стратегии конкретную основу именно для этого трека.",
     "This operational action is blocked and cannot progress without attention.": "Это рабочее действие заблокировано и не может двигаться дальше без вашего внимания.",
     "This operational action is active and still requires completion.": "Это рабочее действие активно и всё ещё требует завершения.",
     "Advances the linked workflow without changing source-domain truth by itself.": "Продвигает связанный процесс, не изменяя самостоятельно каноническое состояние исходного домена."
@@ -377,11 +377,11 @@ export const localizeAttentionItem = (locale: UiLocale, item: AttentionItem): At
   title = title.replace(/^(\d+) knowledge candidates? waiting$/, (_, count) => `${count} кандидатов в знания ждут проверки`);
 
   const actionLabels: Record<string, string> = {
-    "Open Identity": "Открыть Identity",
+    "Open Identity": "Открыть идентичность",
     "Continue execution": "Продолжить подготовку",
     "Review approved angles": "Проверить утверждённые идеи",
     "Review angles": "Проверить идеи",
-    "Review Brain inbox": "Открыть Inbox Artist Brain",
+    "Review Brain inbox": "Открыть входящие знания",
     "Add song": "Добавить песню",
     "Open action": "Открыть действие",
     "View action": "Открыть действие"
@@ -409,8 +409,8 @@ const entityTypeRu: Record<string, string> = {
   ContentAngle: "Контент-идея",
   PlanningObjective: "Цель",
   CandidateKnowledge: "Кандидат в знания",
-  IdentityVersion: "Версия Identity",
-  ArtistIdentity: "Identity артиста",
+  IdentityVersion: "Версия идентичности",
+  ArtistIdentity: "Идентичность артиста",
   Song: "Песня"
 };
 
