@@ -58,7 +58,7 @@ test("Weekly Review recommendation becomes bounded focus and closes an Operation
   const controls = page.getByTestId(`action-controls-${actionId}`);
   await expect(controls).toBeVisible();
 
-  const languageSwitcher = page.locator(".app-topbar").getByRole("group", { name: "Interface language" });
+  const languageSwitcher = page.locator(".app-topbar").getByRole("group", { name: "Interface locale" });
   await languageSwitcher.getByRole("button", { name: "RU", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Сегодня", exact: true })).toBeVisible();
   await expect(page.getByLabel("ТЕКУЩИЙ ФОКУС")).toBeVisible();
@@ -70,11 +70,11 @@ test("Weekly Review recommendation becomes bounded focus and closes an Operation
   const ruWhyButton = page.getByRole("button", { name: `Почему эта рекомендация: ${actionTitle}` });
   await ruWhyButton.click();
   const ruWhyDrawer = page.getByRole("dialog");
-  await expect(ruWhyDrawer.getByText("ПОЧЕМУ ЭТО", { exact: true })).toBeVisible();
+  await expect(ruWhyDrawer.locator(".attention-drawer-head .signal-label")).toHaveText("ПОЧЕМУ ЭТО");
   await ruWhyDrawer.getByRole("button", { name: "Закрыть объяснение" }).click();
   await expect(ruWhyButton).toBeFocused();
 
-  const ruLanguageSwitcher = page.locator(".app-topbar").getByRole("group", { name: "Язык интерфейса" });
+  const ruLanguageSwitcher = page.locator(".app-topbar").getByRole("group", { name: "Локаль интерфейса" });
   await ruLanguageSwitcher.getByRole("button", { name: "EN", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Today", exact: true })).toBeVisible();
 
