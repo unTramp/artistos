@@ -5,7 +5,7 @@ import type { AttentionItem } from "@artist-os/core";
 import { getContextualGuide } from "@/lib/contextual-guidance";
 import { emitProductTelemetry } from "@/lib/product-telemetry-client";
 import type { ResolvedEntityReference } from "@/lib/entity-reference";
-import { getUiCopy, type UiLocale } from "@/lib/i18n";
+import { getUiCopy, localizeEntityType, type UiLocale } from "@/lib/i18n";
 import { useModalFocusTrap } from "./ui/use-modal-focus-trap";
 
 type Props = {
@@ -180,7 +180,7 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
                 <span className="signal-label">{mode === "guidance" ? `${copy.why.learn} · ${guide?.estimatedMinutes ?? item.guidanceRef?.estimatedMinutes ?? ""} ${locale === "ru" ? "МИН" : "MIN"}` : copy.why.whyThis}</span>
                 <h2 id={`attention-drawer-${item.id}`}>{mode === "guidance" && guide ? guide.title : item.title}</h2>
               </div>
-              <button ref={closeRef} className="drawer-close" type="button" onClick={closeDrawer} aria-label="Close explanation">×</button>
+              <button ref={closeRef} className="drawer-close" type="button" onClick={closeDrawer} aria-label={copy.why.close}>×</button>
             </header>
 
             {mode === "guidance" && guide ? (
@@ -229,13 +229,13 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
                       {basedOn.map((ref) => ref.href ? (
                         <a className="drawer-ref drawer-ref-link" href={ref.href} key={`${ref.type}-${ref.id}-${ref.version ?? "current"}`}>
                           <strong>{ref.label}</strong>
-                          <small>{ref.type}{ref.version !== undefined ? ` · v${ref.version}` : ""}</small>
+                          <small>{localizeEntityType(locale, ref.type)}{ref.version !== undefined ? ` · v${ref.version}` : ""}</small>
                           <span aria-hidden="true">→</span>
                         </a>
                       ) : (
                         <div className="drawer-ref unresolved" key={`${ref.type}-${ref.id}-${ref.version ?? "current"}`}>
                           <strong>{ref.label}</strong>
-                          <small>{ref.type} · {copy.today.unresolved}</small>
+                          <small>{localizeEntityType(locale, ref.type)} · {copy.today.unresolved}</small>
                         </div>
                       ))}
                     </div>
@@ -254,7 +254,7 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
                     <p>{copy.why.maturityDescriptions[maturityKey]}</p>
                     {maturity.counts.length > 0 && (
                       <div className="maturity-counts">
-                        {maturity.counts.map(({ type, count }) => <span key={type}>{type} · {count}</span>)}
+                        {maturity.counts.map(({ type, count }) => <span key={type}>{localizeEntityType(locale, type)} · {count}</span>)}
                       </div>
                     )}
                   </div>
@@ -276,13 +276,13 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
                       {blockedBy.map((ref) => ref.href ? (
                         <a className="drawer-ref drawer-ref-link" href={ref.href} key={`blocked-${ref.type}-${ref.id}`}>
                           <strong>{ref.label}</strong>
-                          <small>{ref.type}</small>
+                          <small>{localizeEntityType(locale, ref.type)}</small>
                           <span aria-hidden="true">→</span>
                         </a>
                       ) : (
                         <div className="drawer-ref unresolved" key={`blocked-${ref.type}-${ref.id}`}>
                           <strong>{ref.label}</strong>
-                          <small>{ref.type} · {copy.today.unresolved}</small>
+                          <small>{localizeEntityType(locale, ref.type)} · {copy.today.unresolved}</small>
                         </div>
                       ))}
                     </div>
