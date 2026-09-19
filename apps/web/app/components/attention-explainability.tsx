@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { AttentionItem } from "@artist-os/core";
 import { getContextualGuide } from "@/lib/contextual-guidance";
 import { emitProductTelemetry } from "@/lib/product-telemetry-client";
@@ -84,10 +84,10 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
     resolved: false
   }));
 
-  const closeDrawer = () => {
+  const closeDrawer = useCallback(() => {
     setOpen(false);
     setMode("explanation");
-  };
+  }, []);
 
   useModalFocusTrap({
     open,
