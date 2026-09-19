@@ -4,16 +4,15 @@ import {
   PgArtistFoundationReader,
   PgContentExecutionReader,
   PgContentFactoryReader,
-  PgDecisionReader,
   PgKnowledgeReader,
   PgOperationalActionReader,
-  PgPlanningObjectiveReader,
-  listLearnings
+  PgPlanningObjectiveReader
 } from "@artist-os/db";
 import { AppShell } from "./components/app-shell";
 import { AttentionExplainability } from "./components/attention-explainability";
 import { CurrentFocusEditor } from "./components/current-focus-editor";
 import { OperationalActionControls } from "./components/operational-action-controls";
+import { PageHeader } from "./components/ui/presentation";
 import { resolveAuthenticatedActorContext } from "@/lib/actor-context";
 import { hrefForOperationalSource } from "@/lib/entity-href";
 import { entityReferenceKey } from "@/lib/entity-reference";
@@ -35,6 +34,8 @@ const labelFor = (item: AttentionItem) => {
   if (item.kind === "FOUNDATION") return "FOUNDATION";
   return "MUSIC";
 };
+
+const memoryReferenceTypes = new Set(["Decision", "Learning", "WeeklyReview"]);
 
 export default async function HomePage() {
   const actorContext = await resolveAuthenticatedActorContext(await headers());
@@ -90,20 +91,17 @@ export default async function HomePage() {
   const executionReader = new PgContentExecutionReader(runtime.db);
   const actionReader = new PgOperationalActionReader(runtime.db);
   const objectiveReader = new PgPlanningObjectiveReader(runtime.db);
-  const decisionReader = new PgDecisionReader(runtime.db);
   const computedAt = new Date();
   const currentDate = computedAt.toISOString().slice(0, 10);
 
-  const [identity, songs, knowledge, angles, units, operationalActions, currentObjective, recentDecisions, recentLearnings] = await Promise.all([
+  const [identity, songs, knowledge, angles, units, operationalActions, currentObjective] = await Promise.all([
     artistReader.getIdentityHome(actorContext.artistId),
     artistReader.listSongs(actorContext.artistId),
     knowledgeReader.getHome(actorContext.artistId),
     factoryReader.listAngles(actorContext.artistId),
     factoryReader.listUnits(actorContext.artistId),
     actionReader.listActions(actorContext.artistId, { statuses: ["OPEN", "IN_PROGRESS", "BLOCKED"], limit: 50 }),
-    objectiveReader.getCurrentPrimary(actorContext.artistId, currentDate),
-    decisionReader.listDecisions(actorContext.artistId, { statuses: ["ACTIVE", "UNDER_REVIEW"], limit: 3 }),
-    listLearnings(runtime.db, actorContext.artistId, { statuses: ["VALIDATED"], limit: 3 })
+    objectiveReader.getCurrentPrimary(actorContext.artistId, currentDate)
   ]);
 
   const approvedExecution = await Promise.all(
@@ -115,8 +113,6 @@ export default async function HomePage() {
   const unitAngleIds = new Set(units.flatMap((unit) => unit.angleId ? [unit.angleId] : []));
   const approvedWithoutUnit = angles.filter((angle) => angle.status === "APPROVED" && !unitAngleIds.has(angle.id));
   const unitsWithoutExecution = approvedExecution.filter((entry) => !entry.approved);
-  const recentDecision = recentDecisions[0] ?? null;
-  const recentLearning = recentLearnings[0] ?? null;
 
   const projection = new AttentionProjectionService().project({
     computedAt,
@@ -181,20 +177,22 @@ export default async function HomePage() {
   const operationalActionByAttentionId = new Map(operationalActions.map((action) => [`operational-action:${action.id}`, action]));
   const primary = projection.items[0] ?? null;
   const primaryOperationalAction = primary ? operationalActionByAttentionId.get(primary.id) ?? null : null;
-  const secondary = projection.items.slice(1, 4);
-  const latestUnit = units[0] ?? null;
+  const secondary = projection.items.slice(1, 6);
+  const remainingSecondaryCount = Math.max(0, projection.items.length - 1 - secondary.length);
+  const primaryBasedOn = primary ? resolvedRefsFor(primary.basedOn) : [];
+  const primaryBlockedBy = primary ? resolvedRefsFor(primary.blockedBy) : [];
+  const primaryMemoryRefs = primaryBasedOn.filter((ref) => memoryReferenceTypes.has(ref.type));
+  const primaryWorkflowRefs = primaryBasedOn.filter((ref) => !memoryReferenceTypes.has(ref.type));
 
   return (
     <AppShell activeId="today" sessionEmail={actorContext.user.email} workspaceLabel="Artist Workspace">
       <section className="today-shell">
-        <header className="today-header compact">
-          <div>
-            <p className="eyebrow">TODAY · DAILY OS</p>
-            <h1>What needs attention now?</h1>
-            <p>One deterministic projection across domain state and OperationalActions. Deep work stays in the owning domain.</p>
-          </div>
-          <div className="today-context-state"><i />Context Ready</div>
-        </header>
+        <PageHeader
+          eyebrow="DAILY OS"
+          title="Today"
+          description="What needs attention now? Artist OS projects current canonical state into one primary action, a bounded attention queue and the provenance that explains why."
+          className="today-page-header"
+        />
 
         <CurrentFocusEditor
           currentDate={currentDate}
@@ -209,87 +207,184 @@ export default async function HomePage() {
           } : null}
         />
 
-        {primary ? (
-          <section className={`today-hero-card tone-${toneFor(primary)}`} id={primaryOperationalAction ? `action-${primaryOperationalAction.id}` : undefined}>
-            <div>
-              <span className="signal-label">{labelFor(primary)}</span>
-              <h2>{primary.title}</h2>
-              <p>{primary.whyThis[0]}</p>
-              {primary.objectiveAligned && <small className="today-objective-note">Aligned with current objective</small>}
-              {primaryOperationalAction && <OperationalActionControls
-                actionId={primaryOperationalAction.id}
-                status={primaryOperationalAction.status as "OPEN" | "IN_PROGRESS" | "BLOCKED"}
-                version={primaryOperationalAction.version}
-                executionMode={primaryOperationalAction.executionMode}
-              />}
-            </div>
-            <div className="today-hero-actions">
-              <AttentionExplainability
-                item={primary}
-                resolvedBasedOn={resolvedRefsFor(primary.basedOn)}
-                resolvedBlockedBy={resolvedRefsFor(primary.blockedBy)}
-              />
-              <a className="primary-action" href={primary.action.href}>{primary.action.label} →</a>
-            </div>
-          </section>
-        ) : (
-          <section className="today-hero-card tone-emerald">
-            <div>
-              <span className="signal-label">CLEAR</span>
-              <h2>No immediate blockers</h2>
-              <p>Your implemented workflows have no unresolved deterministic attention item. This is not a generic AI recommendation.</p>
-            </div>
-            <a className="primary-action" href="/factory">Create with context →</a>
-          </section>
-        )}
-
-        <div className="today-stat-grid">
-          <article><span>IDENTITY</span><strong>{identity.activeVersion ? `v${identity.activeVersion.versionNumber} ACTIVE` : "NEEDS SETUP"}</strong><small>{identity.activeEra ? `Era · ${identity.activeEra.name}` : "Base identity context"}</small></article>
-          <article><span>MUSIC</span><strong>{songs.length}</strong><small>song{songs.length === 1 ? "" : "s"} in Artist OS</small></article>
-          <article><span>BRAIN</span><strong>{knowledge.latestSnapshot ? `v${knowledge.latestSnapshot.versionNumber}` : "NO SNAPSHOT"}</strong><small>{pendingKnowledge.length} pending review</small></article>
-          <article><span>ACTIONS</span><strong>{operationalActions.length}</strong><small>active operational action{operationalActions.length === 1 ? "" : "s"}</small></article>
-        </div>
-
-        <div className="today-columns">
-          <section className="attention-panel">
-            <div className="panel-heading"><div><span className="signal-label">NEXT</span><h2>Attention queue</h2></div><small>{projection.items.length} current signal{projection.items.length === 1 ? "" : "s"}</small></div>
-            {secondary.length === 0 ? <div className="quiet-state">No secondary attention items right now.</div> : secondary.map((item) => {
-              const operationalAction = operationalActionByAttentionId.get(item.id) ?? null;
-              return (
-                <article className="attention-row" key={item.id} id={operationalAction ? `action-${operationalAction.id}` : undefined}>
-                  <i className={`attention-dot ${toneFor(item)}`} />
-                  <div className="attention-row-copy">
-                    <span>{labelFor(item)}</span><strong>{item.title}</strong><p>{item.whyThis[0]}</p>
-                    {operationalAction && <OperationalActionControls
-                      actionId={operationalAction.id}
-                      status={operationalAction.status as "OPEN" | "IN_PROGRESS" | "BLOCKED"}
-                      version={operationalAction.version}
-                      executionMode={operationalAction.executionMode}
-                    />}
-                  </div>
-                  <div className="attention-row-actions">
-                    <AttentionExplainability
-                      item={item}
-                      compact
-                      resolvedBasedOn={resolvedRefsFor(item.basedOn)}
-                      resolvedBlockedBy={resolvedRefsFor(item.blockedBy)}
+        <div className="today-workspace-grid">
+          <main className="today-main-column">
+            {primary ? (
+              <section
+                className={`today-hero-card today-primary-card tone-${toneFor(primary)}`}
+                id={primaryOperationalAction ? `action-${primaryOperationalAction.id}` : undefined}
+              >
+                <div className="today-primary-copy">
+                  <span className="signal-label">PRIMARY · {labelFor(primary)}</span>
+                  <h2>{primary.title}</h2>
+                  <p>{primary.whyThis[0]}</p>
+                  {primary.objectiveAligned && <small className="today-objective-note">Aligned with current objective</small>}
+                  {primaryOperationalAction && (
+                    <OperationalActionControls
+                      actionId={primaryOperationalAction.id}
+                      status={primaryOperationalAction.status as "OPEN" | "IN_PROGRESS" | "BLOCKED"}
+                      version={primaryOperationalAction.version}
+                      executionMode={primaryOperationalAction.executionMode}
                     />
-                    <a href={item.action.href} aria-label={item.action.label}>→</a>
-                  </div>
-                </article>
-              );
-            })}
-          </section>
+                  )}
+                </div>
+                <div className="today-hero-actions">
+                  <AttentionExplainability
+                    item={primary}
+                    resolvedBasedOn={primaryBasedOn}
+                    resolvedBlockedBy={primaryBlockedBy}
+                  />
+                  <a className="primary-action" href={primary.action.href}>{primary.action.label} →</a>
+                </div>
+              </section>
+            ) : (
+              <section className="today-hero-card today-primary-card tone-emerald">
+                <div className="today-primary-copy">
+                  <span className="signal-label">CLEAR</span>
+                  <h2>No immediate blockers</h2>
+                  <p>Your implemented workflows have no unresolved deterministic attention item. Artist OS is not filling the gap with generic AI advice.</p>
+                </div>
+                <a className="primary-action" href="/factory">Create with context →</a>
+              </section>
+            )}
 
-          <section className="memory-panel">
-            <div className="panel-heading"><div><span className="signal-label">MEMORY</span><h2>What compounds</h2></div><small>{recentDecisions.length + recentLearnings.length} reusable memory signal{recentDecisions.length + recentLearnings.length === 1 ? "" : "s"}</small></div>
-            <div className="memory-block"><span>RECENT DECISION</span><strong>{recentDecision?.title ?? "No decision memory yet"}</strong><p>{recentDecision ? recentDecision.reason : "Record material choices so future strategy can remember what you chose and why."}</p></div>
-            <div className="memory-block"><span>VALIDATED LEARNING</span><strong>{recentLearning?.statement ?? "Not enough evidence yet"}</strong><p>{recentLearning ? `${recentLearning.scope} · ${recentLearning.confidence} confidence · ${recentLearning.confidenceRationale}` : "Artist OS will surface reusable findings here only after they move through the canonical Learning lifecycle and receive human validation."}</p></div>
-            <div className="memory-block"><span>RECENT EXECUTION</span><strong>{latestUnit?.title ?? "No Content Unit yet"}</strong><p>{latestUnit ? `${latestUnit.status} · ${latestUnit.songTitle ?? "Artist-level"}` : "Create and approve content without losing the reason behind the concept."}</p></div>
-            <a className="inline-link" href="/memory">Open Memory workspace →</a>\n            <a className="inline-link" href="/decisions">Open Decision Memory →</a>
-            <a className="inline-link" href="/learnings">Open Learning Memory →</a>
-            <a className="inline-link" href="/knowledge">Open Brain →</a>
-          </section>
+            <section className="attention-panel">
+              <div className="panel-heading">
+                <div>
+                  <span className="signal-label">NEXT</span>
+                  <h2>Attention queue</h2>
+                </div>
+                <small>{Math.max(0, projection.items.length - 1)} secondary signal{projection.items.length - 1 === 1 ? "" : "s"}</small>
+              </div>
+              {secondary.length === 0 ? (
+                <div className="quiet-state">No secondary attention items right now.</div>
+              ) : (
+                secondary.map((item) => {
+                  const operationalAction = operationalActionByAttentionId.get(item.id) ?? null;
+                  return (
+                    <article className="attention-row" key={item.id} id={operationalAction ? `action-${operationalAction.id}` : undefined}>
+                      <i className={`attention-dot ${toneFor(item)}`} aria-hidden="true" />
+                      <div className="attention-row-copy">
+                        <span>{labelFor(item)}</span>
+                        <strong>{item.title}</strong>
+                        <p>{item.whyThis[0]}</p>
+                        {operationalAction && (
+                          <OperationalActionControls
+                            actionId={operationalAction.id}
+                            status={operationalAction.status as "OPEN" | "IN_PROGRESS" | "BLOCKED"}
+                            version={operationalAction.version}
+                            executionMode={operationalAction.executionMode}
+                          />
+                        )}
+                      </div>
+                      <div className="attention-row-actions">
+                        <AttentionExplainability
+                          item={item}
+                          compact
+                          resolvedBasedOn={resolvedRefsFor(item.basedOn)}
+                          resolvedBlockedBy={resolvedRefsFor(item.blockedBy)}
+                        />
+                        <a href={item.action.href} aria-label={item.action.label}>→</a>
+                      </div>
+                    </article>
+                  );
+                })
+              )}
+              {remainingSecondaryCount > 0 && (
+                <div className="attention-overflow-note">+ {remainingSecondaryCount} lower-priority signal{remainingSecondaryCount === 1 ? "" : "s"} not expanded here.</div>
+              )}
+            </section>
+          </main>
+
+          <aside className="today-context-rail" aria-label="Context for primary attention">
+            <div className="today-context-rail-head">
+              <span className="signal-label">CONTEXT</span>
+              <h2>Why this is here</h2>
+              <p>Only direct provenance from the current primary recommendation is shown here. Recency alone does not make something relevant.</p>
+            </div>
+
+            {primary ? (
+              <>
+                {primaryMemoryRefs.length > 0 && (
+                  <section className="today-context-group">
+                    <span>MEMORY IN USE</span>
+                    <div className="today-context-ref-list">
+                      {primaryMemoryRefs.slice(0, 4).map((ref) => ref.href ? (
+                        <a href={ref.href} key={`${ref.type}-${ref.id}-memory`}>
+                          <small>{ref.type}</small>
+                          <strong>{ref.label}</strong>
+                          <i aria-hidden="true">→</i>
+                        </a>
+                      ) : (
+                        <div className="today-context-ref unresolved" key={`${ref.type}-${ref.id}-memory`}>
+                          <small>{ref.type}</small>
+                          <strong>{ref.label}</strong>
+                          <i>UNRESOLVED</i>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {primaryWorkflowRefs.length > 0 && (
+                  <section className="today-context-group">
+                    <span>WORKFLOW CONTEXT</span>
+                    <div className="today-context-ref-list">
+                      {primaryWorkflowRefs.slice(0, 4).map((ref) => ref.href ? (
+                        <a href={ref.href} key={`${ref.type}-${ref.id}-workflow`}>
+                          <small>{ref.type}</small>
+                          <strong>{ref.label}</strong>
+                          <i aria-hidden="true">→</i>
+                        </a>
+                      ) : (
+                        <div className="today-context-ref unresolved" key={`${ref.type}-${ref.id}-workflow`}>
+                          <small>{ref.type}</small>
+                          <strong>{ref.label}</strong>
+                          <i>UNRESOLVED</i>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {primaryBlockedBy.length > 0 && (
+                  <section className="today-context-group">
+                    <span>BLOCKED BY</span>
+                    <div className="today-context-ref-list">
+                      {primaryBlockedBy.slice(0, 3).map((ref) => ref.href ? (
+                        <a href={ref.href} key={`${ref.type}-${ref.id}-blocked`}>
+                          <small>{ref.type}</small>
+                          <strong>{ref.label}</strong>
+                          <i aria-hidden="true">→</i>
+                        </a>
+                      ) : (
+                        <div className="today-context-ref unresolved" key={`${ref.type}-${ref.id}-blocked`}>
+                          <small>{ref.type}</small>
+                          <strong>{ref.label}</strong>
+                          <i>UNRESOLVED</i>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {primaryBasedOn.length === 0 && primaryBlockedBy.length === 0 && (
+                  <div className="today-context-empty">
+                    No additional entity reference is required for this deterministic recommendation.
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="today-context-empty">
+                No primary attention item is active, so Artist OS has no recommendation provenance to surface here.
+              </div>
+            )}
+
+            <footer className="today-context-links">
+              <a href="/memory">Open Memory →</a>
+              <a href="/knowledge">Open Brain →</a>
+            </footer>
+          </aside>
         </div>
       </section>
     </AppShell>
