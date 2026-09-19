@@ -167,12 +167,6 @@ header > p:last-child, .focus p:last-child { color: var(--muted); max-width: 720
 .state-card .auth-button { margin-top: 18px; }
 
 @media (max-width: 800px) {
-  .shell { grid-template-columns: 1fr; }
-  .sidebar { position: relative; height: auto; border-right: 0; border-bottom: 1px solid var(--border); }
-  nav { display: flex; flex-wrap: wrap; margin-top: 24px; }
-  .session-state { margin-top: 24px; }
-  .stage { margin-top: 14px; }
-  .content { padding: 34px 22px; }
   h1 { font-size: 44px; }
   .grid, .product-grid { grid-template-columns: 1fr; }
   .product-card-wide { grid-column: auto; }
