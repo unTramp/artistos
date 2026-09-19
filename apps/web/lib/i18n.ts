@@ -13,6 +13,7 @@ const en = {
     workspaceAria: "Artist OS workspace",
     brandTagline: "Human-Controlled · Evidence-Driven",
     activeWorkspace: "Active workspace",
+    workspaceLabel: "Artist Workspace",
     authRequired: "Authentication required",
     primaryNav: "Primary",
     navigation: {
@@ -132,6 +133,8 @@ const en = {
     starts: "Starts",
     ends: "Ends",
     footer: "PRIMARY · ARTIST-LEVEL · HUMAN-CONTROLLED",
+    primary: "PRIMARY",
+    secondary: "SECONDARY",
     save: "Set focus",
     saving: "Saving…",
     complete: "Complete focus",
@@ -215,6 +218,7 @@ const ru: typeof en = {
     workspaceAria: "Рабочее пространство Artist OS",
     brandTagline: "Под контролем человека · На основе данных",
     activeWorkspace: "Активное пространство",
+    workspaceLabel: "Рабочее пространство артиста",
     authRequired: "Требуется вход",
     primaryNav: "Основная навигация",
     navigation: {
@@ -334,6 +338,8 @@ const ru: typeof en = {
     starts: "Начало",
     ends: "Окончание",
     footer: "ГЛАВНЫЙ · УРОВЕНЬ АРТИСТА · ПОД КОНТРОЛЕМ ЧЕЛОВЕКА",
+    primary: "ГЛАВНЫЙ",
+    secondary: "ВТОРИЧНЫЙ",
     save: "Задать фокус",
     saving: "Сохранение…",
     complete: "Завершить фокус",
