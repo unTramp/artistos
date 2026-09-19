@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type KeyboardEvent } from "react";
+import { useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 
 export type AuthoringRailItem = {
   id: string;
@@ -51,7 +51,7 @@ export function NumberedAuthoringRail({
       className={className ? `ui-authoring-rail ${className}` : "ui-authoring-rail"}
       aria-label={label}
       role="navigation"
-      style={{ "--authoring-columns": Math.max(1, items.length) } as React.CSSProperties}
+      style={{ "--authoring-columns": Math.max(1, items.length) } as CSSProperties}
     >
       {items.map((item, index) => {
         const active = item.id === activeId;
@@ -84,7 +84,7 @@ export function AuthoringSection({
 }: {
   id?: string;
   labelledBy?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 }) {
   return (
