@@ -1,8 +1,9 @@
 import "server-only";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { PgWorkspaceSettingsReader } from "@artist-os/db";
 import { DEFAULT_UI_LOCALE, normalizeUiLocale, UI_LOCALE_COOKIE, type UiLocale } from "./i18n";
+import { resolveAuthenticatedActorContext } from "./actor-context";
 import { getDatabaseRuntime } from "./runtime";
 
 export async function resolveUiLocale(artistId?: string | null): Promise<UiLocale> {
@@ -10,9 +11,15 @@ export async function resolveUiLocale(artistId?: string | null): Promise<UiLocal
   const cookieValue = store.get(UI_LOCALE_COOKIE)?.value;
   if (cookieValue) return normalizeUiLocale(cookieValue);
 
-  if (artistId) {
+  let resolvedArtistId = artistId ?? null;
+  if (artistId === undefined) {
+    const actorContext = await resolveAuthenticatedActorContext(await headers());
+    resolvedArtistId = actorContext?.artistId ?? null;
+  }
+
+  if (resolvedArtistId) {
     const reader = new PgWorkspaceSettingsReader(getDatabaseRuntime().db);
-    const persisted = await reader.getLocale(artistId);
+    const persisted = await reader.getLocale(resolvedArtistId);
     if (persisted) return normalizeUiLocale(persisted);
   }
 
