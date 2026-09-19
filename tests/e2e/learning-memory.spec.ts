@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("validates a Learning, surfaces it on Today and uses it in Decision lineage", async ({ page }) => {
+test("validates a Learning, preserves it in Memory and uses it in Decision lineage", async ({ page }) => {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const email = `learning-memory-${suffix}@example.test`;
   const statement = "Performance-first short videos create stronger downstream music intent.";
@@ -45,18 +45,20 @@ test("validates a Learning, surfaces it on Today and uses it in Decision lineage
   await card.getByRole("button", { name: "Confirm" }).click();
   await expect(card.getByText("VALIDATED", { exact: true })).toBeVisible();
 
-  await page.goto("/");
-  const memoryPanel = page.locator(".memory-panel");
-  await expect(memoryPanel.getByText("VALIDATED LEARNING", { exact: true })).toBeVisible();
-  await expect(memoryPanel.getByText(statement, { exact: true })).toBeVisible();
+  await page.goto("/memory");
+  const recentLearning = page.locator(".memory-recent-row").filter({ hasText: statement });
+  await expect(recentLearning).toBeVisible();
+  await expect(recentLearning.getByText("LEARNING", { exact: true })).toBeVisible();
 
-  await memoryPanel.getByRole("link", { name: "Open Learning Memory →" }).click();
-  await expect(card.getByText("VALIDATED", { exact: true })).toBeVisible();
+  await recentLearning.click();
+  await page.waitForURL("**/learnings#learning-*");
+  const validatedCard = page.locator(".decision-card").filter({ hasText: statement });
+  await expect(validatedCard.getByText("VALIDATED", { exact: true })).toBeVisible();
 
-  await card.getByRole("button", { name: "Use in decision →" }).click();
-  await card.getByLabel("Decision title").fill("Use performance-first short videos");
-  await card.getByLabel("What are we choosing because of this Learning?").fill("Prioritize performance-first short videos for the next content batch.");
-  await card.getByRole("button", { name: "Create decision" }).click();
+  await validatedCard.getByRole("button", { name: "Use in decision →" }).click();
+  await validatedCard.getByLabel("Decision title").fill("Use performance-first short videos");
+  await validatedCard.getByLabel("What are we choosing because of this Learning?").fill("Prioritize performance-first short videos for the next content batch.");
+  await validatedCard.getByRole("button", { name: "Create decision" }).click();
   await page.waitForURL("**/decisions/*");
 
   await expect(page.getByRole("heading", { name: "Use performance-first short videos" })).toBeVisible();

@@ -35,7 +35,7 @@ test("signs up, uses command palette, manages current focus, explains maturity, 
   await page.getByRole("button", { name: "Create my Artist OS" }).click();
 
   await page.waitForURL("**/");
-  await expect(page.getByRole("heading", { name: "What needs attention now?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Today", exact: true })).toBeVisible();
   await expect(page.getByText("Activate your artist identity", { exact: true })).toBeVisible();
   await expect(page.getByText(email, { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Today", exact: true })).toHaveClass(/active/);

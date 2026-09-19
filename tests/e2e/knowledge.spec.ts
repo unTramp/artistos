@@ -17,7 +17,7 @@ test("reviews Candidate Knowledge and rebuilds Artist Brain from approved source
   await page.getByLabel("Language / locale").fill("en");
   await page.getByRole("button", { name: "Create my Artist OS" }).click();
   await page.waitForURL("**/");
-  await expect(page.getByRole("heading", { name: "What needs attention now?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Today", exact: true })).toBeVisible();
 
   await page.goto("/knowledge");
   await expect(page.getByRole("heading", { name: "Memory that earns permanence", exact: true })).toBeVisible();
