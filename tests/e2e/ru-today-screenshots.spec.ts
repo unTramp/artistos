@@ -84,7 +84,7 @@ test("capture Russian Today after EN/RU localization", async ({ page }) => {
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.screenshot({ path: "artifacts/ru-today/03-today-ru-why.png", fullPage: true });
 
-  await page.getByRole("button", { name: "Закрыть объяснение" }).click();
+  await page.locator(".drawer-close").click();
   await page.getByRole("button", { name: "Открыть палитру команд" }).click();
   await expect(page.getByRole("dialog", { name: "Открыть палитру команд" })).toBeVisible();
   await page.screenshot({ path: "artifacts/ru-today/04-command-palette-ru.png", fullPage: true });
