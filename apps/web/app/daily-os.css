@@ -76,19 +76,12 @@
 .form-message { margin: 0; color: #f59e0b; font-size: 10px; }
 
 /* Bring legacy deep screens into the same visual language without changing their domain UX yet. */
-.product-header h1 { font-size: clamp(38px, 4.4vw, 60px); letter-spacing: -.04em; }
+.product-header h1 { font-size: clamp(36px, 4vw, 44px); letter-spacing: -.035em; }
 .product-card, .collection-list article, .song-table, .artist-brain-board, .factory-angle-card, .factory-unit-list article { border-color: var(--border); background-color: var(--surface); }
 .status-chip { color: #c4b5fd; border-color: rgba(139,92,246,.28); background: rgba(139,92,246,.08); }
 .inline-link { color: #b9a8ed; }
 
 @media (max-width: 900px) {
-  .shell { grid-template-columns: 1fr; }
-  .sidebar { position: relative; height: auto; padding-bottom: 10px; border-right: 0; border-bottom: 1px solid var(--border); }
-  .brand-row { margin: 0 -12px; }
-  .workspace-card, .loop-card { display: none; }
-  .sidebar nav { display: flex; flex-wrap: wrap; margin: 8px 0 0; }
-  .topbar { display: none; }
-  .content { padding: 24px 18px 42px; }
   .today-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .today-columns, .onboarding-shell { grid-template-columns: 1fr; }
   .today-header { display: block; }
