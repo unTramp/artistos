@@ -85,6 +85,22 @@ test("Weekly Review recommendation becomes bounded focus and closes an Operation
   });
   expect(active.data.actions.some((action) => action.id === actionId)).toBe(false);
 
+  await page.getByRole("button", { name: "RU" }).click();
+  await page.waitForLoadState("domcontentloaded");
+  await expect(page.locator("html")).toHaveAttribute("lang", "ru");
+  await expect(page.getByRole("heading", { name: "Сегодня", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Музыка", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "RU" })).toHaveAttribute("aria-pressed", "true");
+
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("lang", "ru");
+  await expect(page.getByRole("heading", { name: "Сегодня", exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "EN" }).click();
+  await page.waitForLoadState("domcontentloaded");
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.getByRole("heading", { name: "Today", exact: true })).toBeVisible();
+
   await page.goto(`/actions/${actionId}`);
   await expect(page.getByRole("heading", { name: actionTitle })).toBeVisible();
   await expect(page.locator(".status-chip").getByText("DONE", { exact: true })).toBeVisible();
