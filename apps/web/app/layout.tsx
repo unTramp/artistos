@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./design-system.css";
 import "./commands.css";
 import "./execution.css";
 import "./factory-ai.css";

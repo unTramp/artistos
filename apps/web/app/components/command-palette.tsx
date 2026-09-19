@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { emitProductTelemetry } from "@/lib/product-telemetry-client";
+import { useModalFocusTrap } from "./ui/use-modal-focus-trap";
 
 type CommandGroup = "Navigate" | "Create" | "Operate";
 
@@ -37,6 +38,8 @@ export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const filtered = useMemo(() => {
@@ -66,6 +69,14 @@ export function CommandPalette() {
     setActiveIndex(0);
   }, []);
 
+  useModalFocusTrap({
+    open,
+    containerRef: dialogRef,
+    initialFocusRef: inputRef,
+    restoreFocusRef: triggerRef,
+    onEscape: closePalette
+  });
+
   const execute = (command: PaletteCommand) => {
     emitProductTelemetry({
       eventName: "COMMAND_PALETTE_EXECUTED",
@@ -82,19 +93,11 @@ export function CommandPalette() {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         if (open) closePalette(); else openPalette("shortcut");
-        return;
       }
-      if (event.key === "Escape" && open) closePalette();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [closePalette, open, openPalette]);
-
-  useEffect(() => {
-    if (!open) return;
-    setActiveIndex(0);
-    requestAnimationFrame(() => inputRef.current?.focus());
-  }, [open]);
 
   useEffect(() => {
     if (activeIndex >= filtered.length) setActiveIndex(0);
@@ -115,7 +118,15 @@ export function CommandPalette() {
 
   return (
     <>
-      <button className="command-shell" type="button" onClick={() => openPalette("button")} aria-label="Open command palette">
+      <button
+        ref={triggerRef}
+        className="command-shell"
+        type="button"
+        onClick={() => openPalette("button")}
+        aria-label="Open command palette"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+      >
         <p>Search or run command</p>
         <span>⌘K</span>
       </button>
@@ -123,9 +134,16 @@ export function CommandPalette() {
       {open && (
         <div className="palette-layer" role="presentation">
           <button className="palette-backdrop" type="button" aria-label="Close command palette" onClick={closePalette} />
-          <section className="command-palette" role="dialog" aria-modal="true" aria-label="Command palette">
+          <section
+            ref={dialogRef}
+            className="command-palette ui-dialog-surface"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Command palette"
+            tabIndex={-1}
+          >
             <header className="palette-search-row">
-              <span className="palette-search-icon">⌕</span>
+              <span className="palette-search-icon" aria-hidden="true">⌕</span>
               <input
                 ref={inputRef}
                 value={query}
@@ -157,7 +175,7 @@ export function CommandPalette() {
                     <strong>{command.label}</strong>
                     <small>{command.description}</small>
                   </span>
-                  <span className="palette-enter">↵</span>
+                  <span className="palette-enter" aria-hidden="true">↵</span>
                 </button>
               ))}
             </div>
