@@ -25,8 +25,6 @@ type BasisMaturity = {
 const memoryRefTypes = new Set(["Decision", "Learning", "Experiment", "Insight", "Hypothesis", "Evidence"]);
 const workflowRefTypes = new Set(["OperationalAction", "ContentUnit", "ContentAngle", "WeeklyReview"]);
 
-const shortId = (id: string) => id.length > 18 ? `${id.slice(0, 8)}…${id.slice(-5)}` : id;
-
 const basisMaturityFor = (item: AttentionItem): BasisMaturity => {
   const countMap = new Map<string, number>();
   for (const ref of item.basedOn) countMap.set(ref.type, (countMap.get(ref.type) ?? 0) + 1);
@@ -231,10 +229,9 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
                           <span aria-hidden="true">→</span>
                         </a>
                       ) : (
-                        <div className="drawer-ref" key={`${ref.type}-${ref.id}-${ref.version ?? "current"}`}>
+                        <div className="drawer-ref unresolved" key={`${ref.type}-${ref.id}-${ref.version ?? "current"}`}>
                           <strong>{ref.label}</strong>
-                          <code>{shortId(ref.id)}</code>
-                          <small>{ref.resolved ? ref.type : "UNRESOLVED"}</small>
+                          <small>{ref.type} · UNRESOLVED</small>
                         </div>
                       ))}
                     </div>
@@ -279,10 +276,9 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
                           <span aria-hidden="true">→</span>
                         </a>
                       ) : (
-                        <div className="drawer-ref" key={`blocked-${ref.type}-${ref.id}`}>
+                        <div className="drawer-ref unresolved" key={`blocked-${ref.type}-${ref.id}`}>
                           <strong>{ref.label}</strong>
-                          <code>{shortId(ref.id)}</code>
-                          <small>UNRESOLVED</small>
+                          <small>{ref.type} · UNRESOLVED</small>
                         </div>
                       ))}
                     </div>
