@@ -32,7 +32,7 @@ const initialsFor = (label: string) => {
 export async function AppShell({
   activeId,
   sessionEmail,
-  workspaceLabel = "Artist Workspace",
+  workspaceLabel,
   children,
   locale
 }: {
@@ -45,6 +45,7 @@ export async function AppShell({
 }) {
   const resolvedLocale = locale ?? await resolveUiLocale();
   const copy = getUiCopy(resolvedLocale);
+  const resolvedWorkspaceLabel = workspaceLabel ?? copy.shell.workspaceLabel;
   const primaryActiveId = primaryNavByRoute[activeId] ?? activeId;
 
   return (
@@ -59,9 +60,9 @@ export async function AppShell({
         </div>
 
         <div className="workspace-card">
-          <div className="workspace-avatar" aria-hidden="true">{initialsFor(workspaceLabel)}</div>
+          <div className="workspace-avatar" aria-hidden="true">{initialsFor(resolvedWorkspaceLabel)}</div>
           <div>
-            <strong>{workspaceLabel}</strong>
+            <strong>{resolvedWorkspaceLabel}</strong>
             <span>{sessionEmail ? copy.shell.activeWorkspace : copy.shell.authRequired}</span>
           </div>
         </div>
@@ -84,6 +85,7 @@ export async function AppShell({
           })}
         </nav>
 
+        <div className="sidebar-language-switcher"><LanguageSwitcher locale={resolvedLocale} /></div>
         <div className="loop-card" aria-label={copy.shell.learningLoop}>
           <span>{copy.shell.learningLoop}</span>
           <p>{copy.shell.learningLoopPath}</p>
