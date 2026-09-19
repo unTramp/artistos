@@ -23,7 +23,7 @@ export const uiCopy = {
       workspaceLabel: "Artist Workspace"
     },
     nav: { today: "Today", create: "Create", music: "Music", brain: "Brain", memory: "Memory", account: "Account" },
-    language: { label: "Interface language", en: "EN", ru: "RU", saving: "Saving language…" },
+    language: { label: "Interface locale", en: "EN", ru: "RU", saving: "Saving language…" },
     command: {
       open: "Open command palette",
       search: "Search or run command",
@@ -181,7 +181,7 @@ export const uiCopy = {
       workspaceLabel: "Пространство артиста"
     },
     nav: { today: "Сегодня", create: "Создать", music: "Музыка", brain: "Мозг", memory: "Память", account: "Аккаунт" },
-    language: { label: "Язык интерфейса", en: "EN", ru: "RU", saving: "Сохраняем язык…" },
+    language: { label: "Локаль интерфейса", en: "EN", ru: "RU", saving: "Сохраняем язык…" },
     command: {
       open: "Открыть палитру команд",
       search: "Поиск или команда",
