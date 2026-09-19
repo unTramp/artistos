@@ -1,5 +1,5 @@
-import type { ComponentType, ReactNode } from "react";
-import { Brain, History, Home, Music2, Orbit, Sparkles, UserRound } from "lucide-react";
+import type { ReactNode } from "react";
+import { Brain, History, Home, Music2, Orbit, Sparkles, UserRound, type LucideIcon } from "lucide-react";
 import { navigation } from "../../lib/navigation";
 import { CommandPalette } from "./command-palette";
 
@@ -11,7 +11,7 @@ const primaryNavByRoute: Record<string, string> = {
   factory: "create"
 };
 
-const navIcons: Record<string, ComponentType<{ "aria-hidden"?: boolean; focusable?: boolean }>> = {
+const navIcons: Record<string, LucideIcon> = {
   today: Home,
   create: Sparkles,
   music: Music2,
