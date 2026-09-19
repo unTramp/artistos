@@ -239,7 +239,7 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
                       ))}
                     </div>
                   ) : (
-                    <p className="drawer-empty">No additional entity reference is required for this deterministic state.</p>
+                    <p className="drawer-empty">{locale === "ru" ? "Для этого детерминированного состояния дополнительные ссылки на сущности не требуются." : "No additional entity reference is required for this deterministic state."}</p>
                   )}
                 </section>
 
@@ -253,7 +253,7 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
   "WORKFLOW EVIDENCE": "ДАННЫЕ РАБОЧЕГО ПРОЦЕССА",
   "ARTIST-SPECIFIC MEMORY": "ПАМЯТЬ КОНКРЕТНОГО АРТИСТА"
 } as const)[maturity.label] : maturity.label}</strong>
-                      <small>{item.basedOn.length} direct provenance ref{item.basedOn.length === 1 ? "" : "s"}</small>
+                      <small>{locale === "ru" ? `${item.basedOn.length} прямых ссылок происхождения` : `${item.basedOn.length} direct provenance ref${item.basedOn.length === 1 ? "" : "s"}`}</small>
                     </div>
                     <p>{maturity.description}</p>
                     {maturity.counts.length > 0 && (
@@ -269,13 +269,13 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
                   {item.uncertainty.length > 0 ? (
                     <ul>{item.uncertainty.map((entry) => <li key={entry}>{entry}</li>)}</ul>
                   ) : (
-                    <p className="drawer-empty">Low — this recommendation comes from deterministic current state.</p>
+                    <p className="drawer-empty">{locale === "ru" ? "Низкая — рекомендация получена из детерминированного текущего состояния." : "Low — this recommendation comes from deterministic current state."}</p>
                   )}
                 </section>
 
                 {item.blockedBy.length > 0 && (
                   <section className="drawer-section">
-                    <span>BLOCKED BY</span>
+                    <span>{locale === "ru" ? "ЗАБЛОКИРОВАНО" : "BLOCKED BY"}</span>
                     <div className="drawer-ref-grid">
                       {blockedBy.map((ref) => ref.href ? (
                         <a className="drawer-ref drawer-ref-link" href={ref.href} key={`blocked-${ref.type}-${ref.id}`}>
@@ -286,7 +286,7 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
                       ) : (
                         <div className="drawer-ref unresolved" key={`blocked-${ref.type}-${ref.id}`}>
                           <strong>{ref.label}</strong>
-                          <small>{ref.type} · UNRESOLVED</small>
+                          <small>{ref.type} · {copy.unresolved}</small>
                         </div>
                       ))}
                     </div>
@@ -295,25 +295,25 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
 
                 <section className="drawer-section">
                   <span>{copy.expected}</span>
-                  <p>{item.expectedEffect ?? "Completing this item resolves the currently surfaced attention state."}</p>
+                  <p>{item.expectedEffect ?? (locale === "ru" ? "Завершение этого пункта снимает текущий сигнал внимания." : "Completing this item resolves the currently surfaced attention state.")}</p>
                 </section>
 
                 <section className="drawer-section">
                   <span>{copy.mayLearn}</span>
-                  <p>{item.whatWillBeLearned ?? "No learning claim is implied — this is operational or readiness work."}</p>
+                  <p>{item.whatWillBeLearned ?? (locale === "ru" ? "Здесь не подразумевается новый вывод — это операционная работа или работа по готовности." : "No learning claim is implied — this is operational or readiness work.")}</p>
                 </section>
 
                 {item.guidanceRef && (
                   <section className="drawer-guidance">
                     <div>
-                      <span>LEARN BEFORE DOING</span>
+                      <span>{locale === "ru" ? "РАЗОБРАТЬСЯ ПЕРЕД ДЕЙСТВИЕМ" : "LEARN BEFORE DOING"}</span>
                       <strong>{item.guidanceRef.label}</strong>
-                      {item.guidanceRef.estimatedMinutes && <small>{item.guidanceRef.estimatedMinutes} min · optional</small>}
+                      {item.guidanceRef.estimatedMinutes && <small>{item.guidanceRef.estimatedMinutes} {locale === "ru" ? "мин · необязательно" : "min · optional"}</small>}
                     </div>
                     {guide ? (
-                      <button type="button" onClick={openGuidance}>Learn →</button>
+                      <button type="button" onClick={openGuidance}>{locale === "ru" ? "Разобраться" : "Learn"} →</button>
                     ) : (
-                      <button type="button" disabled title="Guidance content is not available for this reference">Unavailable</button>
+                      <button type="button" disabled title={locale === "ru" ? "Подсказка для этой ссылки пока недоступна" : "Guidance content is not available for this reference"}>{locale === "ru" ? "Недоступно" : "Unavailable"}</button>
                     )}
                   </section>
                 )}
