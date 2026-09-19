@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useI18n } from "./locale-provider";
 
 type CurrentFocus = {
   id: string;
@@ -29,6 +30,8 @@ const addDays = (dateOnly: string, days: number) => {
 
 export function CurrentFocusEditor({ currentDate, current }: { currentDate: string; current: CurrentFocus | null }) {
   const router = useRouter();
+  const { messages } = useI18n();
+  const copy = messages.currentFocus;
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [statement, setStatement] = useState("");
@@ -69,14 +72,14 @@ export function CurrentFocusEditor({ currentDate, current }: { currentDate: stri
       const payload = await response.json() as ApiErrorPayload;
       if (!response.ok) {
         const firstFieldError = payload.error?.fieldErrors ? Object.values(payload.error.fieldErrors)[0] : undefined;
-        setMessage(firstFieldError ?? payload.error?.message ?? "Current focus could not be created.");
+        setMessage(firstFieldError ?? payload.error?.message ?? copy.createError);
         return;
       }
       reset();
       setOpen(false);
       router.refresh();
     } catch {
-      setMessage("Current focus could not be created. Try again.");
+      setMessage(copy.createRetry);
     } finally {
       setPending(false);
     }
@@ -96,12 +99,12 @@ export function CurrentFocusEditor({ currentDate, current }: { currentDate: stri
       });
       const payload = await response.json() as ApiErrorPayload;
       if (!response.ok) {
-        setMessage(payload.error?.message ?? "Current focus could not be completed.");
+        setMessage(payload.error?.message ?? copy.completeError);
         return;
       }
       router.refresh();
     } catch {
-      setMessage("Current focus could not be completed. Try again.");
+      setMessage(copy.completeRetry);
     } finally {
       setPending(false);
     }
@@ -109,9 +112,9 @@ export function CurrentFocusEditor({ currentDate, current }: { currentDate: stri
 
   if (current) {
     return (
-      <section className="today-focus-card" id="current-focus" aria-label="Current focus">
+      <section className="today-focus-card" id="current-focus" aria-label={copy.aria}>
         <div className="today-focus-copy">
-          <span className="signal-label">CURRENT FOCUS · {current.priority}</span>
+          <span className="signal-label">{copy.currentFocus} · {current.priority}</span>
           <strong>{current.title}</strong>
           <p>{current.statement}</p>
           {message && <small className="focus-form-message" role="alert">{message}</small>}
@@ -119,7 +122,7 @@ export function CurrentFocusEditor({ currentDate, current }: { currentDate: stri
         <div className="today-focus-actions">
           <small>{current.periodStart} → {current.periodEnd}</small>
           <button className="focus-complete-button" type="button" onClick={completeFocus} disabled={pending}>
-            {pending ? "Completing…" : "Complete focus"}
+            {pending ? copy.completing : copy.complete}
           </button>
         </div>
       </section>
@@ -131,46 +134,46 @@ export function CurrentFocusEditor({ currentDate, current }: { currentDate: stri
       {!open ? (
         <>
           <div>
-            <span className="signal-label">CURRENT FOCUS</span>
-            <strong>No primary focus yet</strong>
-            <p>Define one operational focus for the current period. When it is linked to concrete work, Today can use that evidence as a bounded ranking signal.</p>
+            <span className="signal-label">{copy.currentFocus}</span>
+            <strong>{copy.noPrimary}</strong>
+            <p>{copy.noPrimaryDescription}</p>
           </div>
-          <button className="focus-set-button" type="button" onClick={() => setOpen(true)}>Set current focus</button>
+          <button className="focus-set-button" type="button" onClick={() => setOpen(true)}>{copy.setCurrentFocus}</button>
         </>
       ) : (
         <form className="focus-editor-form" onSubmit={createFocus}>
           <div className="focus-editor-heading">
             <div>
-              <span className="signal-label">SET CURRENT FOCUS</span>
-              <strong>What matters most right now?</strong>
-              <p>Keep this operational. A manual focus records your intent; linked evidence from workflows can later make its effect on Today explicit.</p>
+              <span className="signal-label">{copy.setCurrentFocusLabel}</span>
+              <strong>{copy.whatMatters}</strong>
+              <p>{copy.whatMattersDescription}</p>
             </div>
-            <button type="button" className="focus-cancel-button" onClick={() => { reset(); setOpen(false); }} disabled={pending}>Cancel</button>
+            <button type="button" className="focus-cancel-button" onClick={() => { reset(); setOpen(false); }} disabled={pending}>{copy.cancel}</button>
           </div>
 
           <div className="focus-editor-grid">
             <label className="focus-field focus-field-wide">
-              <span>Focus title</span>
-              <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Build momentum around the next release" maxLength={200} required />
+              <span>{copy.titleLabel}</span>
+              <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder={copy.titlePlaceholder} maxLength={200} required />
             </label>
             <label className="focus-field focus-field-wide">
-              <span>What does success look like?</span>
-              <textarea value={statement} onChange={(event) => setStatement(event.target.value)} placeholder="Describe the operational intent in one or two sentences." maxLength={2000} rows={3} required />
+              <span>{copy.successLabel}</span>
+              <textarea value={statement} onChange={(event) => setStatement(event.target.value)} placeholder={copy.successPlaceholder} maxLength={2000} rows={3} required />
             </label>
             <label className="focus-field">
-              <span>Starts</span>
+              <span>{copy.starts}</span>
               <input type="date" value={periodStart} onChange={(event) => setPeriodStart(event.target.value)} required />
             </label>
             <label className="focus-field">
-              <span>Ends</span>
+              <span>{copy.ends}</span>
               <input type="date" value={periodEnd} min={periodStart} onChange={(event) => setPeriodEnd(event.target.value)} required />
             </label>
           </div>
 
           {message && <p className="focus-form-message" role="alert">{message}</p>}
           <div className="focus-editor-footer">
-            <span>PRIMARY · ARTIST-LEVEL · HUMAN-CONTROLLED</span>
-            <button className="primary-action" type="submit" disabled={pending}>{pending ? "Saving…" : "Set focus"}</button>
+            <span>{copy.footer}</span>
+            <button className="primary-action" type="submit" disabled={pending}>{pending ? copy.saving : copy.save}</button>
           </div>
         </form>
       )}
