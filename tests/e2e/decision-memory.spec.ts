@@ -38,9 +38,12 @@ test("records Decision Memory and explicitly overrides a conflicting prior Decis
   await page.getByRole("button", { name: "Record decision", exact: true }).last().click();
 
   await expect(page.locator(".decision-card").filter({ hasText: "Use Trastevere as next release" })).toBeVisible();
-  await page.goto("/");
-  await expect(page.getByText("Use Trastevere as next release", { exact: true })).toBeVisible();
-  await page.getByRole("link", { name: "Open Decision Memory →" }).click();
+
+  await page.goto("/memory");
+  const recentDecision = page.locator(".memory-recent-row").filter({ hasText: "Use Trastevere as next release" });
+  await expect(recentDecision).toBeVisible();
+  await expect(recentDecision.getByText("DECISION", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Open Decisions →" }).click();
 
   await page.getByRole("button", { name: "Record decision" }).click();
   await page.getByLabel("Title").fill("Use Always on My Mind as next release");
