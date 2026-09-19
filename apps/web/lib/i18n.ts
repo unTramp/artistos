@@ -19,7 +19,8 @@ export const uiCopy = {
       contextReady: "Context Ready",
       signIn: "Sign in",
       primaryNav: "Primary",
-      workspace: "Artist OS workspace"
+      workspace: "Artist OS workspace",
+      workspaceLabel: "Artist Workspace"
     },
     nav: { today: "Today", create: "Create", music: "Music", brain: "Brain", memory: "Memory", account: "Account" },
     language: { label: "Interface language", en: "EN", ru: "RU", saving: "Saving language…" },
@@ -175,7 +176,8 @@ export const uiCopy = {
       contextReady: "Контекст готов",
       signIn: "Войти",
       primaryNav: "Основная навигация",
-      workspace: "Рабочее пространство Artist OS"
+      workspace: "Рабочее пространство Artist OS",
+      workspaceLabel: "Пространство артиста"
     },
     nav: { today: "Сегодня", create: "Создать", music: "Музыка", brain: "Мозг", memory: "Память", account: "Аккаунт" },
     language: { label: "Язык интерфейса", en: "EN", ru: "RU", saving: "Сохраняем язык…" },
@@ -261,7 +263,7 @@ export const uiCopy = {
       successPlaceholder: "Опишите рабочую цель одним-двумя предложениями.",
       starts: "Начало",
       ends: "Окончание",
-      footer: "PRIMARY · УРОВЕНЬ АРТИСТА · ПОД КОНТРОЛЕМ ЧЕЛОВЕКА",
+      footer: "ГЛАВНЫЙ · УРОВЕНЬ АРТИСТА · ПОД КОНТРОЛЕМ ЧЕЛОВЕКА",
       saving: "Сохраняем…",
       set: "Задать фокус"
     },
@@ -393,3 +395,21 @@ export const localizeAttentionItem = (locale: UiLocale, item: AttentionItem): At
     action: { ...item.action, label: actionLabels[item.action.label] ?? item.action.label }
   };
 };
+
+
+const entityTypeRu: Record<string, string> = {
+  Decision: "Решение",
+  Learning: "Вывод",
+  WeeklyReview: "Недельный обзор",
+  OperationalAction: "Действие",
+  ContentUnit: "Контент-единица",
+  ContentAngle: "Контент-идея",
+  PlanningObjective: "Цель",
+  CandidateKnowledge: "Кандидат в знания",
+  IdentityVersion: "Версия Identity",
+  ArtistIdentity: "Identity артиста",
+  Song: "Песня"
+};
+
+export const localizeEntityType = (locale: UiLocale, type: string) =>
+  locale === "ru" ? (entityTypeRu[type] ?? type) : type;
