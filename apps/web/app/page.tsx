@@ -18,7 +18,7 @@ import { hrefForOperationalSource } from "@/lib/entity-href";
 import { entityReferenceKey } from "@/lib/entity-reference";
 import { EntityReferenceResolver } from "@/lib/entity-reference-resolver";
 import { getDatabaseRuntime } from "@/lib/runtime";
-import { getUiCopy, localizeAttentionItem, type UiLocale } from "@/lib/i18n";
+import { getUiCopy, localizeAttentionItem, localizeEntityType, type UiLocale } from "@/lib/i18n";
 import { resolveUiLocale } from "@/lib/ui-locale-server";
 
 const toneFor = (item: AttentionItem): "violet" | "amber" | "cyan" | "emerald" => {
@@ -183,7 +183,7 @@ export default async function HomePage() {
   const primaryWorkflowRefs = primaryBasedOn.filter((ref) => !memoryReferenceTypes.has(ref.type));
 
   return (
-    <AppShell activeId="today" sessionEmail={actorContext.user.email} workspaceLabel="Artist Workspace" locale={locale}>
+    <AppShell activeId="today" sessionEmail={actorContext.user.email} locale={locale}>
       <section className="today-shell">
         <PageHeader
           eyebrow={copy.today.eyebrow}
@@ -299,7 +299,7 @@ export default async function HomePage() {
             </section>
           </main>
 
-          <aside className="today-context-rail" aria-label="Context for primary attention">
+          <aside className="today-context-rail" aria-label={copy.today.contextAria}>
             <div className="today-context-rail-head">
               <span className="signal-label">{copy.today.context}</span>
               <h2>{copy.today.whyHere}</h2>
@@ -314,13 +314,13 @@ export default async function HomePage() {
                     <div className="today-context-ref-list">
                       {primaryMemoryRefs.slice(0, 4).map((ref) => ref.href ? (
                         <a href={ref.href} key={`${ref.type}-${ref.id}-memory`}>
-                          <small>{ref.type}</small>
+                          <small>{localizeEntityType(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i aria-hidden="true">→</i>
                         </a>
                       ) : (
                         <div className="today-context-ref unresolved" key={`${ref.type}-${ref.id}-memory`}>
-                          <small>{ref.type}</small>
+                          <small>{localizeEntityType(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i>{copy.today.unresolved}</i>
                         </div>
@@ -335,13 +335,13 @@ export default async function HomePage() {
                     <div className="today-context-ref-list">
                       {primaryWorkflowRefs.slice(0, 4).map((ref) => ref.href ? (
                         <a href={ref.href} key={`${ref.type}-${ref.id}-workflow`}>
-                          <small>{ref.type}</small>
+                          <small>{localizeEntityType(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i aria-hidden="true">→</i>
                         </a>
                       ) : (
                         <div className="today-context-ref unresolved" key={`${ref.type}-${ref.id}-workflow`}>
-                          <small>{ref.type}</small>
+                          <small>{localizeEntityType(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i>{copy.today.unresolved}</i>
                         </div>
@@ -356,13 +356,13 @@ export default async function HomePage() {
                     <div className="today-context-ref-list">
                       {primaryBlockedBy.slice(0, 3).map((ref) => ref.href ? (
                         <a href={ref.href} key={`${ref.type}-${ref.id}-blocked`}>
-                          <small>{ref.type}</small>
+                          <small>{localizeEntityType(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i aria-hidden="true">→</i>
                         </a>
                       ) : (
                         <div className="today-context-ref unresolved" key={`${ref.type}-${ref.id}-blocked`}>
-                          <small>{ref.type}</small>
+                          <small>{localizeEntityType(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i>{copy.today.unresolved}</i>
                         </div>
