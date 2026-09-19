@@ -11,6 +11,7 @@ export * from "./weekly-review-schema";
 export * from "./product-telemetry-schema";
 export * from "./runtime";
 export * from "./artist-workspace-writer";
+export * from "./workspace-settings";
 export * from "./artist-scope";
 export * from "./artist-foundation-writer";
 export * from "./artist-foundation-reader";

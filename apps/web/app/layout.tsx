@@ -12,12 +12,14 @@ import "./planning-objective.css";
 import "./current-focus.css";
 import "./decision-memory.css";
 import "./operational-action-controls.css";
+import { resolveUiLocale } from "@/lib/ui-locale-server";
 
 export const metadata: Metadata = {
   title: "Artist OS",
   description: "Human-controlled operating system for independent artists"
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body>{children}</body></html>;
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await resolveUiLocale();
+  return <html lang={locale}><body>{children}</body></html>;
 }

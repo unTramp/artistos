@@ -5,6 +5,7 @@ import type { AttentionItem } from "@artist-os/core";
 import { getContextualGuide } from "@/lib/contextual-guidance";
 import { emitProductTelemetry } from "@/lib/product-telemetry-client";
 import type { ResolvedEntityReference } from "@/lib/entity-reference";
+import { getUiCopy, localizeEntityType, type UiLocale } from "@/lib/i18n";
 import { useModalFocusTrap } from "./ui/use-modal-focus-trap";
 
 type Props = {
@@ -12,6 +13,7 @@ type Props = {
   compact?: boolean;
   resolvedBasedOn?: ResolvedEntityReference[];
   resolvedBlockedBy?: ResolvedEntityReference[];
+  locale: UiLocale;
 };
 
 type DrawerMode = "explanation" | "guidance";
@@ -61,14 +63,16 @@ const basisMaturityFor = (item: AttentionItem): BasisMaturity => {
   };
 };
 
-export function AttentionExplainability({ item, compact = false, resolvedBasedOn, resolvedBlockedBy }: Props) {
+export function AttentionExplainability({ item, compact = false, resolvedBasedOn, resolvedBlockedBy, locale }: Props) {
+  const copy = getUiCopy(locale);
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<DrawerMode>("explanation");
   const triggerRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const guide = item.guidanceRef ? getContextualGuide(item.guidanceRef.key) : null;
+  const guide = item.guidanceRef ? getContextualGuide(item.guidanceRef.key, locale) : null;
   const maturity = basisMaturityFor(item);
+  const maturityKey = maturity.label.replaceAll("-", "_").replaceAll(" ", "_") as keyof typeof copy.why.maturityLabels;
   const basedOn = resolvedBasedOn ?? item.basedOn.map((ref) => ({
     ...ref,
     label: ref.type,
@@ -157,34 +161,34 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
         className={compact ? "why-action compact" : "why-action"}
         type="button"
         onClick={openExplanation}
-        aria-label={`Why this recommendation: ${item.title}`}
+        aria-label={`${copy.why.triggerAria} ${item.title}`}
         aria-haspopup="dialog"
         aria-expanded={open}
       >
-        Why this?
+        {copy.why.trigger}
       </button>
 
       {open && (
         <div className="attention-drawer-layer" role="presentation">
-          <button className="attention-drawer-backdrop" aria-label="Close explanation" type="button" onClick={closeDrawer} />
+          <button className="attention-drawer-backdrop" aria-label={copy.why.close} type="button" onClick={closeDrawer} />
           <aside ref={drawerRef} className="attention-drawer" role="dialog" aria-modal="true" aria-labelledby={`attention-drawer-${item.id}`} tabIndex={-1}>
             <header className="attention-drawer-head">
               <div>
                 {mode === "guidance" && (
-                  <button className="drawer-back" type="button" onClick={() => setMode("explanation")}>← Back to why</button>
+                  <button className="drawer-back" type="button" onClick={() => setMode("explanation")}>{copy.why.back}</button>
                 )}
-                <span className="signal-label">{mode === "guidance" ? `LEARN · ${guide?.estimatedMinutes ?? item.guidanceRef?.estimatedMinutes ?? ""} MIN` : "WHY THIS"}</span>
+                <span className="signal-label">{mode === "guidance" ? `${copy.why.learn} · ${guide?.estimatedMinutes ?? item.guidanceRef?.estimatedMinutes ?? ""} ${locale === "ru" ? "МИН" : "MIN"}` : copy.why.whyThis}</span>
                 <h2 id={`attention-drawer-${item.id}`}>{mode === "guidance" && guide ? guide.title : item.title}</h2>
               </div>
-              <button ref={closeRef} className="drawer-close" type="button" onClick={closeDrawer} aria-label="Close explanation">×</button>
+              <button ref={closeRef} className="drawer-close" type="button" onClick={closeDrawer} aria-label={copy.why.close}>×</button>
             </header>
 
             {mode === "guidance" && guide ? (
-              <div className="guidance-body" aria-label={`Contextual guidance: ${guide.title}`}>
+              <div className="guidance-body" aria-label={`${copy.why.contextualGuidance}: ${guide.title}`}>
                 <section className="guidance-intro">
-                  <span>CONTEXTUAL GUIDANCE</span>
+                  <span>{copy.why.contextualGuidance}</span>
                   <p>{guide.summary}</p>
-                  <div className="guidance-context-chip">Apply to · {item.title}</div>
+                  <div className="guidance-context-chip">{copy.why.applyTo} · {item.title}</div>
                 </section>
 
                 {guide.sections.map((section) => (
@@ -198,87 +202,87 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
                 ))}
 
                 <section className="guidance-outcome">
-                  <span>READY TO APPLY</span>
+                  <span>{copy.why.ready}</span>
                   <strong>{guide.outcome}</strong>
                 </section>
 
                 <footer className="attention-drawer-footer guidance-footer">
-                  <a className="primary-action" href={item.action.href} onClick={trackGuidanceApply}>Apply now →</a>
-                  <button className="secondary-drawer-action" type="button" onClick={() => setMode("explanation")}>Return to recommendation</button>
+                  <a className="primary-action" href={item.action.href} onClick={trackGuidanceApply}>{copy.why.applyNow} →</a>
+                  <button className="secondary-drawer-action" type="button" onClick={() => setMode("explanation")}>{copy.why.returnRecommendation}</button>
                 </footer>
               </div>
             ) : (
               <>
                 {item.objectiveAligned && (
-                  <div className="drawer-objective-chip">Current objective aligned</div>
+                  <div className="drawer-objective-chip">{copy.why.currentObjective}</div>
                 )}
 
                 <section className="drawer-section">
-                  <span>WHY THIS</span>
+                  <span>{copy.why.whyThis}</span>
                   <ul>{item.whyThis.map((reason) => <li key={reason}>{reason}</li>)}</ul>
                 </section>
 
                 <section className="drawer-section">
-                  <span>BASED ON</span>
+                  <span>{copy.why.basedOn}</span>
                   {item.basedOn.length > 0 ? (
                     <div className="drawer-ref-grid">
                       {basedOn.map((ref) => ref.href ? (
                         <a className="drawer-ref drawer-ref-link" href={ref.href} key={`${ref.type}-${ref.id}-${ref.version ?? "current"}`}>
                           <strong>{ref.label}</strong>
-                          <small>{ref.type}{ref.version !== undefined ? ` · v${ref.version}` : ""}</small>
+                          <small>{localizeEntityType(locale, ref.type)}{ref.version !== undefined ? ` · v${ref.version}` : ""}</small>
                           <span aria-hidden="true">→</span>
                         </a>
                       ) : (
                         <div className="drawer-ref unresolved" key={`${ref.type}-${ref.id}-${ref.version ?? "current"}`}>
                           <strong>{ref.label}</strong>
-                          <small>{ref.type} · UNRESOLVED</small>
+                          <small>{localizeEntityType(locale, ref.type)} · {copy.today.unresolved}</small>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="drawer-empty">No additional entity reference is required for this deterministic state.</p>
+                    <p className="drawer-empty">{copy.why.noRef}</p>
                   )}
                 </section>
 
                 <section className="drawer-section maturity-section">
-                  <span>BASIS MATURITY</span>
+                  <span>{copy.why.maturity}</span>
                   <div className="maturity-card">
                     <div className="maturity-head">
-                      <strong>{maturity.label}</strong>
-                      <small>{item.basedOn.length} direct provenance ref{item.basedOn.length === 1 ? "" : "s"}</small>
+                      <strong>{copy.why.maturityLabels[maturityKey]}</strong>
+                      <small>{item.basedOn.length} {item.basedOn.length === 1 ? copy.why.directRef : copy.why.directRefs}</small>
                     </div>
-                    <p>{maturity.description}</p>
+                    <p>{copy.why.maturityDescriptions[maturityKey]}</p>
                     {maturity.counts.length > 0 && (
                       <div className="maturity-counts">
-                        {maturity.counts.map(({ type, count }) => <span key={type}>{type} · {count}</span>)}
+                        {maturity.counts.map(({ type, count }) => <span key={type}>{localizeEntityType(locale, type)} · {count}</span>)}
                       </div>
                     )}
                   </div>
                 </section>
 
                 <section className="drawer-section">
-                  <span>UNCERTAINTY</span>
+                  <span>{copy.why.uncertainty}</span>
                   {item.uncertainty.length > 0 ? (
                     <ul>{item.uncertainty.map((entry) => <li key={entry}>{entry}</li>)}</ul>
                   ) : (
-                    <p className="drawer-empty">Low — this recommendation comes from deterministic current state.</p>
+                    <p className="drawer-empty">{copy.why.lowUncertainty}</p>
                   )}
                 </section>
 
                 {item.blockedBy.length > 0 && (
                   <section className="drawer-section">
-                    <span>BLOCKED BY</span>
+                    <span>{copy.why.blockedBy}</span>
                     <div className="drawer-ref-grid">
                       {blockedBy.map((ref) => ref.href ? (
                         <a className="drawer-ref drawer-ref-link" href={ref.href} key={`blocked-${ref.type}-${ref.id}`}>
                           <strong>{ref.label}</strong>
-                          <small>{ref.type}</small>
+                          <small>{localizeEntityType(locale, ref.type)}</small>
                           <span aria-hidden="true">→</span>
                         </a>
                       ) : (
                         <div className="drawer-ref unresolved" key={`blocked-${ref.type}-${ref.id}`}>
                           <strong>{ref.label}</strong>
-                          <small>{ref.type} · UNRESOLVED</small>
+                          <small>{localizeEntityType(locale, ref.type)} · {copy.today.unresolved}</small>
                         </div>
                       ))}
                     </div>
@@ -286,26 +290,26 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
                 )}
 
                 <section className="drawer-section">
-                  <span>EXPECTED EFFECT</span>
-                  <p>{item.expectedEffect ?? "Completing this item resolves the currently surfaced attention state."}</p>
+                  <span>{copy.why.expectedEffect}</span>
+                  <p>{item.expectedEffect ?? copy.why.expectedFallback}</p>
                 </section>
 
                 <section className="drawer-section">
-                  <span>WHAT WE MAY LEARN</span>
-                  <p>{item.whatWillBeLearned ?? "No learning claim is implied — this is operational or readiness work."}</p>
+                  <span>{copy.why.learnOutcome}</span>
+                  <p>{item.whatWillBeLearned ?? copy.why.learnFallback}</p>
                 </section>
 
                 {item.guidanceRef && (
                   <section className="drawer-guidance">
                     <div>
-                      <span>LEARN BEFORE DOING</span>
+                      <span>{copy.why.learnBefore}</span>
                       <strong>{item.guidanceRef.label}</strong>
-                      {item.guidanceRef.estimatedMinutes && <small>{item.guidanceRef.estimatedMinutes} min · optional</small>}
+                      {item.guidanceRef.estimatedMinutes && <small>{item.guidanceRef.estimatedMinutes} {locale === "ru" ? "мин" : "min"} · {copy.why.optional}</small>}
                     </div>
                     {guide ? (
-                      <button type="button" onClick={openGuidance}>Learn →</button>
+                      <button type="button" onClick={openGuidance}>{copy.why.learn} →</button>
                     ) : (
-                      <button type="button" disabled title="Guidance content is not available for this reference">Unavailable</button>
+                      <button type="button" disabled title={copy.why.unavailableTitle}>{copy.why.unavailable}</button>
                     )}
                   </section>
                 )}

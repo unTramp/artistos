@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { emitProductTelemetry } from "@/lib/product-telemetry-client";
+import { getUiCopy, type UiLocale } from "@/lib/i18n";
 import { useModalFocusTrap } from "./ui/use-modal-focus-trap";
 
 type CommandGroup = "Navigate" | "Create" | "Operate";
-
 type PaletteCommand = {
   id: string;
   label: string;
@@ -15,7 +15,22 @@ type PaletteCommand = {
   keywords: string[];
 };
 
-const commands: PaletteCommand[] = [
+const commandsFor = (locale: UiLocale): PaletteCommand[] => locale === "ru" ? [
+  { id: "today", label: "Сегодня", description: "Текущий фокус, главное действие и блокеры", group: "Navigate", href: "/", keywords: ["сегодня", "внимание", "дальше"] },
+  { id: "create", label: "Создать", description: "Открыть Content Factory", group: "Navigate", href: "/factory", keywords: ["контент", "фабрика", "идеи"] },
+  { id: "music", label: "Музыка", description: "Песни и Song Brain", group: "Navigate", href: "/songs", keywords: ["песня", "трек", "музыка"] },
+  { id: "brain", label: "Мозг", description: "Текущий контекст артиста и Inbox знаний", group: "Navigate", href: "/knowledge", keywords: ["мозг", "знания", "контекст"] },
+  { id: "memory", label: "Память", description: "Решения, выводы и история Weekly Review", group: "Navigate", href: "/memory", keywords: ["память", "решение", "вывод"] },
+  { id: "decisions", label: "Решения", description: "Материальные решения и причины", group: "Navigate", href: "/decisions", keywords: ["решение", "почему", "история"] },
+  { id: "learnings", label: "Выводы", description: "Проверенные и кандидатные Learnings", group: "Navigate", href: "/learnings", keywords: ["вывод", "learning", "доказательства"] },
+  { id: "weekly-review", label: "Weekly Review", description: "Превратить неделю в решения и действия", group: "Navigate", href: "/weekly-reviews", keywords: ["неделя", "обзор", "review"] },
+  { id: "identity", label: "Identity артиста", description: "Канонический контекст идентичности артиста", group: "Navigate", href: "/identity", keywords: ["identity", "образ", "артист"] },
+  { id: "add-song", label: "Добавить песню", description: "Перейти в Музыку и добавить песню", group: "Create", href: "/songs", keywords: ["новая", "трек", "песня"] },
+  { id: "create-angle", label: "Создать контент-идею", description: "Начать лёгкий черновик в Factory", group: "Create", href: "/factory", keywords: ["идея", "контент", "angle"] },
+  { id: "what-next", label: "Что мне делать дальше?", description: "Вернуться к детерминированным приоритетам Today", group: "Operate", href: "/", keywords: ["дальше", "приоритет", "фокус"] },
+  { id: "show-blockers", label: "Показать блокеры", description: "Открыть Today, где блокеры получают высокий приоритет", group: "Operate", href: "/", keywords: ["блокер", "заблокировано"] },
+  { id: "run-weekly-review", label: "Запустить Weekly Review", description: "Создать неизменяемый недельный снимок решений", group: "Operate", href: "/weekly-reviews", keywords: ["review", "неделя", "обзор"] }
+] : [
   { id: "today", label: "Today", description: "Open current focus, next action and blockers", group: "Navigate", href: "/", keywords: ["home", "attention", "next"] },
   { id: "create", label: "Create", description: "Open Content Factory", group: "Navigate", href: "/factory", keywords: ["content", "factory", "angles"] },
   { id: "music", label: "Music", description: "Open songs and Song Brain", group: "Navigate", href: "/songs", keywords: ["song", "track", "brain"] },
@@ -34,7 +49,9 @@ const commands: PaletteCommand[] = [
 
 const normalize = (value: string) => value.trim().toLowerCase();
 
-export function CommandPalette() {
+export function CommandPalette({ locale }: { locale: UiLocale }) {
+  const copy = getUiCopy(locale);
+  const commands = useMemo(() => commandsFor(locale), [locale]);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -46,21 +63,13 @@ export function CommandPalette() {
     const term = normalize(query);
     if (!term) return commands;
     return commands.filter((command) => normalize([
-      command.label,
-      command.description,
-      command.group,
-      ...command.keywords
+      command.label, command.description, command.group, ...command.keywords
     ].join(" ")).includes(term));
-  }, [query]);
+  }, [commands, query]);
 
   const openPalette = useCallback((source: "button" | "shortcut") => {
     setOpen(true);
-    emitProductTelemetry({
-      eventName: "COMMAND_PALETTE_OPENED",
-      surface: "Global",
-      entityType: "CommandPalette",
-      metadata: { source }
-    });
+    emitProductTelemetry({ eventName: "COMMAND_PALETTE_OPENED", surface: "Global", entityType: "CommandPalette", metadata: { source } });
   }, []);
 
   const closePalette = useCallback(() => {
@@ -69,13 +78,7 @@ export function CommandPalette() {
     setActiveIndex(0);
   }, []);
 
-  useModalFocusTrap({
-    open,
-    containerRef: dialogRef,
-    initialFocusRef: inputRef,
-    restoreFocusRef: triggerRef,
-    onEscape: closePalette
-  });
+  useModalFocusTrap({ open, containerRef: dialogRef, initialFocusRef: inputRef, restoreFocusRef: triggerRef, onEscape: closePalette });
 
   const execute = (command: PaletteCommand) => {
     emitProductTelemetry({
@@ -116,6 +119,9 @@ export function CommandPalette() {
     }
   };
 
+  const groupLabel = (group: CommandGroup) =>
+    group === "Navigate" ? copy.command.navigate : group === "Create" ? copy.command.create : copy.command.operate;
+
   return (
     <>
       <button
@@ -123,23 +129,23 @@ export function CommandPalette() {
         className="command-shell"
         type="button"
         onClick={() => openPalette("button")}
-        aria-label="Open command palette"
+        aria-label={copy.command.open}
         aria-haspopup="dialog"
         aria-expanded={open}
       >
-        <p>Search or run command</p>
+        <p>{copy.command.search}</p>
         <span>⌘K</span>
       </button>
 
       {open && (
         <div className="palette-layer" role="presentation">
-          <button className="palette-backdrop" type="button" aria-label="Close command palette" onClick={closePalette} />
+          <button className="palette-backdrop" type="button" aria-label={copy.why.close} onClick={closePalette} />
           <section
             ref={dialogRef}
             className="command-palette ui-dialog-surface"
             role="dialog"
             aria-modal="true"
-            aria-label="Command palette"
+            aria-label={copy.command.open}
             tabIndex={-1}
           >
             <header className="palette-search-row">
@@ -149,8 +155,8 @@ export function CommandPalette() {
                 value={query}
                 onChange={(event) => { setQuery(event.target.value); setActiveIndex(0); }}
                 onKeyDown={onInputKeyDown}
-                placeholder="Search pages, actions or questions…"
-                aria-label="Search commands"
+                placeholder={copy.command.placeholder}
+                aria-label={copy.command.searchAria}
                 aria-controls="command-palette-results"
               />
               <kbd>ESC</kbd>
@@ -159,8 +165,8 @@ export function CommandPalette() {
             <div className="palette-results" id="command-palette-results">
               {filtered.length === 0 ? (
                 <div className="palette-empty">
-                  <strong>No matching command</strong>
-                  <span>Try Today, blockers, Weekly Review, song, Brain or content.</span>
+                  <strong>{copy.command.emptyTitle}</strong>
+                  <span>{copy.command.emptyBody}</span>
                 </div>
               ) : filtered.map((command, index) => (
                 <button
@@ -170,7 +176,7 @@ export function CommandPalette() {
                   onMouseEnter={() => setActiveIndex(index)}
                   onClick={() => execute(command)}
                 >
-                  <span className="palette-command-group">{command.group}</span>
+                  <span className="palette-command-group">{groupLabel(command.group)}</span>
                   <span className="palette-command-copy">
                     <strong>{command.label}</strong>
                     <small>{command.description}</small>
@@ -181,9 +187,9 @@ export function CommandPalette() {
             </div>
 
             <footer className="palette-footer">
-              <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
-              <span><kbd>↵</kbd> Open</span>
-              <span>Launcher only · no hidden mutations</span>
+              <span><kbd>↑</kbd><kbd>↓</kbd> {copy.command.navHint}</span>
+              <span><kbd>↵</kbd> {copy.command.openHint}</span>
+              <span>{copy.command.boundary}</span>
             </footer>
           </section>
         </div>

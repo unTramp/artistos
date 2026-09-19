@@ -201,6 +201,55 @@
   flex: 1;
 }
 
+.language-switcher {
+  height: 34px;
+  padding: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-deep);
+}
+
+.language-switcher button {
+  min-width: 36px;
+  height: 26px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #6f7580;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  cursor: pointer;
+  transition:
+    color var(--motion-fast) var(--ease-standard),
+    background var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
+}
+
+.language-switcher button:hover:not(:disabled) {
+  color: #d8dae0;
+}
+
+.language-switcher button.active {
+  background: linear-gradient(90deg, rgba(99,102,241,.28), rgba(139,92,246,.28));
+  color: white;
+  box-shadow: inset 0 0 0 1px rgba(139,92,246,.25);
+}
+
+.language-switcher button:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+.sidebar-language-switcher {
+  display: none;
+  margin-top: 10px;
+}
+
 .context-pill,
 .account-pill {
   height: 34px;
@@ -575,6 +624,14 @@
   .app-topbar {
     position: relative;
     display: none;
+  }
+
+  .sidebar-language-switcher {
+    display: block;
+  }
+
+  .sidebar-language-switcher .language-switcher {
+    width: fit-content;
   }
 
   .app-content {

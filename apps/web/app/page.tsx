@@ -18,6 +18,8 @@ import { hrefForOperationalSource } from "@/lib/entity-href";
 import { entityReferenceKey } from "@/lib/entity-reference";
 import { EntityReferenceResolver } from "@/lib/entity-reference-resolver";
 import { getDatabaseRuntime } from "@/lib/runtime";
+import { getUiCopy, localizeAttentionItem, localizeEntityType, type UiLocale } from "@/lib/i18n";
+import { resolveUiLocale } from "@/lib/ui-locale-server";
 
 const toneFor = (item: AttentionItem): "violet" | "amber" | "cyan" | "emerald" => {
   if (item.kind === "BLOCKER") return "amber";
@@ -26,36 +28,31 @@ const toneFor = (item: AttentionItem): "violet" | "amber" | "cyan" | "emerald" =
   return "violet";
 };
 
-const labelFor = (item: AttentionItem) => {
-  if (item.kind === "BLOCKER") return "BLOCKED";
-  if (item.kind === "NEXT_ACTION") return "NEXT";
-  if (item.kind === "REVIEW") return "REVIEW";
-  if (item.kind === "MEMORY") return "MEMORY";
-  if (item.kind === "FOUNDATION") return "FOUNDATION";
-  return "MUSIC";
-};
+const labelFor = (item: AttentionItem, locale: UiLocale) => getUiCopy(locale).today.kind[item.kind];
 
 const memoryReferenceTypes = new Set(["Decision", "Learning", "WeeklyReview"]);
 
 export default async function HomePage() {
   const actorContext = await resolveAuthenticatedActorContext(await headers());
+  const locale = await resolveUiLocale(actorContext?.artistId);
+  const copy = getUiCopy(locale);
 
   if (!actorContext) {
     return (
-      <AppShell activeId="today">
+      <AppShell activeId="today" locale={locale}>
         <section className="today-shell">
           <header className="today-header">
-            <p className="eyebrow">YOUR CAREER · ONE OPERATING SYSTEM</p>
-            <h1>Know what matters next.</h1>
-            <p>Artist OS connects your identity, music, memory and execution so the next decision starts with context instead of a blank page.</p>
+            <p className="eyebrow">{copy.today.signedOutEyebrow}</p>
+            <h1>{copy.today.signedOutTitle}</h1>
+            <p>{copy.today.signedOutBody}</p>
           </header>
           <section className="today-hero-card unauthenticated">
             <div>
-              <span className="signal-label">START HERE</span>
-              <h2>Establish your artist workspace</h2>
-              <p>Sign in or create an account. Artist OS will keep every future decision inside your private artist scope.</p>
+              <span className="signal-label">{copy.today.startHere}</span>
+              <h2>{copy.today.establishWorkspace}</h2>
+              <p>{copy.today.establishWorkspaceBody}</p>
             </div>
-            <a className="primary-action" href="/auth">Sign in →</a>
+            <a className="primary-action" href="/auth">{copy.shell.signIn} →</a>
           </section>
         </section>
       </AppShell>
@@ -64,20 +61,20 @@ export default async function HomePage() {
 
   if (!actorContext.artistId) {
     return (
-      <AppShell activeId="today" sessionEmail={actorContext.user.email}>
+      <AppShell activeId="today" sessionEmail={actorContext.user.email} locale={locale}>
         <section className="today-shell">
           <header className="today-header">
-            <p className="eyebrow">WELCOME TO ARTIST OS</p>
-            <h1>Create your artist workspace.</h1>
-            <p>Three essentials are enough to start. Everything else should be learned progressively as you use the product.</p>
+            <p className="eyebrow">{copy.today.welcome}</p>
+            <h1>{copy.today.createWorkspace}</h1>
+            <p>{copy.today.createWorkspaceBody}</p>
           </header>
           <section className="today-hero-card">
             <div>
-              <span className="signal-label">ONBOARDING</span>
-              <h2>No DevTools required</h2>
-              <p>Create the canonical Artist scope, then Artist OS can begin building Identity, Song Brain and memory around your real work.</p>
+              <span className="signal-label">{copy.today.onboarding}</span>
+              <h2>{copy.today.noDevTools}</h2>
+              <p>{copy.today.noDevToolsBody}</p>
             </div>
-            <a className="primary-action" href="/onboarding">Create workspace →</a>
+            <a className="primary-action" href="/onboarding">{copy.today.createWorkspaceAction} →</a>
           </section>
         </section>
       </AppShell>
@@ -174,27 +171,29 @@ export default async function HomePage() {
     }
   );
 
+  const localizedItems = projection.items.map((item) => localizeAttentionItem(locale, item));
   const operationalActionByAttentionId = new Map(operationalActions.map((action) => [`operational-action:${action.id}`, action]));
-  const primary = projection.items[0] ?? null;
+  const primary = localizedItems[0] ?? null;
   const primaryOperationalAction = primary ? operationalActionByAttentionId.get(primary.id) ?? null : null;
-  const secondary = projection.items.slice(1, 6);
-  const remainingSecondaryCount = Math.max(0, projection.items.length - 1 - secondary.length);
+  const secondary = localizedItems.slice(1, 6);
+  const remainingSecondaryCount = Math.max(0, localizedItems.length - 1 - secondary.length);
   const primaryBasedOn = primary ? resolvedRefsFor(primary.basedOn) : [];
   const primaryBlockedBy = primary ? resolvedRefsFor(primary.blockedBy) : [];
   const primaryMemoryRefs = primaryBasedOn.filter((ref) => memoryReferenceTypes.has(ref.type));
   const primaryWorkflowRefs = primaryBasedOn.filter((ref) => !memoryReferenceTypes.has(ref.type));
 
   return (
-    <AppShell activeId="today" sessionEmail={actorContext.user.email} workspaceLabel="Artist Workspace">
+    <AppShell activeId="today" sessionEmail={actorContext.user.email} locale={locale}>
       <section className="today-shell">
         <PageHeader
-          eyebrow="DAILY OS"
-          title="Today"
-          description="What needs attention now? Artist OS projects current canonical state into one primary action, a bounded attention queue and the provenance that explains why."
+          eyebrow={copy.today.eyebrow}
+          title={copy.today.title}
+          description={copy.today.description}
           className="today-page-header"
         />
 
         <CurrentFocusEditor
+          locale={locale}
           currentDate={currentDate}
           current={currentObjective ? {
             id: currentObjective.id,
@@ -215,16 +214,17 @@ export default async function HomePage() {
                 id={primaryOperationalAction ? `action-${primaryOperationalAction.id}` : undefined}
               >
                 <div className="today-primary-copy">
-                  <span className="signal-label">PRIMARY · {labelFor(primary)}</span>
+                  <span className="signal-label">{copy.today.primary} · {labelFor(primary, locale)}</span>
                   <h2>{primary.title}</h2>
                   <p>{primary.whyThis[0]}</p>
-                  {primary.objectiveAligned && <small className="today-objective-note">Aligned with current objective</small>}
+                  {primary.objectiveAligned && <small className="today-objective-note">{copy.today.aligned}</small>}
                   {primaryOperationalAction && (
                     <OperationalActionControls
                       actionId={primaryOperationalAction.id}
                       status={primaryOperationalAction.status as "OPEN" | "IN_PROGRESS" | "BLOCKED"}
                       version={primaryOperationalAction.version}
                       executionMode={primaryOperationalAction.executionMode}
+                      locale={locale}
                     />
                   )}
                 </div>
@@ -233,6 +233,7 @@ export default async function HomePage() {
                     item={primary}
                     resolvedBasedOn={primaryBasedOn}
                     resolvedBlockedBy={primaryBlockedBy}
+                    locale={locale}
                   />
                   <a className="primary-action" href={primary.action.href}>{primary.action.label} →</a>
                 </div>
@@ -240,24 +241,24 @@ export default async function HomePage() {
             ) : (
               <section className="today-hero-card today-primary-card tone-emerald">
                 <div className="today-primary-copy">
-                  <span className="signal-label">CLEAR</span>
-                  <h2>No immediate blockers</h2>
-                  <p>Your implemented workflows have no unresolved deterministic attention item. Artist OS is not filling the gap with generic AI advice.</p>
+                  <span className="signal-label">{copy.today.clear}</span>
+                  <h2>{copy.today.noBlockers}</h2>
+                  <p>{copy.today.noBlockersBody}</p>
                 </div>
-                <a className="primary-action" href="/factory">Create with context →</a>
+                <a className="primary-action" href="/factory">{copy.today.createWithContext} →</a>
               </section>
             )}
 
             <section className="attention-panel">
               <div className="panel-heading">
                 <div>
-                  <span className="signal-label">NEXT</span>
-                  <h2>Attention queue</h2>
+                  <span className="signal-label">{copy.today.next}</span>
+                  <h2>{copy.today.queue}</h2>
                 </div>
-                <small>{Math.max(0, projection.items.length - 1)} secondary signal{projection.items.length - 1 === 1 ? "" : "s"}</small>
+                <small>{Math.max(0, localizedItems.length - 1)} {localizedItems.length - 1 === 1 ? copy.today.secondarySignal : copy.today.secondarySignals}</small>
               </div>
               {secondary.length === 0 ? (
-                <div className="quiet-state">No secondary attention items right now.</div>
+                <div className="quiet-state">{copy.today.noSecondary}</div>
               ) : (
                 secondary.map((item) => {
                   const operationalAction = operationalActionByAttentionId.get(item.id) ?? null;
@@ -265,7 +266,7 @@ export default async function HomePage() {
                     <article className="attention-row" key={item.id} id={operationalAction ? `action-${operationalAction.id}` : undefined}>
                       <i className={`attention-dot ${toneFor(item)}`} aria-hidden="true" />
                       <div className="attention-row-copy">
-                        <span>{labelFor(item)}</span>
+                        <span>{labelFor(item, locale)}</span>
                         <strong>{item.title}</strong>
                         <p>{item.whyThis[0]}</p>
                         {operationalAction && (
@@ -274,6 +275,7 @@ export default async function HomePage() {
                             status={operationalAction.status as "OPEN" | "IN_PROGRESS" | "BLOCKED"}
                             version={operationalAction.version}
                             executionMode={operationalAction.executionMode}
+                            locale={locale}
                           />
                         )}
                       </div>
@@ -283,6 +285,7 @@ export default async function HomePage() {
                           compact
                           resolvedBasedOn={resolvedRefsFor(item.basedOn)}
                           resolvedBlockedBy={resolvedRefsFor(item.blockedBy)}
+                          locale={locale}
                         />
                         <a href={item.action.href} aria-label={item.action.label}>→</a>
                       </div>
@@ -291,35 +294,35 @@ export default async function HomePage() {
                 })
               )}
               {remainingSecondaryCount > 0 && (
-                <div className="attention-overflow-note">+ {remainingSecondaryCount} lower-priority signal{remainingSecondaryCount === 1 ? "" : "s"} not expanded here.</div>
+                <div className="attention-overflow-note">+ {remainingSecondaryCount} {remainingSecondaryCount === 1 ? copy.today.lowerPriority : copy.today.lowerPriorityPlural} {copy.today.notExpanded}</div>
               )}
             </section>
           </main>
 
-          <aside className="today-context-rail" aria-label="Context for primary attention">
+          <aside className="today-context-rail" aria-label={copy.today.contextAria}>
             <div className="today-context-rail-head">
-              <span className="signal-label">CONTEXT</span>
-              <h2>Why this is here</h2>
-              <p>Only direct provenance from the current primary recommendation is shown here. Recency alone does not make something relevant.</p>
+              <span className="signal-label">{copy.today.context}</span>
+              <h2>{copy.today.whyHere}</h2>
+              <p>{copy.today.whyHereBody}</p>
             </div>
 
             {primary ? (
               <>
                 {primaryMemoryRefs.length > 0 && (
                   <section className="today-context-group">
-                    <span>MEMORY IN USE</span>
+                    <span>{copy.today.memoryInUse}</span>
                     <div className="today-context-ref-list">
                       {primaryMemoryRefs.slice(0, 4).map((ref) => ref.href ? (
                         <a href={ref.href} key={`${ref.type}-${ref.id}-memory`}>
-                          <small>{ref.type}</small>
+                          <small>{localizeEntityType(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i aria-hidden="true">→</i>
                         </a>
                       ) : (
                         <div className="today-context-ref unresolved" key={`${ref.type}-${ref.id}-memory`}>
-                          <small>{ref.type}</small>
+                          <small>{localizeEntityType(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
-                          <i>UNRESOLVED</i>
+                          <i>{copy.today.unresolved}</i>
                         </div>
                       ))}
                     </div>
@@ -328,19 +331,19 @@ export default async function HomePage() {
 
                 {primaryWorkflowRefs.length > 0 && (
                   <section className="today-context-group">
-                    <span>WORKFLOW CONTEXT</span>
+                    <span>{copy.today.workflowContext}</span>
                     <div className="today-context-ref-list">
                       {primaryWorkflowRefs.slice(0, 4).map((ref) => ref.href ? (
                         <a href={ref.href} key={`${ref.type}-${ref.id}-workflow`}>
-                          <small>{ref.type}</small>
+                          <small>{localizeEntityType(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i aria-hidden="true">→</i>
                         </a>
                       ) : (
                         <div className="today-context-ref unresolved" key={`${ref.type}-${ref.id}-workflow`}>
-                          <small>{ref.type}</small>
+                          <small>{localizeEntityType(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
-                          <i>UNRESOLVED</i>
+                          <i>{copy.today.unresolved}</i>
                         </div>
                       ))}
                     </div>
@@ -349,19 +352,19 @@ export default async function HomePage() {
 
                 {primaryBlockedBy.length > 0 && (
                   <section className="today-context-group">
-                    <span>BLOCKED BY</span>
+                    <span>{copy.today.blockedBy}</span>
                     <div className="today-context-ref-list">
                       {primaryBlockedBy.slice(0, 3).map((ref) => ref.href ? (
                         <a href={ref.href} key={`${ref.type}-${ref.id}-blocked`}>
-                          <small>{ref.type}</small>
+                          <small>{localizeEntityType(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i aria-hidden="true">→</i>
                         </a>
                       ) : (
                         <div className="today-context-ref unresolved" key={`${ref.type}-${ref.id}-blocked`}>
-                          <small>{ref.type}</small>
+                          <small>{localizeEntityType(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
-                          <i>UNRESOLVED</i>
+                          <i>{copy.today.unresolved}</i>
                         </div>
                       ))}
                     </div>
@@ -370,19 +373,19 @@ export default async function HomePage() {
 
                 {primaryBasedOn.length === 0 && primaryBlockedBy.length === 0 && (
                   <div className="today-context-empty">
-                    No additional entity reference is required for this deterministic recommendation.
+                    {copy.today.noExtraRef}
                   </div>
                 )}
               </>
             ) : (
               <div className="today-context-empty">
-                No primary attention item is active, so Artist OS has no recommendation provenance to surface here.
+                {copy.today.noPrimaryContext}
               </div>
             )}
 
             <footer className="today-context-links">
-              <a href="/memory">Open Memory →</a>
-              <a href="/knowledge">Open Brain →</a>
+              <a href="/memory">{copy.today.openMemory} →</a>
+              <a href="/knowledge">{copy.today.openBrain} →</a>
             </footer>
           </aside>
         </div>
