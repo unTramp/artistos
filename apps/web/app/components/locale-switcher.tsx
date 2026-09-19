@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { localeCookieName } from "@/lib/i18n-server";
-import type { Locale } from "@/lib/i18n";
-import { getUiCopy } from "@/lib/i18n";
+import { getUiCopy, localeCookieName, type Locale } from "@/lib/i18n";
 
 export function LocaleSwitcher({ locale }: { locale: Locale }) {
   const [pending, setPending] = useState(false);
