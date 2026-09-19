@@ -19,7 +19,7 @@ import { entityReferenceKey } from "@/lib/entity-reference";
 import { EntityReferenceResolver } from "@/lib/entity-reference-resolver";
 import { getDatabaseRuntime } from "@/lib/runtime";
 import { getServerLocale } from "@/lib/i18n-server";
-import { getUiCopy } from "@/lib/i18n";
+import { entityTypeLabel, getUiCopy } from "@/lib/i18n";
 import { localizeAttentionItem } from "@/lib/attention-i18n";
 
 const toneFor = (item: AttentionItem): "violet" | "amber" | "cyan" | "emerald" => {
@@ -323,13 +323,13 @@ export default async function HomePage() {
                     <div className="today-context-ref-list">
                       {primaryMemoryRefs.slice(0, 4).map((ref) => ref.href ? (
                         <a href={ref.href} key={`${ref.type}-${ref.id}-memory`}>
-                          <small>{ref.type}</small>
+                          <small>{entityTypeLabel(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i aria-hidden="true">→</i>
                         </a>
                       ) : (
                         <div className="today-context-ref unresolved" key={`${ref.type}-${ref.id}-memory`}>
-                          <small>{ref.type}</small>
+                          <small>{entityTypeLabel(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i>{copy.today.unresolved}</i>
                         </div>
@@ -344,13 +344,13 @@ export default async function HomePage() {
                     <div className="today-context-ref-list">
                       {primaryWorkflowRefs.slice(0, 4).map((ref) => ref.href ? (
                         <a href={ref.href} key={`${ref.type}-${ref.id}-workflow`}>
-                          <small>{ref.type}</small>
+                          <small>{entityTypeLabel(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i aria-hidden="true">→</i>
                         </a>
                       ) : (
                         <div className="today-context-ref unresolved" key={`${ref.type}-${ref.id}-workflow`}>
-                          <small>{ref.type}</small>
+                          <small>{entityTypeLabel(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i>{copy.today.unresolved}</i>
                         </div>
@@ -365,13 +365,13 @@ export default async function HomePage() {
                     <div className="today-context-ref-list">
                       {primaryBlockedBy.slice(0, 3).map((ref) => ref.href ? (
                         <a href={ref.href} key={`${ref.type}-${ref.id}-blocked`}>
-                          <small>{ref.type}</small>
+                          <small>{entityTypeLabel(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i aria-hidden="true">→</i>
                         </a>
                       ) : (
                         <div className="today-context-ref unresolved" key={`${ref.type}-${ref.id}-blocked`}>
-                          <small>{ref.type}</small>
+                          <small>{entityTypeLabel(locale, ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i>{copy.today.unresolved}</i>
                         </div>
