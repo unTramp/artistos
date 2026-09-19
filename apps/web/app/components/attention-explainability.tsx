@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import type { AttentionItem } from "@artist-os/core";
 import { getContextualGuide } from "@/lib/contextual-guidance";
 import { emitProductTelemetry } from "@/lib/product-telemetry-client";
 import type { ResolvedEntityReference } from "@/lib/entity-reference";
+import { useModalFocusTrap } from "./ui/use-modal-focus-trap";
 
 type Props = {
   item: AttentionItem;
@@ -65,6 +66,9 @@ const basisMaturityFor = (item: AttentionItem): BasisMaturity => {
 export function AttentionExplainability({ item, compact = false, resolvedBasedOn, resolvedBlockedBy }: Props) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<DrawerMode>("explanation");
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const guide = item.guidanceRef ? getContextualGuide(item.guidanceRef.key) : null;
   const maturity = basisMaturityFor(item);
   const basedOn = resolvedBasedOn ?? item.basedOn.map((ref) => ({
@@ -80,24 +84,18 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
     resolved: false
   }));
 
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [open]);
-
   const closeDrawer = () => {
     setOpen(false);
     setMode("explanation");
   };
+
+  useModalFocusTrap({
+    open,
+    containerRef: drawerRef,
+    initialFocusRef: closeRef,
+    restoreFocusRef: triggerRef,
+    onEscape: closeDrawer
+  });
 
   const openExplanation = () => {
     setMode("explanation");
@@ -157,10 +155,13 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
   return (
     <>
       <button
+        ref={triggerRef}
         className={compact ? "why-action compact" : "why-action"}
         type="button"
         onClick={openExplanation}
         aria-label={`Why this recommendation: ${item.title}`}
+        aria-haspopup="dialog"
+        aria-expanded={open}
       >
         Why this?
       </button>
@@ -168,7 +169,7 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
       {open && (
         <div className="attention-drawer-layer" role="presentation">
           <button className="attention-drawer-backdrop" aria-label="Close explanation" type="button" onClick={closeDrawer} />
-          <aside className="attention-drawer" role="dialog" aria-modal="true" aria-labelledby={`attention-drawer-${item.id}`}>
+          <aside ref={drawerRef} className="attention-drawer" role="dialog" aria-modal="true" aria-labelledby={`attention-drawer-${item.id}`} tabIndex={-1}>
             <header className="attention-drawer-head">
               <div>
                 {mode === "guidance" && (
@@ -177,7 +178,7 @@ export function AttentionExplainability({ item, compact = false, resolvedBasedOn
                 <span className="signal-label">{mode === "guidance" ? `LEARN · ${guide?.estimatedMinutes ?? item.guidanceRef?.estimatedMinutes ?? ""} MIN` : "WHY THIS"}</span>
                 <h2 id={`attention-drawer-${item.id}`}>{mode === "guidance" && guide ? guide.title : item.title}</h2>
               </div>
-              <button className="drawer-close" type="button" onClick={closeDrawer} aria-label="Close explanation">×</button>
+              <button ref={closeRef} className="drawer-close" type="button" onClick={closeDrawer} aria-label="Close explanation">×</button>
             </header>
 
             {mode === "guidance" && guide ? (
