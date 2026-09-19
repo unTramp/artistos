@@ -50,16 +50,21 @@ test("Weekly Review recommendation becomes bounded focus and closes an Operation
   await focusSection.getByRole("button", { name: "Confirm current focus" }).click();
   await page.waitForURL("**/");
 
+  await expect(page.getByRole("heading", { name: "Today", exact: true })).toBeVisible();
   await expect(page.getByLabel("Current focus")).toBeVisible();
   await expect(page.getByText("Aligned with current objective", { exact: true })).toBeVisible();
+  await expect(page.locator(".today-primary-card")).toContainText(actionTitle);
+  await expect(page.getByLabel("Context for primary attention")).toBeVisible();
   const controls = page.getByTestId(`action-controls-${actionId}`);
   await expect(controls).toBeVisible();
 
-  await page.getByRole("button", { name: `Why this recommendation: ${actionTitle}` }).click();
+  const whyButton = page.getByRole("button", { name: `Why this recommendation: ${actionTitle}` });
+  await whyButton.click();
   const whyDrawer = page.getByRole("dialog");
   await expect(whyDrawer.getByRole("link", { name: actionTitle, exact: false })).toBeVisible();
   await expect(whyDrawer.getByText(actionId, { exact: true })).toHaveCount(0);
   await whyDrawer.getByRole("button", { name: "Close explanation" }).click();
+  await expect(whyButton).toBeFocused();
   await controls.getByRole("button", { name: "Done" }).click();
   await expect(page.getByTestId(`action-controls-${actionId}`)).toHaveCount(0);
 
