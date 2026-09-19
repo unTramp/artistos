@@ -1,6 +1,7 @@
 export type Locale = "en" | "ru";
 
 export const supportedLocales: Locale[] = ["en", "ru"];
+export const localeCookieName = "artist-os-locale";
 
 export const normalizeLocale = (value: string | null | undefined): Locale =>
   value?.toLowerCase().startsWith("ru") ? "ru" : "en";
