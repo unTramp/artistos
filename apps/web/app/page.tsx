@@ -14,9 +14,12 @@ import { CurrentFocusEditor } from "./components/current-focus-editor";
 import { OperationalActionControls } from "./components/operational-action-controls";
 import { PageHeader } from "./components/ui/presentation";
 import { resolveAuthenticatedActorContext } from "@/lib/actor-context";
+import { localizeAttentionItem } from "@/lib/attention-localization";
 import { hrefForOperationalSource } from "@/lib/entity-href";
 import { entityReferenceKey } from "@/lib/entity-reference";
 import { EntityReferenceResolver } from "@/lib/entity-reference-resolver";
+import { getMessages } from "@/lib/i18n";
+import { getRequestLocale } from "@/lib/i18n-server";
 import { getDatabaseRuntime } from "@/lib/runtime";
 
 const toneFor = (item: AttentionItem): "violet" | "amber" | "cyan" | "emerald" => {
@@ -26,36 +29,42 @@ const toneFor = (item: AttentionItem): "violet" | "amber" | "cyan" | "emerald" =
   return "violet";
 };
 
-const labelFor = (item: AttentionItem) => {
-  if (item.kind === "BLOCKER") return "BLOCKED";
-  if (item.kind === "NEXT_ACTION") return "NEXT";
-  if (item.kind === "REVIEW") return "REVIEW";
-  if (item.kind === "MEMORY") return "MEMORY";
-  if (item.kind === "FOUNDATION") return "FOUNDATION";
-  return "MUSIC";
-};
-
 const memoryReferenceTypes = new Set(["Decision", "Learning", "WeeklyReview"]);
 
 export default async function HomePage() {
+  const locale = await getRequestLocale();
+  const messages = getMessages(locale);
+  const copy = messages.today;
   const actorContext = await resolveAuthenticatedActorContext(await headers());
+
+  const labelFor = (item: AttentionItem) => {
+    if (item.kind === "BLOCKER") return copy.kind.blocker;
+    if (item.kind === "NEXT_ACTION") return copy.kind.nextAction;
+    if (item.kind === "REVIEW") return copy.kind.review;
+    if (item.kind === "MEMORY") return copy.kind.memory;
+    if (item.kind === "FOUNDATION") return copy.kind.foundation;
+    return copy.kind.music;
+  };
+
+  const typeLabel = (type: string) =>
+    messages.entityTypes[type as keyof typeof messages.entityTypes] ?? type;
 
   if (!actorContext) {
     return (
       <AppShell activeId="today">
         <section className="today-shell">
           <header className="today-header">
-            <p className="eyebrow">YOUR CAREER · ONE OPERATING SYSTEM</p>
-            <h1>Know what matters next.</h1>
-            <p>Artist OS connects your identity, music, memory and execution so the next decision starts with context instead of a blank page.</p>
+            <p className="eyebrow">{copy.signedOutEyebrow}</p>
+            <h1>{copy.signedOutTitle}</h1>
+            <p>{copy.signedOutDescription}</p>
           </header>
           <section className="today-hero-card unauthenticated">
             <div>
-              <span className="signal-label">START HERE</span>
-              <h2>Establish your artist workspace</h2>
-              <p>Sign in or create an account. Artist OS will keep every future decision inside your private artist scope.</p>
+              <span className="signal-label">{copy.startHere}</span>
+              <h2>{copy.establishWorkspace}</h2>
+              <p>{copy.establishWorkspaceDescription}</p>
             </div>
-            <a className="primary-action" href="/auth">Sign in →</a>
+            <a className="primary-action" href="/auth">{copy.signInAction}</a>
           </section>
         </section>
       </AppShell>
@@ -67,17 +76,17 @@ export default async function HomePage() {
       <AppShell activeId="today" sessionEmail={actorContext.user.email}>
         <section className="today-shell">
           <header className="today-header">
-            <p className="eyebrow">WELCOME TO ARTIST OS</p>
-            <h1>Create your artist workspace.</h1>
-            <p>Three essentials are enough to start. Everything else should be learned progressively as you use the product.</p>
+            <p className="eyebrow">{copy.welcome}</p>
+            <h1>{copy.createWorkspaceTitle}</h1>
+            <p>{copy.createWorkspaceDescription}</p>
           </header>
           <section className="today-hero-card">
             <div>
-              <span className="signal-label">ONBOARDING</span>
-              <h2>No DevTools required</h2>
-              <p>Create the canonical Artist scope, then Artist OS can begin building Identity, Song Brain and memory around your real work.</p>
+              <span className="signal-label">{copy.onboarding}</span>
+              <h2>{copy.noDevtools}</h2>
+              <p>{copy.onboardingDescription}</p>
             </div>
-            <a className="primary-action" href="/onboarding">Create workspace →</a>
+            <a className="primary-action" href="/onboarding">{copy.createWorkspaceAction}</a>
           </section>
         </section>
       </AppShell>
@@ -161,36 +170,47 @@ export default async function HomePage() {
     }))
   });
 
+  const localizedItems = projection.items.map((item) => localizeAttentionItem(item, locale));
+
   const provenanceResolver = new EntityReferenceResolver(runtime.db, actorContext.artistId);
   const resolvedReferenceMap = await provenanceResolver.resolveMany(
-    projection.items.flatMap((item) => [...item.basedOn, ...item.blockedBy])
+    localizedItems.flatMap((item) => [...item.basedOn, ...item.blockedBy])
   );
   const resolvedRefsFor = (refs: AttentionItem["basedOn"]) => refs.map((ref) =>
     resolvedReferenceMap[entityReferenceKey(ref.type, ref.id)] ?? {
       ...ref,
-      label: ref.type,
+      label: typeLabel(ref.type),
       href: null,
       resolved: false
     }
   );
 
   const operationalActionByAttentionId = new Map(operationalActions.map((action) => [`operational-action:${action.id}`, action]));
-  const primary = projection.items[0] ?? null;
+  const primary = localizedItems[0] ?? null;
   const primaryOperationalAction = primary ? operationalActionByAttentionId.get(primary.id) ?? null : null;
-  const secondary = projection.items.slice(1, 6);
-  const remainingSecondaryCount = Math.max(0, projection.items.length - 1 - secondary.length);
+  const secondary = localizedItems.slice(1, 6);
+  const secondaryCount = Math.max(0, localizedItems.length - 1);
+  const remainingSecondaryCount = Math.max(0, localizedItems.length - 1 - secondary.length);
   const primaryBasedOn = primary ? resolvedRefsFor(primary.basedOn) : [];
   const primaryBlockedBy = primary ? resolvedRefsFor(primary.blockedBy) : [];
   const primaryMemoryRefs = primaryBasedOn.filter((ref) => memoryReferenceTypes.has(ref.type));
   const primaryWorkflowRefs = primaryBasedOn.filter((ref) => !memoryReferenceTypes.has(ref.type));
 
+  const secondaryCountLabel = locale === "ru"
+    ? `Сигналов: ${secondaryCount}`
+    : `${secondaryCount} ${secondaryCount === 1 ? copy.secondarySignal : copy.secondarySignals}`;
+
+  const overflowLabel = locale === "ru"
+    ? `Ещё ${remainingSecondaryCount} сигналов низкого приоритета не раскрыто здесь.`
+    : `+ ${remainingSecondaryCount} ${remainingSecondaryCount === 1 ? copy.lowerPriority : copy.lowerPriorities} ${copy.notExpanded}`;
+
   return (
-    <AppShell activeId="today" sessionEmail={actorContext.user.email} workspaceLabel="Artist Workspace">
+    <AppShell activeId="today" sessionEmail={actorContext.user.email} workspaceLabel={messages.shell.workspaceLabel}>
       <section className="today-shell">
         <PageHeader
-          eyebrow="DAILY OS"
-          title="Today"
-          description="What needs attention now? Artist OS projects current canonical state into one primary action, a bounded attention queue and the provenance that explains why."
+          eyebrow={copy.eyebrow}
+          title={copy.title}
+          description={copy.description}
           className="today-page-header"
         />
 
@@ -215,10 +235,10 @@ export default async function HomePage() {
                 id={primaryOperationalAction ? `action-${primaryOperationalAction.id}` : undefined}
               >
                 <div className="today-primary-copy">
-                  <span className="signal-label">PRIMARY · {labelFor(primary)}</span>
+                  <span className="signal-label">{copy.primary} · {labelFor(primary)}</span>
                   <h2>{primary.title}</h2>
                   <p>{primary.whyThis[0]}</p>
-                  {primary.objectiveAligned && <small className="today-objective-note">Aligned with current objective</small>}
+                  {primary.objectiveAligned && <small className="today-objective-note">{copy.aligned}</small>}
                   {primaryOperationalAction && (
                     <OperationalActionControls
                       actionId={primaryOperationalAction.id}
@@ -240,24 +260,24 @@ export default async function HomePage() {
             ) : (
               <section className="today-hero-card today-primary-card tone-emerald">
                 <div className="today-primary-copy">
-                  <span className="signal-label">CLEAR</span>
-                  <h2>No immediate blockers</h2>
-                  <p>Your implemented workflows have no unresolved deterministic attention item. Artist OS is not filling the gap with generic AI advice.</p>
+                  <span className="signal-label">{copy.clear}</span>
+                  <h2>{copy.noBlockers}</h2>
+                  <p>{copy.noBlockersDescription}</p>
                 </div>
-                <a className="primary-action" href="/factory">Create with context →</a>
+                <a className="primary-action" href="/factory">{copy.createWithContext}</a>
               </section>
             )}
 
             <section className="attention-panel">
               <div className="panel-heading">
                 <div>
-                  <span className="signal-label">NEXT</span>
-                  <h2>Attention queue</h2>
+                  <span className="signal-label">{copy.next}</span>
+                  <h2>{copy.queueTitle}</h2>
                 </div>
-                <small>{Math.max(0, projection.items.length - 1)} secondary signal{projection.items.length - 1 === 1 ? "" : "s"}</small>
+                <small>{secondaryCountLabel}</small>
               </div>
               {secondary.length === 0 ? (
-                <div className="quiet-state">No secondary attention items right now.</div>
+                <div className="quiet-state">{copy.noSecondary}</div>
               ) : (
                 secondary.map((item) => {
                   const operationalAction = operationalActionByAttentionId.get(item.id) ?? null;
@@ -291,35 +311,35 @@ export default async function HomePage() {
                 })
               )}
               {remainingSecondaryCount > 0 && (
-                <div className="attention-overflow-note">+ {remainingSecondaryCount} lower-priority signal{remainingSecondaryCount === 1 ? "" : "s"} not expanded here.</div>
+                <div className="attention-overflow-note">{overflowLabel}</div>
               )}
             </section>
           </main>
 
-          <aside className="today-context-rail" aria-label="Context for primary attention">
+          <aside className="today-context-rail" aria-label={copy.contextAria}>
             <div className="today-context-rail-head">
-              <span className="signal-label">CONTEXT</span>
-              <h2>Why this is here</h2>
-              <p>Only direct provenance from the current primary recommendation is shown here. Recency alone does not make something relevant.</p>
+              <span className="signal-label">{copy.context}</span>
+              <h2>{copy.whyHere}</h2>
+              <p>{copy.whyHereDescription}</p>
             </div>
 
             {primary ? (
               <>
                 {primaryMemoryRefs.length > 0 && (
                   <section className="today-context-group">
-                    <span>MEMORY IN USE</span>
+                    <span>{copy.memoryInUse}</span>
                     <div className="today-context-ref-list">
                       {primaryMemoryRefs.slice(0, 4).map((ref) => ref.href ? (
                         <a href={ref.href} key={`${ref.type}-${ref.id}-memory`}>
-                          <small>{ref.type}</small>
+                          <small>{typeLabel(ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i aria-hidden="true">→</i>
                         </a>
                       ) : (
                         <div className="today-context-ref unresolved" key={`${ref.type}-${ref.id}-memory`}>
-                          <small>{ref.type}</small>
-                          <strong>{ref.label}</strong>
-                          <i>UNRESOLVED</i>
+                          <small>{typeLabel(ref.type)}</small>
+                          <strong>{ref.resolved ? ref.label : typeLabel(ref.type)}</strong>
+                          <i>{copy.unresolved}</i>
                         </div>
                       ))}
                     </div>
@@ -328,19 +348,19 @@ export default async function HomePage() {
 
                 {primaryWorkflowRefs.length > 0 && (
                   <section className="today-context-group">
-                    <span>WORKFLOW CONTEXT</span>
+                    <span>{copy.workflowContext}</span>
                     <div className="today-context-ref-list">
                       {primaryWorkflowRefs.slice(0, 4).map((ref) => ref.href ? (
                         <a href={ref.href} key={`${ref.type}-${ref.id}-workflow`}>
-                          <small>{ref.type}</small>
+                          <small>{typeLabel(ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i aria-hidden="true">→</i>
                         </a>
                       ) : (
                         <div className="today-context-ref unresolved" key={`${ref.type}-${ref.id}-workflow`}>
-                          <small>{ref.type}</small>
-                          <strong>{ref.label}</strong>
-                          <i>UNRESOLVED</i>
+                          <small>{typeLabel(ref.type)}</small>
+                          <strong>{ref.resolved ? ref.label : typeLabel(ref.type)}</strong>
+                          <i>{copy.unresolved}</i>
                         </div>
                       ))}
                     </div>
@@ -349,19 +369,19 @@ export default async function HomePage() {
 
                 {primaryBlockedBy.length > 0 && (
                   <section className="today-context-group">
-                    <span>BLOCKED BY</span>
+                    <span>{copy.blockedBy}</span>
                     <div className="today-context-ref-list">
                       {primaryBlockedBy.slice(0, 3).map((ref) => ref.href ? (
                         <a href={ref.href} key={`${ref.type}-${ref.id}-blocked`}>
-                          <small>{ref.type}</small>
+                          <small>{typeLabel(ref.type)}</small>
                           <strong>{ref.label}</strong>
                           <i aria-hidden="true">→</i>
                         </a>
                       ) : (
                         <div className="today-context-ref unresolved" key={`${ref.type}-${ref.id}-blocked`}>
-                          <small>{ref.type}</small>
-                          <strong>{ref.label}</strong>
-                          <i>UNRESOLVED</i>
+                          <small>{typeLabel(ref.type)}</small>
+                          <strong>{ref.resolved ? ref.label : typeLabel(ref.type)}</strong>
+                          <i>{copy.unresolved}</i>
                         </div>
                       ))}
                     </div>
@@ -369,20 +389,16 @@ export default async function HomePage() {
                 )}
 
                 {primaryBasedOn.length === 0 && primaryBlockedBy.length === 0 && (
-                  <div className="today-context-empty">
-                    No additional entity reference is required for this deterministic recommendation.
-                  </div>
+                  <div className="today-context-empty">{copy.noExtraRef}</div>
                 )}
               </>
             ) : (
-              <div className="today-context-empty">
-                No primary attention item is active, so Artist OS has no recommendation provenance to surface here.
-              </div>
+              <div className="today-context-empty">{copy.noPrimaryProvenance}</div>
             )}
 
             <footer className="today-context-links">
-              <a href="/memory">Open Memory →</a>
-              <a href="/knowledge">Open Brain →</a>
+              <a href="/memory">{copy.openMemory}</a>
+              <a href="/knowledge">{copy.openBrain}</a>
             </footer>
           </aside>
         </div>
