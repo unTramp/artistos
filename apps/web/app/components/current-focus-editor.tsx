@@ -114,7 +114,7 @@ export function CurrentFocusEditor({ currentDate, current }: { currentDate: stri
     return (
       <section className="today-focus-card" id="current-focus" aria-label={copy.aria}>
         <div className="today-focus-copy">
-          <span className="signal-label">{copy.currentFocus} · {current.priority}</span>
+          <span className="signal-label">{copy.currentFocus} · {current.priority === "PRIMARY" ? copy.primary : copy.secondary}</span>
           <strong>{current.title}</strong>
           <p>{current.statement}</p>
           {message && <small className="focus-form-message" role="alert">{message}</small>}
