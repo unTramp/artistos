@@ -213,7 +213,7 @@ const en = {
   }
 } as const;
 
-const ru: typeof en = {
+const ru = {
   shell: {
     workspaceAria: "Рабочее пространство Artist OS",
     brandTagline: "Под контролем человека · На основе данных",
@@ -416,8 +416,8 @@ const ru: typeof en = {
     ArtistIdentity: "Идентичность артиста",
     WeeklyReviewSeed: "Недельный обзор"
   }
-};
+} as const;
 
-export type Messages = typeof en;
+export type Messages = typeof en | typeof ru;
 
 export const getMessages = (locale: Locale): Messages => locale === "ru" ? ru : en;
