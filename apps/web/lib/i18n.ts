@@ -387,13 +387,14 @@ export const localizeAttentionItem = (locale: UiLocale, item: AttentionItem): At
     "View action": "Открыть действие"
   };
 
+  const guidanceRef = localizeGuidance(locale, item.guidanceRef);
   return {
     ...item,
     title,
     whyThis: item.whyThis.map((entry) => replaceKnownSystemText(locale, entry)),
-    expectedEffect: item.expectedEffect ? replaceKnownSystemText(locale, item.expectedEffect) : undefined,
-    whatWillBeLearned: item.whatWillBeLearned ? replaceKnownSystemText(locale, item.whatWillBeLearned) : undefined,
-    guidanceRef: localizeGuidance(locale, item.guidanceRef),
+    ...(item.expectedEffect ? { expectedEffect: replaceKnownSystemText(locale, item.expectedEffect) } : {}),
+    ...(item.whatWillBeLearned ? { whatWillBeLearned: replaceKnownSystemText(locale, item.whatWillBeLearned) } : {}),
+    ...(guidanceRef ? { guidanceRef } : {}),
     action: { ...item.action, label: actionLabels[item.action.label] ?? item.action.label }
   };
 };
